@@ -120,6 +120,17 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
 .cta{cursor:pointer}
 .cta:hover .face{filter:brightness(1.12)}
 .screen{mix-blend-mode:screen}
+@keyframes ring{0%{transform:rotate(0)}15%{transform:rotate(9deg)}35%{transform:rotate(-7deg)}55%{transform:rotate(5deg)}75%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
+.bellg.ring{animation:ring 1.3s ease-out}
+@keyframes seq{0%,100%{opacity:.12}8%,30%{opacity:1}42%{opacity:.12}}
+.seq{animation:seq 2.8s ease-in-out infinite}
+.shackle{transition:transform .8s cubic-bezier(.3,1.5,.5,1)}
+.shackle.open{transform:translateY(-70px)}
+.crk.go{animation:spin .7s linear 6}
+.waves{transition:opacity .4s}
+.waves.go{opacity:1}
+.note.lit{filter:drop-shadow(0 0 6px #ffb040)}
+.note.lit path,.note.lit circle{stroke:#c0141a}
 @media (prefers-reduced-motion:reduce){
   .spin,.swing,.rain,.puff,.dust,.glint,.needle,.pulse,.bob,.flick,.flame,.dashpulse,.bubble,.twinkle,.drift,.blink{animation:none!important}
 }
@@ -180,6 +191,10 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
         <radialGradient id="lightR"><stop offset="0" stop-color="#fffbe8"/><stop offset=".35" stop-color="#ffd98a" stop-opacity=".9"/><stop offset="1" stop-color="#ffb040" stop-opacity="0"/></radialGradient>
         <radialGradient id="fireG" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff0a0"/><stop offset=".4" stop-color="#ff8a20"/><stop offset="1" stop-color="#5a1000"/></radialGradient>
         <radialGradient id="potion" cx=".4" cy=".4" r=".7"><stop offset="0" stop-color="#d8ffb0"/><stop offset=".5" stop-color="#4ad06a"/><stop offset="1" stop-color="#0a4a1a"/></radialGradient>
+        <linearGradient id="bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0c080"/><stop offset=".35" stop-color="#b0743a"/><stop offset=".7" stop-color="#6a3a14"/><stop offset="1" stop-color="#2e1606"/></linearGradient>
+        <radialGradient id="moonGlass" cx=".42" cy=".38" r=".72"><stop offset="0" stop-color="#e2ebf8"/><stop offset=".45" stop-color="#8ea6c4"/><stop offset="1" stop-color="#26344a"/></radialGradient>
+        <linearGradient id="shCylH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".28" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient>
+        <radialGradient id="hornIn" cx=".6" cy=".62" r=".62"><stop offset="0" stop-color="#1a0e04"/><stop offset=".3" stop-color="#5a3812"/><stop offset=".75" stop-color="#c9964a"/><stop offset="1" stop-color="#f4d692"/></radialGradient>
         <radialGradient id="recess" r=".5"><stop offset=".7" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></radialGradient>
         <!-- procedural textures (filled in by script at start) -->
         <pattern id="pWood" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.7)"><image data-tx="wood" width="512" height="256" preserveAspectRatio="none"/></pattern>
@@ -194,6 +209,8 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
         <pattern id="pParch" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(2)"><image data-tx="parch" width="384" height="384" preserveAspectRatio="none"/></pattern>
         <pattern id="pParchS" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(.4)"><image data-tx="parch" width="384" height="384" preserveAspectRatio="none"/></pattern>
         <pattern id="pSpun" patternUnits="objectBoundingBox" patternContentUnits="objectBoundingBox" width="1" height="1"><image data-tx="spun" width="1" height="1" preserveAspectRatio="none"/></pattern>
+        <pattern id="pStone" width="256" height="240" patternUnits="userSpaceOnUse" patternTransform="scale(.55)"><image data-tx="stone" width="256" height="240" preserveAspectRatio="none"/></pattern>
+        <pattern id="pStoneL" width="256" height="240" patternUnits="userSpaceOnUse" patternTransform="scale(1.1)"><image data-tx="stone" width="256" height="240" preserveAspectRatio="none"/></pattern>
         <pattern id="pBrush" width="256" height="256" patternUnits="userSpaceOnUse"><image data-tx="brush" width="256" height="256" preserveAspectRatio="none"/></pattern>
         <pattern id="pGrime" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(1.3)"><image data-tx="grime" width="384" height="384" preserveAspectRatio="none"/></pattern>
         <pattern id="pPatina" width="256" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.6)"><image data-tx="patina" width="256" height="256" preserveAspectRatio="none"/></pattern>
@@ -267,7 +284,8 @@ const RINGS = [['sun','moon','star','tri','wave','earth'],['wave','earth','sun',
 const CODE = ['moon','star','tri'];
 function freshState(){
   return { inv:[], sel:null, f:{}, hs:0, ms:0, rs:[0,0,0], pr:PIPE_SOL.map((t,i)=>t[1]+PIPE_SCR[i]),
-    shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false };
+    shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false,
+    level:1, lk:[12,12,12,12], pegs:[null,null,null], bellSeq:[] };
 }
 let S = freshState();
 let soundOn = true;
@@ -316,12 +334,13 @@ const AU = {
   chime(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>{ this.tone(f,1.6,'sine',.09,i*.13); this.tone(f*2.01,.7,'sine',.02,i*.13); }); },
   pick(){ this.tone(880,.25,'sine',.08); this.tone(1320,.35,'sine',.06,.08); },
   bell(n){ for(let i=0;i<n;i++){ this.tone(196,1.8,'sine',.12,i*.55); this.tone(392.5,1.4,'sine',.05,i*.55); this.tone(589,.9,'sine',.025,i*.55); } },
+  bellTone(f){ this.tone(f,2.4,'sine',.15); this.tone(f*2.01,1.5,'sine',.05); this.tone(f*2.76,1,'sine',.04); this.tone(f*5.4,.5,'sine',.02); },
   hiss(){ this.noise(2,.14,3800,'highpass'); },
   whirr(){ for(let i=0;i<14;i++) this.tone(900+i*30,.03,'square',.02,i*.09); this.noise(1.3,.08,300,'lowpass'); }
 };
 setInterval(()=>{
   if(!AU.ok()) return; const sc=S.scene;
-  if(sc==='room') AU.tick(true); else if(sc==='clock' && !S.f.clockDone) AU.tick(false);
+  if(sc==='room') AU.tick(true); else if(['tower','core','dial'].includes(sc) && S.f.towerOn) AU.tick(false); else if(sc==='clock' && !S.f.clockDone) AU.tick(false);
 }, 1000);
 
 /* ---------------- procedural textures ---------------- */
@@ -432,6 +451,17 @@ function patinaTex(){
     o[0]=70; o[1]=140; o[2]=112; o[3]=sm(.56,.8,g)*200;
   });
 }
+function stoneTex(){
+  const n=makeNoise(41), hs=(a,b)=>{ const x=Math.sin(a*127.1+b*311.7)*43758.5453; return x-Math.floor(x); };
+  return canvasTex(256,240,(u,v,o,x,y)=>{
+    const row=Math.floor(y/40), off=(row%2)*64, bx=(x+off)%128, by=y%40, idx=Math.floor(((x+off)%256)/128);
+    const m=fbm(n,u,v,8,8,4);
+    if(bx<4||by<4){ const k=.55+.4*m; o[0]=40*k; o[1]=35*k; o[2]=30*k; return; }
+    const h=hs(row,idx), k=(.72+.34*h)*(.72+.5*m);
+    const e=Math.min(bx-4,127-bx,by-4,39-by), ed=e<6?.72+.046*e:1;
+    o[0]=(98+22*h)*k*ed; o[1]=(86+12*h)*k*ed; o[2]=(74+6*h)*k*ed;
+  });
+}
 let TEX_READY=false;
 async function buildTextures(progress){
   const jobs=[
@@ -443,7 +473,8 @@ async function buildTextures(progress){
     ['spun',spunTex,'png'],
     ['brush',brushTex,'png'],
     ['grime',grimeTex,'png'],
-    ['patina',patinaTex,'png']
+    ['patina',patinaTex,'png'],
+    ['stone',stoneTex,'jpeg']
   ];
   for(let i=0;i<jobs.length;i++){
     await new Promise(r=>setTimeout(r,0));
@@ -1334,7 +1365,7 @@ function hatchScene(){
 /* ---------------- TITLE & END ---------------- */
 let texProgress=0;
 function titleScene(){
-  const cont = S.started && typeof resumeScene!=='undefined' && !['end','title'].includes(resumeScene);
+  const cont = S.started && typeof resumeScene!=='undefined' && !['end','end2','title'].includes(resumeScene);
   return `<rect width="1000" height="1000" fill="#1a1a12"/><rect width="1000" height="1000" fill="url(#pPaperL)"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".7"/>
   <circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".9" class="screen"/>
   ${gear(110,140,190,20,{spin:70,op:.55})}${gear(330,40,90,12,{spin:34,rev:true,op:.45})}
@@ -1352,7 +1383,7 @@ function titleScene(){
   ${vignette()}`;
 }
 function cta(x,y,label,act,ghost){
-  const w=ghost?300:420, h=ghost?66:84;
+  const w=ghost?300:Math.max(420,label.length*19+80), h=ghost?66:84;
   return `<g class="cta hot" data-act="${act}" role="button" tabindex="0">
     <g filter="url(#sh)"><g class="face"${ghost?'':BEV}><rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="${ghost?'#1e140c':'url(#brass)'}" stroke="${ghost?'#d6a64e':'none'}" stroke-width="2"/>${ghost?'':`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="url(#pBrush)" opacity=".45"/>`}</g></g>
     ${ghost?'':`<rect x="${x-w/2+8}" y="${y-h/2+8}" width="${w-16}" height="${h-16}" rx="5" fill="none" stroke="#5a3810" stroke-width="1.5"/>${bolt(x-w/2+22,y,6)}${bolt(x+w/2-22,y,6)}`}
@@ -1370,8 +1401,292 @@ function endScene(){
   <g${BEV}><text x="500" y="370" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="74" letter-spacing="6" fill="url(#goldText)">Механизм ожил</text></g>
   ${lines.map((t,i)=>`<text x="500" y="${440+i*42}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="30" fill="#f2e2be">${t}</text>`).join('')}
   ${note.map((t,i)=>`<text x="500" y="${600+i*44}" text-anchor="middle" font-family="Caveat,cursive" font-size="38" fill="#ffd98a">${t}</text>`).join('')}
-  <text x="500" y="780" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="3" fill="#c9a062">Время в мастерской: ${mm}:${ss}</text>
-  ${cta(500,870,'Сыграть снова','start')}
+  <text x="500" y="760" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="3" fill="#c9a062">Время в мастерской: ${mm}:${ss}</text>
+  ${cta(500,840,'Глава II · Подняться в башню','toTower')}
+  ${cta(500,935,'Сыграть сначала','start',true)}
+  ${vignette()}`;
+}
+
+/* ================= CHAPTER II · THE TOWER ================= */
+const BELLS=[['earth',262,190],['moon',294,160],['sun',330,140],['star',392,120],['tri',440,104]];
+const BELL_X=[160,345,510,660,800];
+const MELODY=['sun','moon','star','sun','tri'];
+const LOCK_CODE=[4,9,6,11];
+const GEAR_ITEMS={gS:{r:48,n:8},gM:{r:84,n:14},gL:{r:120,n:20}};
+const GB={A:[130,600,72,12], B:[718,502,60,10], pegs:[[310,534],[454,448],[574,502]], sol:['gL','gS','gM']};
+let phonoPlaying=false;
+
+function stoneBg(floorY=820){
+  return `<rect x="-1000" width="3000" height="${floorY}" fill="#4a4038"/><rect x="-1000" width="3000" height="${floorY}" fill="url(#pStoneL)"/>
+  <rect x="-1000" width="3000" height="${floorY}" fill="url(#pGrime)" opacity=".7"/><rect x="-1000" width="3000" height="${floorY}" fill="url(#shWall)"/>
+  ${tex('rect',`x="-1000" y="${floorY}" width="3000" height="${1200-floorY+1000}"`,'#2a170b','pFloor','url(#shFloor)')}
+  <rect x="-1000" y="${floorY-6}" width="3000" height="10" fill="#000" opacity=".5" filter="url(#blur4)"/>`;
+}
+
+/* --- the giant dial, seen from inside the tower: numerals mirrored --- */
+function dialArt(cx,cy,R,lit,running){
+  const fs=R*.15;
+  let s=`<circle cx="${cx}" cy="${cy}" r="${f1(R+30)}" fill="#000" opacity=".55" filter="url(#soft)"/>
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#moonGlass)"/>
+  ${[[-.45,.45,.09],[.3,.55,.07],[-.1,.62,.06],[.5,.2,.05],[-.6,.1,.05]].map(([dx,dy,r])=>`<circle cx="${f1(cx+dx*R)}" cy="${f1(cy+dy*R)}" r="${f1(r*R)}" fill="#ffd27a" opacity=".35" filter="url(#blur4)"/>`).join('')}
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#pGrime)" opacity=".45"/>
+  ${lit?`<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#warm)" class="screen flick"/>`:''}`;
+  let mull='';
+  for(let i=0;i<12;i++){ const a=rad(i*30+15); mull+=`M${f1(cx+Math.sin(a)*R*.3)},${f1(cy-Math.cos(a)*R*.3)}L${f1(cx+Math.sin(a)*R)},${f1(cy-Math.cos(a)*R)}`; }
+  s+=`<g${R>200?BEV:BEVS}><path d="${mull}" stroke="url(#steel)" stroke-width="${f1(R*.025)}"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(R*.62)}" fill="none" stroke="url(#steel)" stroke-width="${f1(R*.02)}"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(R*.3)}" fill="none" stroke="url(#steel)" stroke-width="${f1(R*.03)}"/></g>`;
+  for(let k=1;k<=12;k++){
+    const a=rad(-k*30), x=cx+Math.sin(a)*R*.8, y=cy-Math.cos(a)*R*.8, j=LOCK_CODE.indexOf(k);
+    if(lit && j>=0){
+      s+=`<g class="seq" style="animation-delay:${j*.7}s"><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(fs*1.05)}" fill="#ff3a20" opacity=".75" filter="url(#glow)"/></g>`;
+      const ix=cx+Math.sin(a)*R*.64, iy=cy-Math.cos(a)*R*.64;
+      for(let d=0;d<=j;d++){ const off=(d-j/2)*fs*.38; s+=`<circle cx="${f1(ix+Math.cos(a)*off)}" cy="${f1(iy+Math.sin(a)*off)}" r="${f1(fs*.12)}" fill="#ff6a4a" filter="url(#glow)"/>`; }
+    }
+    s+=`<text transform="translate(${f1(x)},${f1(y+fs*.36)}) scale(-1,1)" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${f1(fs)}" fill="${lit&&j>=0?'#fff0e0':'#14161e'}" opacity=".9">${RN[k%12]}</text>`;
+  }
+  // stopped hands (front time 3:47 — mirrored inside)
+  const hA=-(3*30+47*.5), mA=-(47*6);
+  s+=`<g class="${running?'spin rev':''}" style="transform-origin:${cx}px ${cy}px;animation-duration:30s"><path d="M${f1(cx-R*.025)},${cy} L${cx},${f1(cy-R*.72)} L${f1(cx+R*.025)},${cy} Z" fill="#0e1016" transform="rotate(${mA} ${cx} ${cy})"/></g>
+  <g class="${running?'spin rev':''}" style="transform-origin:${cx}px ${cy}px;animation-duration:360s"><path d="M${f1(cx-R*.035)},${cy} L${cx},${f1(cy-R*.48)} L${f1(cx+R*.035)},${cy} Z" fill="#0e1016" transform="rotate(${hA} ${cx} ${cy})"/></g>
+  <g${R>200?BEV:BEVS}>${disc(cx,cy,R*.07,'url(#steel)',.5)}${annulus(cx,cy,R+22,R,'url(#steel)',.45)}</g>
+  ${rivetRing(cx,cy,R+11,36,Math.max(2.5,R*.016))}
+  ${lit?Array.from({length:8},(_,i)=>{const a=rad(i*45);return `<circle cx="${f1(cx+Math.cos(a)*(R+11))}" cy="${f1(cy+Math.sin(a)*(R+11))}" r="${f1(R*.03)}" fill="#ffe08a" filter="url(#glow)"/>`}).join(''):''}`;
+  return s;
+}
+
+/* --- bells --- */
+function bellShape(cx,top,w,h){ const W=w/2;
+  return `M${f1(cx-W*.36)},${f1(top)} C${f1(cx-W*.42)},${f1(top+h*.06)} ${f1(cx-W*.56)},${f1(top+h*.14)} ${f1(cx-W*.6)},${f1(top+h*.38)} C${f1(cx-W*.64)},${f1(top+h*.66)} ${f1(cx-W*.82)},${f1(top+h*.84)} ${f1(cx-W)},${f1(top+h)} L${f1(cx+W)},${f1(top+h)} C${f1(cx+W*.82)},${f1(top+h*.84)} ${f1(cx+W*.64)},${f1(top+h*.66)} ${f1(cx+W*.6)},${f1(top+h*.38)} C${f1(cx+W*.56)},${f1(top+h*.14)} ${f1(cx+W*.42)},${f1(top+h*.06)} ${f1(cx+W*.36)},${f1(top)} Z`; }
+function bellsArt(act){
+  let s=`<g filter="url(#sh)"><g${CARVE}>${woodRect(40,118,920,44,'pWood','url(#shVr)')}</g></g>
+  ${[80,300,500,700,920].map(x=>brassBar(x-10,112,20,56)+bolt(x,124,4)+bolt(x,156,4)).join('')}`;
+  BELLS.forEach(([gl,,w],i)=>{
+    const cx=BELL_X[i], h=w*1.05, top=200+(190-w)*.25;
+    s+=`<path d="M${cx},162 L${cx},${f1(top-h*.1)}" stroke="#2a2a2a" stroke-width="5" stroke-dasharray="7 3"/>
+    <g ${act?`class="bellg hot" data-act="bell" data-i="${i}" id="bell${i}"`:''} style="transform-origin:${cx}px ${f1(top-h*.1)}px">
+      <path d="M${f1(cx-w*.12)},${f1(top+2)} C${f1(cx-w*.12)},${f1(top-h*.16)} ${f1(cx+w*.12)},${f1(top-h*.16)} ${f1(cx+w*.12)},${f1(top+2)}" stroke="url(#bronze)" stroke-width="${f1(w*.06)}" fill="none"/>
+      <g${BEV}><path d="${bellShape(cx,top,w,h)}" fill="url(#bronze)"/></g>
+      <path d="${bellShape(cx,top,w,h)}" fill="url(#shCyl)" opacity=".75"/>
+      <path d="${bellShape(cx,top,w,h)}" fill="url(#pPatina)" opacity=".35"/>
+      <path d="M${f1(cx-w*.31)},${f1(top+h*.3)} Q${cx},${f1(top+h*.36)} ${f1(cx+w*.31)},${f1(top+h*.3)} M${f1(cx-w*.44)},${f1(top+h*.86)} Q${cx},${f1(top+h*.93)} ${f1(cx+w*.44)},${f1(top+h*.86)}" stroke="#3a1e08" stroke-width="${f1(w*.018)}" fill="none" opacity=".8"/>
+      <ellipse cx="${cx}" cy="${f1(top+h)}" rx="${f1(w/2)}" ry="${f1(h*.06)}" fill="#1a0c04"/>
+      <circle cx="${cx}" cy="${f1(top+h*1.05)}" r="${f1(w*.07)}" fill="url(#bronze)"/>
+      ${glyph(gl,cx+1.5,top+h*.6+1.5,w*.34,'#f6d49a',w*.03).replace('<g ','<g opacity=".4" ')}${glyph(gl,cx,top+h*.6,w*.34,'#2a1404',w*.03)}
+    </g>`;
+  });
+  return s;
+}
+
+/* --- phonograph --- */
+function phonoArt(act){
+  let s=`<g filter="url(#sh)"><g${CARVE}>${woodRect(120,700,760,34,'pWood','url(#shVr)')}</g></g>
+  ${[180,820].map(x=>`<path d="M${x-16},734 L${x+16},734 L${x+10},900 L${x-10},900 Z" fill="#3a2010"/><path d="M${x-16},734 L${x+16},734 L${x+10},900 L${x-10},900 Z" fill="url(#shCyl)"/>`).join('')}
+  <ellipse cx="560" cy="702" rx="230" ry="12" fill="#000" opacity=".5" filter="url(#blur4)"/>
+  <g filter="url(#shS)"><g${CARVE}>${tex('rect','x="380" y="580" width="360" height="120" rx="6"','#55200f','pMahog','url(#shV)')}</g></g>
+  ${brassBar(376,576,368,10)}${brassBar(376,692,368,8)}
+  <rect x="420" y="604" width="280" height="70" rx="4" fill="none" stroke="#d8a868" stroke-width="2" opacity=".5"/>
+  <g filter="url(#shS)"><g${BEVS}><rect x="430" y="520" width="16" height="62" fill="url(#brassV)"/><rect x="694" y="520" width="16" height="62" fill="url(#brassV)"/></g></g>
+  <g class="cyl"><rect x="446" y="508" width="248" height="56" rx="10" fill="#3a1e0c"/>
+    ${Array.from({length:22},(_,i)=>`<line x1="${452+i*11}" y1="510" x2="${452+i*11}" y2="562" stroke="#1a0c04" stroke-width="2" opacity=".6"/>`).join('')}
+    <rect x="446" y="508" width="248" height="56" rx="10" fill="url(#shCylH)"/></g>
+  <g${BEVS}>${disc(438,536,20,'url(#brassR)')}${disc(702,536,20,'url(#brassR)')}</g>
+  <path d="M600,506 L600,486 L520,480" stroke="url(#brassH)" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  // horn
+  const hp='M484,476 C440,430 340,300 222,112 A58,140 -40 0 0 398,318 C450,400 488,452 500,470 Z';
+  s+=`<g filter="url(#sh)"><g${BEVL}><path d="${hp}" fill="url(#brass)"/><path d="${hp}" fill="url(#pBrush)" opacity=".35"/></g></g>
+  <g transform="rotate(-40 310 215)">
+    <ellipse cx="310" cy="215" rx="58" ry="140" fill="url(#hornIn)"/>
+    ${Array.from({length:10},(_,i)=>{const a=rad(i*36);return `<line x1="${f1(318+Math.cos(a)*12)}" y1="${f1(240+Math.sin(a)*28)}" x2="${f1(310+Math.cos(a)*58)}" y2="${f1(215+Math.sin(a)*140)}" stroke="#5a3810" stroke-width="2" opacity=".5"/>`}).join('')}
+    <ellipse cx="318" cy="240" rx="12" ry="28" fill="#120a04"/>
+    <g${BEVS}><ellipse cx="310" cy="215" rx="58" ry="140" fill="none" stroke="url(#brassH)" stroke-width="9"/></g>
+    <path d="M276,110 A58,140 0 0 0 262,250" fill="none" stroke="#fff6d0" stroke-width="6" opacity=".45" stroke-linecap="round"/>
+  </g>
+  <g class="waves" opacity="0">${[0,1,2].map(i=>`<path d="M${170-i*34},${60-i*26} A${130+i*40},${170+i*40} -40 0 0 ${420+i*14},${360+i*30}" fill="none" stroke="#ffe0a0" stroke-width="4" opacity="${.6-i*.15}"/>`).join('')}</g>
+  <g ${act?'class="hot" data-act="crank"':''}>
+    <circle cx="790" cy="640" r="70" fill="transparent"/>
+    <g class="crk" style="transform-origin:760px 640px"><g${BEVS}><rect x="756" y="636" width="70" height="9" rx="4" fill="url(#brassH)"/><circle cx="760" cy="640" r="11" fill="url(#brassR)"/><rect x="814" y="612" width="14" height="34" rx="6" fill="#3a1e0c"/></g></g>
+  </g>
+  <g transform="rotate(-4 280 780)"><path d="M150,740 L410,740 L414,826 L146,826 Z" fill="#000" opacity=".4" transform="translate(4,5)" filter="url(#blur4)"/>
+    ${tex('path','d="M150,740 L410,740 L414,826 L146,826 Z"','#ead6a6','pParchS','')}
+    <text x="280" y="764" text-anchor="middle" font-family="Caveat,cursive" font-weight="700" font-size="22" fill="#3a2210">Валик №7 · «Песнь колоколов»</text>
+    ${MELODY.map((g,i)=>`<g class="note" id="note${i}">${glyph(g,190+i*45,800,30,'#3a2210',3)}</g>`).join('')}</g>`;
+  return s;
+}
+
+/* --- drive gearbox --- */
+function gearboxArt(act){
+  const f=S.f, run=f.gearsDone;
+  let s=`<g filter="url(#sh)"><g${BEVL}><rect x="30" y="280" width="940" height="480" rx="14" fill="url(#brass)"/><rect x="30" y="280" width="940" height="480" rx="14" fill="url(#pBrush)" opacity=".4"/></g></g>
+  <rect x="54" y="304" width="892" height="432" rx="8" fill="#1a120a"/><rect x="54" y="304" width="892" height="432" rx="8" fill="url(#pBrush)" opacity=".35"/><rect x="54" y="304" width="892" height="432" rx="8" fill="url(#shAO)"/>
+  ${[[48,298],[952,298],[48,742],[952,742]].map(([x,y])=>bolt(x,y,8)).join('')}
+  <g filter="url(#shS)"><g${BEV}><rect x="330" y="312" width="340" height="40" rx="4" fill="url(#brass)"/></g></g>
+  <text x="500" y="340" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="22" letter-spacing="3" fill="#2a1606">ПРИВОД ЦИФЕРБЛАТА</text>
+  <g${BEV}><rect x="64" y="650" width="120" height="70" rx="10" fill="url(#copperV)"/></g>${brassBar(60,646,128,8)}${brassBar(60,712,128,8)}
+  <rect x="784" y="490" width="160" height="24" fill="url(#steel)"/><rect x="784" y="490" width="160" height="24" fill="url(#pBrush)" opacity=".5"/>
+  <path d="M900,470 L920,440 L940,470 Z M914,470 h12 v20 h-12 Z" fill="#d6a64e"/>
+  <text x="920" y="540" text-anchor="middle" font-family="Cormorant SC,serif" font-size="16" fill="#d6a64e">К ЦИФЕРБЛАТУ</text>`;
+  const rot=(i)=>i%2?' rev':'';
+  s+=`<g${BEV}>`;
+  const [ax,ay,ar,an]=GB.A; s+=gear(ax,ay,ar,an,{cls:run?'spin':'',spin:run?ar/14:0});
+  const [bx,by,br,bn]=GB.B; s+=gear(bx,by,br,bn,{cls:run?'spin':'',spin:run?br/14:0,holes:4});
+  GB.pegs.forEach(([px,py],i)=>{ const id=S.pegs[i]; if(id){ const g=GEAR_ITEMS[id]; s+=gear(px,py,g.r,g.n,{spin:run?g.r/14:0,rev:run&&i%2===0,holes:g.r>60?6:4}); } });
+  s+=`</g>`;
+  GB.pegs.forEach(([px,py],i)=>{
+    s+=`${disc(px,py,10,'url(#steel)',.5)}`;
+    if(act) s+=`<circle class="hot" cx="${px}" cy="${py}" r="${S.pegs[i]?GEAR_ITEMS[S.pegs[i]].r*.7:46}" fill="${S.pegs[i]?'transparent':'#f4d68f'}" fill-opacity="${S.pegs[i]?0:.06}" stroke="${S.pegs[i]?'none':'#f4d68f'}" stroke-dasharray="8 6" stroke-width="2" ${S.pegs[i]?'':'class="hot dashpulse"'} data-act="peg" data-i="${i}"/>`;
+  });
+  return s;
+}
+
+/* --- Guild padlock --- */
+function guildEmblem(x,y,s){
+  return `<g transform="translate(${x},${y}) scale(${s})">${gear(0,0,40,12,{solid:true,fill:'#3a3a3a'})}
+    <path d="M0,-30 L28,18 L-28,18 Z" fill="#1a1a1a" stroke="#c9a062" stroke-width="2.5"/>
+    <path d="M-14,4 Q0,-10 14,4 Q0,16 -14,4 Z" fill="#e9d4a3"/><circle cx="0" cy="4" r="4.5" fill="#8a1410"/></g>`;
+}
+function padlockArt(cx,cy,k,open){
+  return `<g transform="translate(${cx},${cy}) scale(${k})">
+    <g class="shackle${open?' open':''}"><path d="M-120,-10 L-120,-140 A120,120 0 0 1 120,-140 L120,-10" fill="none" stroke="#1a1a1a" stroke-width="58"/>
+    <path d="M-120,-10 L-120,-140 A120,120 0 0 1 120,-140 L120,-10" fill="none" stroke="url(#steel)" stroke-width="46"/>
+    <path d="M-132,-20 L-132,-140 A132,132 0 0 1 -60,-258" fill="none" stroke="#fff" stroke-width="5" opacity=".25"/></g>
+    <g filter="url(#sh)"><g${BEVL}><rect x="-200" y="-30" width="400" height="380" rx="40" fill="#2e2e2c"/><rect x="-200" y="-30" width="400" height="380" rx="40" fill="url(#pBrush)" opacity=".55"/></g></g>
+    <rect x="-200" y="-30" width="400" height="380" rx="40" fill="url(#pGrime)" opacity=".5"/>
+    ${[[-170,0],[170,0],[-170,320],[170,320]].map(([x,y])=>bolt(x,y,11)).join('')}
+    ${guildEmblem(0,70,1.3)}
+  </g>`;
+}
+function lockScene(){
+  const f=S.f;
+  let s=stoneBg(860)+`<circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".5" class="screen"/>
+  <path d="M-200,300 L1200,300" stroke="url(#steel)" stroke-width="40"/><path d="M-200,300 L1200,300" stroke="url(#pBrush)" stroke-width="40" opacity=".5"/>
+  ${Array.from({length:12},(_,i)=>`<rect x="${-60+i*100}" y="280" width="14" height="560" fill="url(#steel)"/>`).join('')}
+  ${padlockArt(500,360,1,f.lockDone)}
+  <rect x="320" y="560" width="360" height="110" rx="10" fill="#0c0c0c"/><rect x="320" y="560" width="360" height="110" rx="10" fill="url(#recess)"/>`;
+  for(let i=0;i<4;i++){ const x=365+i*90;
+    s+=`<g class="hot" data-act="lockw" data-i="${i}">
+      <g${BEVS}><rect x="${x-38}" y="568" width="76" height="94" rx="8" fill="url(#brassH)"/></g>
+      <rect x="${x-38}" y="568" width="76" height="94" rx="8" fill="url(#shCylH)"/>
+      <text id="lw${i}" x="${x}" y="628" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="34" fill="#2a1606">${RN[S.lk[i]%12]}</text>
+      <path d="M${x-8},560 L${x+8},560 L${x},550 Z M${x-8},672 L${x+8},672 L${x},682 Z" fill="#d6a64e"/>
+    </g>`; }
+  s+=`<text x="500" y="760" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="4" fill="#e9c47a">GILDIA · HOROLOGIORUM</text>${vignette()}`;
+  return s;
+}
+
+/* --- central mechanism --- */
+function coreArt(act){
+  const f=S.f, run=f.heartIn2;
+  let s=`<g filter="url(#sh)"><g${CARVE}>${tex('rect','x="170" y="770" width="660" height="130" rx="6"','#3a3430','pStone','url(#shVr)')}</g></g>
+  ${[200,800].map(x=>`<g filter="url(#shS)"><g${BEV}><rect x="${x-24}" y="150" width="48" height="624" fill="url(#steel)"/><rect x="${x-24}" y="150" width="48" height="624" fill="url(#pBrush)" opacity=".5"/><rect x="${x-36}" y="140" width="72" height="26" rx="4" fill="url(#brassH)"/><rect x="${x-36}" y="748" width="72" height="26" rx="4" fill="url(#brassH)"/></g></g>`).join('')}
+  <g filter="url(#sh)"><g${BEVL}>${annulus(500,460,300,262,'url(#brass)',.6)}</g></g>
+  <circle cx="500" cy="460" r="262" fill="#0e0704"/><circle cx="500" cy="460" r="262" fill="url(#pGrime)" opacity=".6"/>
+  ${boltRing(500,460,281,20,7)}
+  <g${BEV}>${gear(500,460,200,30,{holes:8,spin:run?24:0})}${gear(330,300,60,12,{spin:run?7:0,rev:true})}${gear(680,630,54,11,{spin:run?6:0,rev:true})}</g>
+  <g${BEVS}><path d="M500,200 L430,250 L440,262 L500,222 L560,262 L570,250 Z" fill="url(#steel)"/><rect x="494" y="160" width="12" height="70" fill="url(#steel)"/></g>
+  <circle cx="500" cy="460" r="84" fill="#0a0503"/><circle cx="500" cy="460" r="84" fill="url(#recess)"/>
+  ${run ? heartObj(500,466,52) : `<path d="${heartPath(500,466,52)}" fill="#1e0d06" stroke="#ffb35c" stroke-width="3" stroke-dasharray="9 6" class="dashpulse" opacity=".85"/>`}`;
+  if(!f.lockDone){
+    s+=`<g${BEVS}>${Array.from({length:11},(_,i)=>`<rect x="${242+i*48}" y="190" width="12" height="540" rx="5" fill="url(#steel)"/>`).join('')}
+      <rect x="230" y="330" width="540" height="18" fill="url(#steel)"/><rect x="230" y="570" width="540" height="18" fill="url(#steel)"/></g>
+      ${padlockArt(500,620,.32,false)}`;
+  }
+  if(act) s+=`<circle class="hot" cx="500" cy="500" r="${f.lockDone?110:300}" fill="transparent" data-act="core"/>`;
+  return s;
+}
+
+/* --- professor on the ladder --- */
+function professor(x,y){
+  return `<g>
+    <path d="M${x-22},${y+40} L${x+22},${y+40} L${x+30},${y+190} L${x-28},${y+190} Z" fill="#1c1410"/>
+    <path d="M${x-22},${y+40} L${x+22},${y+40} L${x+30},${y+190} L${x-28},${y+190} Z" fill="none" stroke="#ffd98a" stroke-width="2" opacity=".5"/>
+    <rect x="${x-18}" y="${y+190}" width="12" height="60" fill="#120c08"/><rect x="${x+6}" y="${y+190}" width="12" height="54" fill="#120c08"/>
+    <path d="M${x-18},${y+52} L${x-34},${y+90} M${x+18},${y+52} L${x+34},${y+80}" stroke="#1c1410" stroke-width="11" stroke-linecap="round"/><circle cx="${x-34}" cy="${y+90}" r="6" fill="#3a2a20"/><circle cx="${x+34}" cy="${y+80}" r="6" fill="#3a2a20"/>
+    <circle cx="${x}" cy="${y+18}" r="20" fill="#2e2218"/>
+    <path d="M${x-16},${y+22} C${x-18},${y+40} ${x-8},${y+52} ${x},${y+54} C${x+8},${y+52} ${x+18},${y+40} ${x+16},${y+22} C${x+8},${y+30} ${x-8},${y+30} ${x-16},${y+22} Z" fill="#b8b0a2"/><path d="M${x-10},${y+28} q10,-5 20,0" stroke="#8a8478" stroke-width="3" fill="none"/>
+    <rect x="${x-17}" y="${y-30}" width="34" height="38" rx="3" fill="#100a06"/><rect x="${x-26}" y="${y+4}" width="52" height="7" rx="3" fill="#100a06"/>
+    <rect x="${x-17}" y="${y-4}" width="34" height="5" fill="#8a1410"/>
+    <circle cx="${x-8}" cy="${y+16}" r="6" fill="#ffd27a" filter="url(#glow)"/><circle cx="${x+8}" cy="${y+16}" r="6" fill="#ffd27a" filter="url(#glow)"/>
+  </g>`;
+}
+
+/* --- overview: the mechanism hall --- */
+function towerScene(){
+  const f=S.f, on=f.towerOn;
+  let s=`<rect x="-1000" width="3000" height="800" fill="#4a4038"/><rect x="-1000" width="3000" height="800" fill="url(#pStone)"/>
+  <rect x="-1000" width="3000" height="800" fill="url(#pGrime)" opacity=".65"/><rect x="-1000" width="3000" height="800" fill="url(#shWall)"/>`;
+  s+=gear(-30,620,170,26,{spin:on?60:0,op:.9,bev:true})+gear(1040,520,190,28,{spin:on?70:0,rev:true,op:.9,bev:true});
+  s+=dialArt(500,320,262,f.gearsDone,on);
+  // ceiling
+  s+=`<g${CARVE}>${woodRect(-1000,0,3000,36,'pWood','url(#shVr)')}</g>
+  ${[60,240,760].map(x=>`<g${CARVE}>${woodRect(x-14,30,28,40,'pWoodV','url(#shCyl)')}</g>`).join('')}`;
+  s+= on ? `<rect x="820" y="-40" width="130" height="76" fill="#ffe8b0" filter="url(#glow)"/><path d="M820,36 L950,36 L1040,800 L740,800 Z" fill="url(#cone)" class="screen" opacity=".8"/>`
+         : `<g${CARVE}>${woodRect(820,4,130,30,'pWood','url(#shV)')}</g>${brassBar(830,14,110,6)}`;
+  // ladder
+  s+=`<g filter="url(#shS)">${[868,938].map(x=>`<rect x="${x}" y="36" width="12" height="760" fill="#4a2a14"/><rect x="${x}" y="36" width="12" height="760" fill="url(#shCyl)"/>`).join('')}
+    ${Array.from({length:15},(_,i)=>`<rect x="874" y="${70+i*50}" width="64" height="8" fill="#5a3418"/>`).join('')}</g>`;
+  // drive shaft
+  s+=`<g${BEVS}><rect x="493" y="330" width="14" height="270" fill="url(#steel)"/>${gear(500,600,26,10,{solid:true})}</g>`;
+  // floor
+  s+=tex('rect','x="-1000" y="790" width="3000" height="1210"','#2a170b','pFloor','url(#shFloor)')+`<rect x="-1000" y="784" width="3000" height="10" fill="#000" opacity=".5" filter="url(#blur4)"/>`;
+  s+=`<path d="M300,560 L700,560 L900,1000 L120,1000 Z" fill="url(#moonBeam)" class="screen" filter="url(#soft)" pointer-events="none"/>`;
+  // mini stations
+  s+=`<g transform="translate(20,40) scale(.3)">${bellsArt(false)}</g>`;
+  if(f.bellsDone && !f.gotGL) s+=`<circle cx="150" cy="300" r="20" fill="url(#warm)" class="pulse screen"/>`;
+  s+=`<g transform="translate(18,380) scale(.29)">${gearboxArt(false)}</g>`;
+  s+=`<g transform="translate(700,470) scale(.3)">${phonoArt(false)}</g>`;
+  s+=`<g transform="translate(330,520) scale(.34)">${coreArt(false)}</g>`;
+  // crate
+  s+=`<g filter="url(#sh)"><g${CARVE}>${woodRect(40,800,190,130,'pWoodV','url(#shV)')}</g></g>
+  ${[836,872,908].map(y=>`<line x1="40" y1="${y}" x2="230" y2="${y}" stroke="#120904" stroke-width="2.5"/>`).join('')}
+  ${brassBar(40,806,190,8)}${brassBar(40,918,190,8)}
+  <text x="135" y="864" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="20" fill="#1a0c04" opacity=".55" transform="rotate(-4 135 864)">ХРУПКО</text>
+  ${f.crateOpen ? `<path d="M40,800 L230,800 L250,770 L60,770 Z" fill="#c9a050" opacity=".8"/>` : ''}`;
+  if(on) s+=professor(906,330);
+  // glints, dust, vignette
+  s+=glint(900,600,'phono')+glint(130,180,'bells')+glint(150,470,'gearbox')+glint(135,860,'crate')+glint(500,690,'core');
+  if(f.gearsDone) s+=glint(500,150,'dial');
+  for(let i=0;i<18;i++){ const r=rng(i*19+3); s+=`<circle class="dust" style="animation-delay:${f1(-r()*9)}s;animation-duration:12s" cx="${f1(300+r()*400)}" cy="${f1(560+r()*300)}" r="${f1(.8+r()*1.4)}" fill="#cfe0ff" opacity=".6"/>`; }
+  s+=vignette();
+  // hotspots
+  s+=hot(30,90,280,150,'go','data-go="bells"')
+    +hot(20,455,280,150,'go','data-go="gearbox"')
+    +hot(730,480,240,240,'go','data-go="phono"')
+    +hot(370,600,260,240,'go','data-go="core"')
+    +hot(30,760,210,180,'crate')
+    +`<circle class="hot" cx="500" cy="320" r="250" fill="transparent" data-act="go" data-go="dial"/>`;
+  if(on) s+=hot(860,280,100,320,'prof');
+  return s;
+}
+
+/* --- close-up scenes --- */
+function bellsScene(){
+  const f=S.f;
+  let s=stoneBg(860)+`<circle cx="500" cy="360" r="600" fill="url(#warm)" opacity=".45" class="screen"/><g transform="translate(-60,0) scale(1.13)">${bellsArt(true)}</g>`;
+  s+=`<g filter="url(#shS)"><g${BEV}><rect x="350" y="900" width="300" height="50" rx="4" fill="url(#brass)"/></g></g>
+  <text x="500" y="934" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" letter-spacing="4" fill="#2a1606">CANTUS · APERIT</text>`;
+  if(f.bellsDone && !f.gotGL) s+=`<g class="hot" data-act="takeGL"><circle cx="160" cy="790" r="110" fill="url(#warm)" class="pulse screen"/>${gear(160,790,72,20,{bev:true,holes:6})}</g>`;
+  return s+vignette();
+}
+function phonoScene(){ return stoneBg(900)+`<circle cx="300" cy="300" r="600" fill="url(#warm)" opacity=".5" class="screen"/>${phonoArt(true)}${vignette()}`; }
+function gearboxScene(){ return stoneBg(880)+`<circle cx="500" cy="500" r="600" fill="url(#warm)" opacity=".45" class="screen"/><g id="gbox">${gearboxArt(true)}</g>${vignette()}`; }
+function dialScene(){
+  const f=S.f;
+  return stoneBg(960)+dialArt(500,470,420,f.gearsDone,f.towerOn)+vignette()+`<circle class="hot" cx="500" cy="470" r="420" fill="transparent" data-act="say" data-say="dial"/>`;
+}
+function coreScene(){ return stoneBg(900)+`<circle cx="500" cy="460" r="600" fill="url(#warm)" opacity=".5" class="screen"/>${coreArt(true)}${vignette()}`; }
+function end2Scene(){
+  const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
+  const lines=['Башня Хронос пробила полночь, и над Новым Лондоном снова пошло время.','— Я знал, что ты справишься, — сказал профессор, стряхивая пыль с цилиндра.','— Гильдия хотела остановить часы и править городом, где ничего не меняется.'];
+  const note=['«Сердце теперь бьётся в башне. А нам с тобой пора за работу:','у меня есть одна идея насчёт дирижабля…»'];
+  return `<rect width="1000" height="1000" fill="#120e10"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".6"/>
+  ${dialArt(500,300,230,true,true)}
+  <rect x="-500" y="-500" width="2000" height="2000" fill="#000" opacity=".45"/>
+  <g${BEV}><text x="500" y="590" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="66" letter-spacing="5" fill="url(#goldText)">Время пошло</text></g>
+  ${lines.map((t,i)=>`<text x="500" y="${648+i*36}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="25" fill="#f2e2be">${t}</text>`).join('')}
+  ${note.map((t,i)=>`<text x="500" y="${770+i*38}" text-anchor="middle" font-family="Caveat,cursive" font-size="32" fill="#ffd98a">${t}</text>`).join('')}
+  <text x="500" y="872" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#c9a062">Конец второй главы · общее время ${mm}:${ss}</text>
+  ${cta(500,935,'Сыграть снова','start')}
   ${vignette()}`;
 }
 
@@ -1388,7 +1703,15 @@ const SC={
   rings:{title:'Кольца шкатулки',bleed:DESK_BLEED,draw:ringsScene,back:'box',hint:1},
   pipes:{title:'Паровой контур',bleed:['#150c06','#150c06',500,'pPaperL'],draw:pipesScene,mount:updatePipes,back:'box',hint:1},
   hatch:{title:'Круглый люк',bleed:WALL_BLEED,draw:hatchScene,back:'room',hint:1},
-  end:{title:'Финал',bleed:['#1a0f07','#1a0f07',500],draw:endScene}
+  end:{title:'Финал',bleed:['#1a0f07','#1a0f07',500],draw:endScene},
+  tower:{title:'Башня Хронос',bleed:['#3a3430','#2a170b',790,'pStone','pFloor'],draw:towerScene,hint:1},
+  bells:{title:'Карильон',bleed:['#3a3430','#2a170b',860,'pStoneL','pFloor'],draw:bellsScene,back:'tower',hint:1},
+  phono:{title:'Фонограф',bleed:['#3a3430','#2a170b',900,'pStoneL','pFloor'],draw:phonoScene,back:'tower',hint:1},
+  gearbox:{title:'Привод циферблата',bleed:['#3a3430','#2a170b',880,'pStoneL','pFloor'],draw:gearboxScene,back:'tower',hint:1},
+  dial:{title:'Циферблат',bleed:['#3a3430','#2a170b',960,'pStoneL','pFloor'],draw:dialScene,back:'tower',hint:1},
+  core:{title:'Главный механизм',bleed:['#3a3430','#2a170b',900,'pStoneL','pFloor'],draw:coreScene,back:'tower',hint:1},
+  lock:{title:'Замок Гильдии',bleed:['#3a3430','#2a170b',860,'pStoneL','pFloor'],draw:lockScene,back:'core',hint:1},
+  end2:{title:'Финал',bleed:['#120e10','#120e10',500],draw:end2Scene}
 };
 const SAY={
   window:'За окном ночной дождь над Новым Лондоном. Вдали плывёт огонёк дирижабля. Рамы заклёпаны намертво.',
@@ -1404,11 +1727,15 @@ const SAY={
   globe:'Старый глобус. На месте Нового Лондона — крошечная гравировка в виде шестерни.',
   hourglass:'Песочные часы. Песок застыл посередине и не сыплется.',
   letter:'Письмо профессора. Перечитай внимательно: здесь все подсказки.',
+  dial:'Циферблат башни изнутри. Свет города пробивается сквозь матовое стекло, а все цифры видны задом наперёд.',
   boxtop:'Крышка украшена латунной розой ветров и девизом «Время открывает всё». Она не поддаётся.'
 };
 const ITEMS={
   gear:{name:'Латунная шестерня',desc:'Латунная шестерня на одиннадцать зубьев. Где-то ей найдётся место.',icon:()=>gear(50,50,40,11,{bev:true})},
   lens:{name:'Красная линза',desc:'Красная линза в латунной оправе. Выбрана — теперь проведи ею над тем, что хочешь рассмотреть.',icon:()=>lensIcon(40,40,.62)},
+  gS:{name:'Малая шестерня',desc:'Малая шестерня, восемь зубьев.',icon:()=>gear(50,50,24,8,{bev:true})},
+  gM:{name:'Средняя шестерня',desc:'Средняя шестерня, четырнадцать зубьев.',icon:()=>gear(50,50,34,14,{bev:true})},
+  gL:{name:'Большая шестерня',desc:'Большая шестерня, двадцать зубьев. Тяжёлая.',icon:()=>gear(50,50,44,20,{bev:true,holes:6})},
   heart:{name:'Сердце Хроноса',desc:'Сердце Хроноса. Оно тёплое и тихо тикает, как живое.',icon:()=>heartObj(50,52,30,false)}
 };
 
@@ -1421,7 +1748,7 @@ function hideMsg(){ msgEl.hidden=true; }
 msgEl.addEventListener('click',()=>{ if(msgQueue.length) showMsg(msgQueue.shift()); else hideMsg(); });
 
 function renderInv(){
-  const inv=$('#inv'); const showInv = !['title','end'].includes(S.scene);
+  const inv=$('#inv'); const showInv = !['title','end','end2'].includes(S.scene);
   inv.hidden=!showInv; if(!showInv) return;
   let h=''; for(let i=0;i<4;i++){ const id=S.inv[i];
     h+=`<button class="slot${id&&S.sel===id?' sel':''}" data-slot="${i}" aria-label="${id?ITEMS[id].name:'Пустой слот'}">${id?`<svg viewBox="0 0 100 100">${ITEMS[id].icon()}</svg>`:''}</button>`; }
@@ -1453,7 +1780,7 @@ function render(){
 function go(n){
   if(!SC[n]) n='room';
   if(S.scene!==n) hideMsg();
-  S.scene=n; if(SC[n].hint) S.f['v_'+n]=true;
+  S.scene=n; if(SC[n].hint) S.f['v_'+n]=true; if(n==='dial' && S.f.gearsDone && !S.f.sawDial){ S.f.sawDial=true; setTimeout(()=>say('Четыре стекла вспыхивают красным по очереди. Рядом с каждым — от одной до четырёх точек.'),400); }
   render(); save();
   if(n==='letter' && S.inv.includes('lens') && S.sel!=='lens' && S.f.gotLens && !S.f.sawCode) setTimeout(()=>say('Может, взглянуть на письмо через красную линзу? Выбери её внизу.'),400);
 }
@@ -1462,7 +1789,20 @@ $('#hint').addEventListener('click',()=>{ AU.click(); hint(); });
 function updSnd(){ $('#snd').classList.toggle('off',!soundOn); $('#sndWave').style.display=soundOn?'':'none'; }
 $('#snd').addEventListener('click',()=>{ soundOn=!soundOn; try{localStorage.setItem(SAVE_KEY+'-snd',soundOn?'1':'0');}catch(e){} AU.init(); AU.ambient(); updSnd(); });
 
+function hint2(){
+  const f=S.f; let h;
+  if(!f.heardPhono) h='На столе справа — фонограф профессора. Покрути его ручку и послушай запись.';
+  else if(!f.crateOpen) h='В деревянном ящике слева внизу что-то звякает.';
+  else if(!f.gotGL) h=f.bellsDone?'Из-под колокола выпала шестерня — забери её.':'Сыграй на колоколах мелодию с карточки у фонографа: найди на колоколах те же знаки и ударь по ним по порядку.';
+  else if(!f.gearsDone) h='Привод на стене: зубья должны сцепиться без зазора и наложения. Расстояние до мотора подходит только большой шестерне, дальше — малая, потом средняя.';
+  else if(!f.sawDial) h='Циферблат засветился. Подойди к нему поближе.';
+  else if(!f.lockDone) h='Код замка — четыре красные цифры в порядке точек. Изнутри башни они зеркальные: VI изнутри — это IV снаружи, XI — это IX. Набери, как видно с улицы.';
+  else if(!f.heartIn2) h='Замок снят. Выбери Сердце внизу и вставь его в гнездо главного механизма.';
+  else h='По лестнице спускается профессор. Коснись его.';
+  say(h);
+}
 function hint(){
+  if(S.level===2) return hint2();
   const f=S.f; let h;
   if(!f.v_letter) h='Начни с письма на столе: оно адресовано тебе.';
   else if(!f.gotGear) h = f.v_painting ? 'Выставь на настенных часах время с башни на картине — 7:20. Крути латунные рукоятки по бокам циферблата.' : 'Профессор пишет о времени на любимой картине. Рассмотри картину над столом.';
@@ -1490,7 +1830,7 @@ const ACT={
       'Ты — его подмастерье. Едва ты вошёл, дверь мастерской захлопнулась, и замок щёлкнул. Изнутри ключа нет.',
       'Единственный другой выход — круглый латунный люк в стене. Но его механизм мёртв.',
       'На столе лежит письмо, адресованное тебе. Касайся предметов, чтобы рассмотреть их.']); },
-  cont:()=>{ AU.init(); go(resumeScene && !['title','end'].includes(resumeScene) ? resumeScene : 'room'); },
+  cont:()=>{ AU.init(); go(resumeScene && !['title','end','end2'].includes(resumeScene) ? resumeScene : 'room'); },
   knob:el=>{
     if(S.f.clockDone){ say('Часы уже пробили своё. Механизм стрелок застопорился.'); return; }
     const k=el.dataset.k; if(k==='h') S.hs++; else S.ms++;
@@ -1528,7 +1868,7 @@ const ACT={
     else if(S.inv.includes('gear')) say('Пустая ось. Выбери шестерню внизу экрана, затем коснись оси.');
     else say('Пустая ось. В передаче явно не хватает одной шестерни.');
   },
-  crank:()=>{
+  boxCrank:()=>{
     const f=S.f, tr=$('#train');
     if(!f.gearPlaced){ AU.clank(); const g=$('#g1'); g.classList.remove('shake'); void g.getBoundingClientRect(); g.classList.add('shake');
       say('Рукоять заедает: в передаче не хватает звена.'); return; }
@@ -1567,6 +1907,64 @@ const ACT={
     } else if(S.inv.includes('heart')) say('Гнездо в форме сердца. Выбери Сердце внизу экрана и коснись гнезда.');
     else say('В центре люка — гнездо в форме сердца. Пустое и холодное.');
   },
+  toTower:()=>{ AU.init(); S.level=2; S.f.ch1=true; S.inv=['heart']; S.sel=null; S.tEnd=0; go('tower');
+    sayAll(['Ты поднимаешься по винтовой лестнице. Сердце выскользнуло из гнезда люка и тихо тикает у тебя в кармане.',
+      'Наверху — механический зал башни Хронос. Огромный циферблат подсвечен луной изнутри. Стрелки стоят.',
+      'Главный механизм заперт тяжёлым замком с гербом Гильдии. Профессора нигде нет.',
+      'На столе у стены стоит фонограф. Похоже, профессор оставил запись.']); },
+  crate:()=>{ if(S.f.crateOpen){ say('Пустой ящик, в нём только солома.'); return; }
+    S.f.crateOpen=true; AU.clank(); addItem('gS'); addItem('gM'); render(); say('Ты поддел крышку ящика. В соломе — две латунные шестерни: малая и средняя.'); },
+  crank:()=>{
+    if(S.scene!=='phono'){ return ACT.boxCrank(); }
+    if(phonoPlaying) return; phonoPlaying=true; AU.click();
+    $('.crk')?.classList.add('go'); $('.waves')?.classList.add('go');
+    MELODY.forEach((g,i)=>setTimeout(()=>{ document.querySelectorAll('.note').forEach(n=>n.classList.remove('lit')); $('#note'+i)?.classList.add('lit');
+      const b=BELLS.find(x=>x[0]===g); AU.bellTone(b[1]); },500+i*700));
+    setTimeout(()=>{ phonoPlaying=false; $('.waves')?.classList.remove('go'); $('.crk')?.classList.remove('go'); document.querySelectorAll('.note').forEach(n=>n.classList.remove('lit'));
+      S.f.heardPhono=true; save();
+      sayAll(['«Если ты слышишь это, Сердце у тебя. Я заперт в часовой комнате, над залом. Гильдия остановила Хронос и повесила свой замок на механизм.»',
+        '«Код замка я спрятал в циферблате. Но помни: изнутри башни всё читается задом наперёд.»',
+        '«Привод циферблата я разобрал, чтобы Гильдия не нашла код. Две шестерни — в ящике, третью охраняют колокола. Они откроются песне с этого валика.»',
+        '«Знаки песни — на карточке. Сыграй их на колоколах по порядку. Удачи, мой друг.»']); },500+MELODY.length*700+600);
+  },
+  bell:el=>{
+    const i=+el.dataset.i; el.classList.remove('ring'); void el.getBoundingClientRect(); el.classList.add('ring'); AU.bellTone(BELLS[i][1]);
+    if(S.f.bellsDone) return;
+    S.bellSeq=(S.bellSeq||[]).concat(BELLS[i][0]).slice(-5); save();
+    if(S.bellSeq.join()===MELODY.join()){ S.f.bellsDone=true; save();
+      setTimeout(()=>{ AU.clank(); render(); AU.chime(); say('Колокола отозвались эхом, и из-под самого большого со звоном выпала большая шестерня!'); },1300); }
+  },
+  takeGL:()=>{ if(S.f.gotGL) return; S.f.gotGL=true; addItem('gL'); render(); say('Большая шестерня, двадцать зубьев. Теперь все три у тебя.'); },
+  peg:el=>{
+    const i=+el.dataset.i, f=S.f; if(f.gearsDone) return;
+    if(S.pegs[i]){ S.inv.push(S.pegs[i]); S.pegs[i]=null; AU.click(); save(); render(); return; }
+    if(!['gS','gM','gL'].includes(S.sel)){ say(S.inv.some(x=>x[0]==='g')?'Пустая ось. Выбери шестерню внизу экрана, затем коснись оси.':'Пустая ось. Шестерни нужно ещё найти.'); return; }
+    const id=S.sel; removeItem(id); S.pegs[i]=id; AU.click(); AU.tick(); save(); render();
+    if(S.pegs.every(Boolean)){
+      if(S.pegs.join()===GB.sol.join()){ f.gearsDone=true; save();
+        setTimeout(()=>{ AU.whirr(); render(); },250); setTimeout(()=>{ AU.chime(); say('Зубья сцепились, привод ожил! Где-то над головой щёлкнули реле, и циферблат башни засветился.'); },900); }
+      else { AU.clank(); const g=$('#gbox'); g.classList.remove('shake'); void g.getBoundingClientRect(); g.classList.add('shake'); say('Механизм заклинило: где-то зубья налезают друг на друга, где-то не достают. Коснись шестерни, чтобы снять её.'); }
+    }
+  },
+  lockw:el=>{
+    if(S.f.lockDone) return; const i=+el.dataset.i; S.lk[i]=S.lk[i]%12+1; $('#lw'+i).textContent=RN[S.lk[i]%12]; AU.click(); save();
+    if(S.lk.join()===LOCK_CODE.join()){ S.f.lockDone=true; save(); AU.clank(); $('.shackle')?.classList.add('open'); AU.chime();
+      setTimeout(()=>{ go('core'); say('Дужка замка отскочила, и решётка главного механизма откинулась.'); },1500); }
+  },
+  core:()=>{
+    const f=S.f;
+    if(!f.lockDone){ go('lock'); if(!f.sawDial) say('Замок Гильдии: четыре колеса с римскими цифрами. Код где-то в башне.'); return; }
+    if(f.heartIn2) return;
+    if(S.sel==='heart'){
+      removeItem('heart'); f.heartIn2=true; save(); render(); AU.clank(); AU.chime();
+      say('Сердце легло в гнездо. Огромное колесо дрогнуло и пошло!');
+      setTimeout(()=>AU.bell(6),900);
+      setTimeout(()=>{ f.towerOn=true; save(); go('tower'); AU.hiss();
+        sayAll(['Башня ожила: колёса пошли, стрелки двинулись, над городом поплыл бой часов.','Наверху скрипнул люк. По лестнице спускается профессор Брасс! Коснись его.']); },4200);
+    } else if(S.inv.includes('heart')) say('Гнездо в форме сердца. Выбери Сердце внизу экрана и коснись гнезда.');
+    else say('Гнездо в форме сердца. Пустое.');
+  },
+  prof:()=>{ S.tEnd=Date.now(); save(); go('end2'); },
   wheel:()=>{ if(S.f.heartIn) return; AU.clank(); const w=$('#wheel'); w.classList.remove('shake'); void w.getBoundingClientRect(); w.classList.add('shake');
     say('Колесо не поддаётся ни на миллиметр. Механизму не хватает сердца.'); }
 };
