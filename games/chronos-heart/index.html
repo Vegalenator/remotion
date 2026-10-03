@@ -129,6 +129,17 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
 .crk.go{animation:spin .7s linear 6}
 .waves{transition:opacity .4s}
 .waves.go{opacity:1}
+.rock{animation:rock 7s ease-in-out infinite}
+@keyframes rock{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.prop{animation:spin .22s linear infinite}
+.sweep{animation:sweep 6s ease-in-out infinite}
+@keyframes sweep{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(14deg)}}
+.flash{animation:flash 5s linear infinite}
+@keyframes flash{0%,86%,100%{opacity:0}88%{opacity:.55}90%{opacity:0}93%{opacity:.4}95%{opacity:0}}
+.piston{animation:piston 1s ease-in-out infinite}
+@keyframes piston{0%,100%{transform:translateX(0)}50%{transform:translateX(-50px)}}
+.dropped{transition:transform 1.2s cubic-bezier(.5,0,.9,.5),opacity 1.2s;transform:translateY(520px);opacity:0}
+.lever{transition:transform .3s ease}
 .note.lit{filter:drop-shadow(0 0 6px #ffb040)}
 .note.lit path,.note.lit circle{stroke:#c0141a}
 @media (prefers-reduced-motion:reduce){
@@ -195,6 +206,9 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
         <radialGradient id="moonGlass" cx=".42" cy=".38" r=".72"><stop offset="0" stop-color="#e2ebf8"/><stop offset=".45" stop-color="#8ea6c4"/><stop offset="1" stop-color="#26344a"/></radialGradient>
         <linearGradient id="shCylH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".28" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient>
         <radialGradient id="hornIn" cx=".6" cy=".62" r=".62"><stop offset="0" stop-color="#1a0e04"/><stop offset=".3" stop-color="#5a3812"/><stop offset=".75" stop-color="#c9964a"/><stop offset="1" stop-color="#f4d692"/></radialGradient>
+        <linearGradient id="envG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0dcb0"/><stop offset=".45" stop-color="#c8a878"/><stop offset="1" stop-color="#6a4a2a"/></linearGradient>
+        <linearGradient id="dawnSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a6a"/><stop offset=".45" stop-color="#c86a6a"/><stop offset=".75" stop-color="#f4b070"/><stop offset="1" stop-color="#ffe0a0"/></linearGradient>
+        <linearGradient id="searchG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff8d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff8d8" stop-opacity="0"/></linearGradient>
         <radialGradient id="recess" r=".5"><stop offset=".7" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></radialGradient>
         <!-- procedural textures (filled in by script at start) -->
         <pattern id="pWood" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.7)"><image data-tx="wood" width="512" height="256" preserveAspectRatio="none"/></pattern>
@@ -285,7 +299,8 @@ const CODE = ['moon','star','tri'];
 function freshState(){
   return { inv:[], sel:null, f:{}, hs:0, ms:0, rs:[0,0,0], pr:PIPE_SOL.map((t,i)=>t[1]+PIPE_SCR[i]),
     shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false,
-    level:1, lk:[12,12,12,12], pegs:[null,null,null], bellSeq:[] };
+    level:1, lk:[12,12,12,12], pegs:[null,null,null], bellSeq:[],
+    vl:[1,0,0,1,1,0], bl:[0,0,0,0,0], hd:[0,0,0], tg:3 };
 }
 let S = freshState();
 let soundOn = true;
@@ -335,11 +350,13 @@ const AU = {
   pick(){ this.tone(880,.25,'sine',.08); this.tone(1320,.35,'sine',.06,.08); },
   bell(n){ for(let i=0;i<n;i++){ this.tone(196,1.8,'sine',.12,i*.55); this.tone(392.5,1.4,'sine',.05,i*.55); this.tone(589,.9,'sine',.025,i*.55); } },
   bellTone(f){ this.tone(f,2.4,'sine',.15); this.tone(f*2.01,1.5,'sine',.05); this.tone(f*2.76,1,'sine',.04); this.tone(f*5.4,.5,'sine',.02); },
+  chug(){ this.noise(.16,.12,180,'lowpass'); this.tone(55,.2,'sine',.07); },
   hiss(){ this.noise(2,.14,3800,'highpass'); },
   whirr(){ for(let i=0;i<14;i++) this.tone(900+i*30,.03,'square',.02,i*.09); this.noise(1.3,.08,300,'lowpass'); }
 };
 setInterval(()=>{
   if(!AU.ok()) return; const sc=S.scene;
+  if(S.level===3 && S.f.engineOn && ['ship','engine','telegraph','ballast','binnacle'].includes(sc)) AU.chug();
   if(sc==='room') AU.tick(true); else if(['tower','core','dial'].includes(sc) && S.f.towerOn) AU.tick(false); else if(sc==='clock' && !S.f.clockDone) AU.tick(false);
 }, 1000);
 
@@ -1365,7 +1382,7 @@ function hatchScene(){
 /* ---------------- TITLE & END ---------------- */
 let texProgress=0;
 function titleScene(){
-  const cont = S.started && typeof resumeScene!=='undefined' && !['end','end2','title'].includes(resumeScene);
+  const cont = S.started && typeof resumeScene!=='undefined' && !['end','end2','end3','jump','title'].includes(resumeScene);
   return `<rect width="1000" height="1000" fill="#1a1a12"/><rect width="1000" height="1000" fill="url(#pPaperL)"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".7"/>
   <circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".9" class="screen"/>
   ${gear(110,140,190,20,{spin:70,op:.55})}${gear(330,40,90,12,{spin:34,rev:true,op:.45})}
@@ -1678,15 +1695,453 @@ function coreScene(){ return stoneBg(900)+`<circle cx="500" cy="460" r="600" fil
 function end2Scene(){
   const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
   const lines=['Башня Хронос пробила полночь, и над Новым Лондоном снова пошло время.','— Я знал, что ты справишься, — сказал профессор, стряхивая пыль с цилиндра.','— Гильдия хотела остановить часы и править городом, где ничего не меняется.'];
-  const note=['«Сердце теперь бьётся в башне. А нам с тобой пора за работу:','у меня есть одна идея насчёт дирижабля…»'];
+  const note=['«Сердце теперь бьётся в башне. А нам пора: слышишь гул?','Это моя «Аврора». И корабли Гильдии тоже близко…»'];
   return `<rect width="1000" height="1000" fill="#120e10"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".6"/>
   ${dialArt(500,300,230,true,true)}
   <rect x="-500" y="-500" width="2000" height="2000" fill="#000" opacity=".45"/>
   <g${BEV}><text x="500" y="590" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="66" letter-spacing="5" fill="url(#goldText)">Время пошло</text></g>
   ${lines.map((t,i)=>`<text x="500" y="${648+i*36}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="25" fill="#f2e2be">${t}</text>`).join('')}
   ${note.map((t,i)=>`<text x="500" y="${770+i*38}" text-anchor="middle" font-family="Caveat,cursive" font-size="32" fill="#ffd98a">${t}</text>`).join('')}
-  <text x="500" y="872" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#c9a062">Конец второй главы · общее время ${mm}:${ss}</text>
-  ${cta(500,935,'Сыграть снова','start')}
+  <text x="500" y="862" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#c9a062">Конец второй главы · общее время ${mm}:${ss}</text>
+  ${cta(500,915,'Глава III · На борт «Авроры»','toAirship')}
+  ${cta(500,990,'Сыграть сначала','start',true)}
+  ${vignette()}`;
+}
+
+/* ================= CHAPTER III · THE AIRSHIP «АВРОРА» ================= */
+const BALLAST=[4,7,9,11,15], BALLAST_TARGET=33;
+const MORSE={0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.'};
+const HEADING=[0,4,5];
+const TG_LABELS=[['ПОЛНЫЙ','НАЗАД'],['СРЕДНИЙ','НАЗАД'],['МАЛЫЙ','НАЗАД'],['СТОП',''],['МАЛЫЙ','ВПЕРЁД'],['СРЕДНИЙ','ВПЕРЁД'],['ПОЛНЫЙ','ВПЕРЁД']];
+let sceneTimers=[];
+const later=(fn,ms)=>{ const t=setTimeout(fn,ms); sceneTimers.push(t); return t; };
+
+function morseSchedule(){
+  const u=.22, seq=[];
+  HEADING.forEach((d,di)=>{ const code=MORSE[d];
+    [...code].forEach((c,ci)=>{ seq.push([1,(c==='.'?1:3)*u,c]);
+      const last=ci===code.length-1, lastD=di===HEADING.length-1;
+      seq.push([0,(!last?1:(!lastD?3:10))*u, !last?'':(!lastD?'gap':'end')]); }); });
+  return seq;
+}
+function morseAnim(){
+  const seq=morseSchedule(), T=seq.reduce((a,x)=>a+x[1],0); let t=0; const kt=[], vals=[];
+  seq.forEach(([on,d])=>{ kt.push((t/T).toFixed(4)); vals.push(on); t+=d; });
+  return `<animate attributeName="opacity" dur="${T.toFixed(3)}s" repeatCount="indefinite" calcMode="discrete" keyTimes="${kt.join(';')}" values="${vals.join(';')}"/>`;
+}
+
+/* --- reusable art --- */
+function airship(cx,cy,s,o={}){
+  const env=`M${f1(cx-s*3.2)},${cy} C${f1(cx-s*3.2)},${f1(cy-s*1.15)} ${f1(cx+s*2.3)},${f1(cy-s*1.25)} ${f1(cx+s*3.4)},${cy} C${f1(cx+s*2.3)},${f1(cy+s*1.25)} ${f1(cx-s*3.2)},${f1(cy+s*1.15)} ${f1(cx-s*3.2)},${cy} Z`;
+  let seams=''; for(let i=-5;i<=6;i++){ const x=cx+i*s*.5; seams+=`<path d="M${f1(x)},${f1(cy-s*1.08)} Q${f1(x+s*.12)},${cy} ${f1(x)},${f1(cy+s*1.08)}" fill="none" stroke="#5a3a1c" stroke-width="${f1(s*.025)}" opacity=".45"/>`; }
+  const gy=cy+s*1.55;
+  return `<g${o.cls?` class="${o.cls}"`:''}>
+    ${o.lights===false?'':`<ellipse cx="${cx}" cy="${f1(gy+s*.2)}" rx="${f1(s*1.6)}" ry="${f1(s*.5)}" fill="#ffcf80" opacity=".25" filter="url(#soft)"/>`}
+    <path d="M${f1(cx-s*2.9)},${cy} L${f1(cx-s*3.9)},${f1(cy-s*1.1)} L${f1(cx-s*3.5)},${cy} L${f1(cx-s*3.9)},${f1(cy+s*1.1)} Z" fill="${o.dark?'#120e14':'#6a3a20'}"/>
+    <path d="${env}" fill="${o.dark?'#16121a':'url(#envG)'}"/>
+    ${o.dark?'':`<path d="${env}" fill="url(#pGrime)" opacity=".35"/>${seams}<path d="${env}" fill="url(#shCylH)" opacity=".7"/>
+    <text x="${f1(cx+s*.2)}" y="${f1(cy+s*.18)}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${f1(s*.5)}" letter-spacing="${f1(s*.08)}" fill="#5a1a10" opacity=".85">${o.name||'АВРОРА'}</text>`}
+    ${[-1.6,-.4,.8,1.8].map(k=>`<line x1="${f1(cx+k*s)}" y1="${f1(cy+s*1.02)}" x2="${f1(cx+k*s*.55)}" y2="${f1(gy-s*.2)}" stroke="${o.dark?'#0a0a0a':'#2a1a0c'}" stroke-width="${f1(s*.03)}"/>`).join('')}
+    <path d="M${f1(cx-s*1.3)},${f1(gy-s*.22)} L${f1(cx+s*1.4)},${f1(gy-s*.22)} L${f1(cx+s*1.15)},${f1(gy+s*.32)} L${f1(cx-s*1.05)},${f1(gy+s*.32)} Z" fill="${o.dark?'#0e0a0c':'#4a2a14'}"/>
+    ${o.dark?'':`<path d="M${f1(cx-s*1.3)},${f1(gy-s*.22)} L${f1(cx+s*1.4)},${f1(gy-s*.22)} L${f1(cx+s*1.15)},${f1(gy+s*.32)} L${f1(cx-s*1.05)},${f1(gy+s*.32)} Z" fill="url(#pWood)" opacity=".7"/>`}
+    ${Array.from({length:6},(_,i)=>`<rect x="${f1(cx-s*1+i*s*.38)}" y="${f1(gy-s*.1)}" width="${f1(s*.2)}" height="${f1(s*.16)}" rx="${f1(s*.04)}" fill="${o.dark?'#ff3020':'#ffd27a'}" opacity="${o.dark?.8:.95}"/>`).join('')}
+    ${[[-1.45,0],[1.55,0]].map(([k])=>`<g><rect x="${f1(cx+k*s-s*.08)}" y="${f1(gy-s*.12)}" width="${f1(s*.16)}" height="${f1(s*.24)}" fill="${o.dark?'#0a0a0a':'url(#brassH)'}"/>
+      <ellipse class="${o.still?'':'prop'}" style="transform-origin:${f1(cx+k*s)}px ${f1(gy)}px" cx="${f1(cx+k*s)}" cy="${f1(gy)}" rx="${f1(s*.06)}" ry="${f1(s*.45)}" fill="${o.dark?'#222':'#d8c8a0'}" opacity=".55"/></g>`).join('')}
+  </g>`;
+}
+function shipWheel(cx,cy,R,o={}){
+  let spokes='', knobs='';
+  for(let i=0;i<8;i++){ const a=rad(i*45+(o.rot||0)), x1=cx+Math.cos(a)*R*.18, y1=cy+Math.sin(a)*R*.18, x2=cx+Math.cos(a)*R*1.22, y2=cy+Math.sin(a)*R*1.22;
+    spokes+=`M${f1(x1)},${f1(y1)}L${f1(cx+Math.cos(a)*R)},${f1(cy+Math.sin(a)*R)}`;
+    knobs+=`<line x1="${f1(cx+Math.cos(a)*R*1.02)}" y1="${f1(cy+Math.sin(a)*R*1.02)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#5a3418" stroke-width="${f1(R*.11)}" stroke-linecap="round"/>
+      <circle cx="${f1(x2)}" cy="${f1(y2)}" r="${f1(R*.07)}" fill="#6e4224"/>`; }
+  return `<g filter="url(#sh)"><g${CARVE}>
+    ${knobs}
+    <path d="${spokes}" stroke="#4a2a14" stroke-width="${f1(R*.08)}" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(R*.93)}" fill="none" stroke="#4a2a14" stroke-width="${f1(R*.15)}"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(R*.93)}" fill="none" stroke="url(#pWood)" stroke-width="${f1(R*.15)}"/>
+  </g></g>
+  <g${BEV}><circle cx="${cx}" cy="${cy}" r="${f1(R*.93)}" fill="none" stroke="url(#brassH)" stroke-width="${f1(R*.035)}"/>${disc(cx,cy,R*.2,'url(#brassR)',.6)}</g>
+  <circle cx="${cx}" cy="${cy}" r="${f1(R*.07)}" fill="#2a1606"/>`;
+}
+function profFigure(x,y,k=1){ // y = top of the hat
+  const S_=v=>f1(v*k);
+  return `<g transform="translate(${x},${y}) scale(${k})">
+    <path d="M-62,190 C-70,150 -50,128 -20,120 L20,120 C50,128 70,150 62,190 L70,380 L-70,380 Z" fill="#2a2620"/>
+    <path d="M-62,190 C-70,150 -50,128 -20,120 L20,120 C50,128 70,150 62,190 L70,380 L-70,380 Z" fill="url(#shCyl)" opacity=".7"/>
+    <path d="M-20,120 L0,200 L20,120 L14,260 L-14,260 Z" fill="#6a1a14"/>
+    <path d="M-12,170 C-4,190 6,190 14,176" stroke="#e8c070" stroke-width="2.5" fill="none"/>
+    <path d="M-20,120 L-4,170 L-30,250 Z M20,120 L4,170 L30,250 Z" fill="#1c1a16"/>
+    <ellipse cx="0" cy="78" rx="30" ry="36" fill="#d9a882"/><ellipse cx="0" cy="78" rx="30" ry="36" fill="url(#shAO)"/>
+    <path d="M-30,84 C-34,120 -18,150 0,154 C18,150 34,120 30,84 C20,96 -20,96 -30,84 Z" fill="#e6e0d4"/>
+    <path d="M-20,98 C-10,90 10,90 20,98 C10,102 -10,102 -20,98 Z" fill="#cfc8ba"/>
+    <circle cx="-11" cy="72" r="8" fill="none" stroke="url(#brassH)" stroke-width="2.4"/><circle cx="11" cy="72" r="8" fill="none" stroke="url(#brassH)" stroke-width="2.4"/>
+    <circle cx="-11" cy="72" r="2.6" fill="#2a1a10"/><circle cx="11" cy="72" r="2.6" fill="#2a1a10"/>
+    <rect x="-28" y="-6" width="56" height="58" rx="4" fill="#15110e"/><rect x="-28" y="-6" width="56" height="58" rx="4" fill="url(#shCyl)" opacity=".6"/>
+    <rect x="-44" y="46" width="88" height="10" rx="5" fill="#15110e"/>
+    <rect x="-28" y="30" width="56" height="9" fill="#7a1a14"/>
+    <g${BEVS}><circle cx="-12" cy="22" r="9" fill="url(#brass)"/><circle cx="12" cy="22" r="9" fill="url(#brass)"/></g>
+    <circle cx="-12" cy="22" r="5.5" fill="#6ab0c8" opacity=".8"/><circle cx="12" cy="22" r="5.5" fill="#6ab0c8" opacity=".8"/>
+  </g>`;
+}
+function wrenchIcon(x,y,k){
+  return `<g transform="translate(${x},${y}) scale(${k}) rotate(-40)"${BEVS}>
+    <rect x="-8" y="-60" width="16" height="96" rx="6" fill="url(#steel)"/>
+    <path d="M-22,-62 C-24,-90 24,-90 22,-62 L10,-62 L10,-78 L-10,-78 L-10,-62 Z" fill="url(#steel)"/>
+    <circle cx="0" cy="44" r="18" fill="url(#steel)"/><circle cx="0" cy="44" r="8" fill="#1a1a1a"/></g>`;
+}
+
+/* --- window panorama --- */
+function skyView(){
+  const f=S.f, high=f.ballastDone, turned=f.headingDone, esc=f.escaped;
+  let s=`<rect x="-200" y="-100" width="1400" height="760" fill="url(#${esc?'dawnSky':'night'})"/>`;
+  if(!esc){
+    s+=Array.from({length:40},(_,i)=>{const r=rng(i*5+9);return `<circle class="twinkle" style="animation-delay:${f1(r()*3)}s" cx="${f1(r()*1000)}" cy="${f1(80+r()*260)}" r="${f1(.8+r()*1.4)}" fill="#fff"/>`}).join('');
+    s+=`<circle cx="430" cy="150" r="70" fill="#d9e4ff" opacity=".18" filter="url(#soft)"/><circle cx="430" cy="150" r="28" fill="#f1ead2"/><circle cx="422" cy="144" r="6" fill="#cfc6a8"/><circle cx="440" cy="158" r="4" fill="#cfc6a8"/>`;
+  } else {
+    s+=`<circle cx="620" cy="420" r="140" fill="#fff0c0" opacity=".45" filter="url(#soft)"/><circle cx="620" cy="430" r="46" fill="#fff4d0"/>`;
+  }
+  // mountains
+  s+=`<path d="M-200,${high?400:450} L60,${high?300:400} L180,${high?360:430} L330,${high?250:390} L470,${high?350:440} L620,${high?230:380} L760,${high?190:400} L880,${high?300:430} L1200,${high?280:420} L1200,560 L-200,560 Z" fill="${esc?'#5a3a5a':'#18233a'}"/>`;
+  if(high){ // observatory on the Storm Peak
+    s+=`<rect x="742" y="168" width="36" height="22" fill="#1a2436"/><path d="M738,170 A22,22 0 0 1 782,170 Z" fill="#26324a"/>
+    <circle cx="760" cy="176" r="${turned||esc?7:5}" fill="#fff2b0" filter="url(#glow)">${turned||esc?'':morseAnim()}</circle>`;
+  }
+  if(!high){
+    s+=`<rect x="-200" y="440" width="1400" height="120" fill="#0c1220"/>
+    ${Array.from({length:90},(_,i)=>{const r=rng(i*3+1);return `<rect x="${f1(-100+r()*1200)}" y="${f1(450+r()*90)}" width="3" height="3" fill="#ffc35a" opacity="${f1(.4+r()*.6)}"/>`}).join('')}
+    <g transform="translate(250,350)"><rect x="-10" y="0" width="20" height="100" fill="#0e1424"/><circle cy="0" r="16" fill="#ffd98a" opacity=".85" filter="url(#glow)"/></g>`;
+  } else {
+    s+=`${Array.from({length:9},(_,i)=>`<ellipse class="drift" style="animation-duration:${50+i*7}s;animation-delay:${-i*6}s" cx="${-100+i*140}" cy="${470+(i%3)*24}" rx="160" ry="34" fill="${esc?'#f6d6c0':'#8a9ab8'}" opacity=".55" filter="url(#blur4)"/>`).join('')}`;
+  }
+  if(!esc){
+    // Guild pursuer
+    const gx=turned?150:230, gy=turned?280:250, gs=turned?16:26;
+    s+=`<g transform="translate(${gx},${gy})"><g class="sweep" style="transform-origin:0px 40px"><path d="M0,40 L-260,420 L120,420 Z" fill="url(#searchG)" class="screen"/></g></g>`;
+    s+=airship(gx,gy,gs,{dark:true,still:false});
+    if(turned) s+=`<rect x="-200" y="-100" width="1400" height="760" fill="#fff" class="flash" opacity="0"/>
+      <path d="M560,80 L540,170 L566,170 L530,280" fill="none" stroke="#e8f0ff" stroke-width="4" class="flash" opacity="0" filter="url(#glow)"/>`;
+  }
+  s+=`${Array.from({length:4},(_,i)=>`<ellipse class="drift" style="animation-duration:${36+i*9}s;animation-delay:${-i*9}s" cx="${i*260}" cy="${140+i*40}" rx="120" ry="20" fill="${esc?'#ffd0b0':'#3a4a68'}" opacity=".6" filter="url(#blur4)"/>`).join('')}`;
+  return s;
+}
+
+/* --- bridge overview --- */
+const WIN='M140,500 L140,190 Q140,110 220,110 L780,110 Q860,110 860,190 L860,500 Z';
+function shipScene(){
+  const f=S.f;
+  let s=`<clipPath id="shipWin"><path d="${WIN}"/></clipPath>
+  <g clip-path="url(#shipWin)"><g class="rock" style="transform-origin:500px 330px">${skyView()}</g><path d="${WIN}" fill="url(#glassG)"/></g>`;
+  // ceiling + walls
+  s+=`<path d="M-1000,-200 L2000,-200 L2000,110 L860,110 Q860,110 780,110 L220,110 Q140,110 140,190 L140,500 L-1000,500 Z" fill="#2a170b"/>
+  ${tex('path',`d="M-1000,-200 L2000,-200 L2000,600 L860,600 L860,190 Q860,110 780,110 L220,110 Q140,110 140,190 L140,600 L-1000,600 Z"`,'#3a2010','pWoodV','url(#shWall)')}
+  ${[-120,40,200,360,520,680,840,1000].map(x=>`<path d="M${x},-10 Q${x+(500-x)*.25},70 ${x+(500-x)*.5},110" stroke="#1a0c04" stroke-width="16" fill="none" opacity=".75"/>`).join('')}
+  <g${BEV}><path d="${WIN}" fill="none" stroke="url(#brass)" stroke-width="12"/></g>
+  <g${BEVS}><path d="M320,110 L320,500 M500,110 L500,500 M680,110 L680,500 M140,300 L860,300" stroke="url(#brassH)" stroke-width="8"/></g>
+  ${[[320,300],[500,300],[680,300]].map(([x,y])=>bolt(x,y,7)).join('')}`;
+  // portholes
+  [[70,230],[930,230]].forEach(([x,y])=>{ s+=`<circle cx="${x}" cy="${y}" r="40" fill="url(#night)"/><circle cx="${x}" cy="${y}" r="40" fill="url(#glassG)"/>
+    <g filter="url(#shS)"><g${BEV}>${annulus(x,y,52,40,'url(#brass)',.6)}</g></g>${boltRing(x,y,46,8,3.5)}`; });
+  // lower wall + rail
+  s+=`${tex('rect','x="-1000" y="500" width="3000" height="290"','#3a2010','pWood','url(#shV)')}
+  ${[160,330,500,670].map(x=>carvedPanel(x,540,160,210,'pWood')).join('')}
+  ${carvedPanel(-20,540,170,210,'pWood')}${carvedPanel(840,540,170,210,'pWood')}
+  ${brassBar(-1000,500,3000,14)}`;
+  // floor
+  s+=tex('rect','x="-1000" y="790" width="3000" height="1210"','#2a170b','pFloor','url(#shFloor)')+`<rect x="-1000" y="784" width="3000" height="10" fill="#000" opacity=".5" filter="url(#blur4)"/>`;
+  for(let i=-8;i<=20;i++){ const xb=i*70, xt=500+(xb-500)*.5; s+=`<line x1="${f1(xt)}" y1="790" x2="${xb}" y2="1000" stroke="#0a0502" stroke-width="2" opacity=".55"/>`; }
+  // tool rack (left wall)
+  s+=`<g filter="url(#sh)">${woodRect(10,310,124,190,'pWoodV','url(#shCyl)')}</g>
+  <g filter="url(#shS)"><g${BEVS}><rect x="26" y="318" width="92" height="20" rx="3" fill="url(#brass)"/></g></g>
+  <text x="72" y="333" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="12" fill="#2a1606">ИНСТРУМЕНТ</text>
+  ${[40,72,104].map(x=>`<circle cx="${x}" cy="356" r="3" fill="url(#brassR)"/>`).join('')}
+  <g transform="translate(40,420) rotate(10)"><rect x="-4" y="-60" width="8" height="90" fill="#6a4224"/><rect x="-16" y="-66" width="32" height="16" rx="3" fill="url(#steel)"/></g>
+  ${f.gotWrench?'':wrenchIcon(74,428,.55)}
+  <g transform="translate(108,430)"><path d="M-6,-70 L-2,10 M6,-70 L2,10" stroke="url(#steel)" stroke-width="6"/><circle cx="0" cy="-10" r="5" fill="url(#brassR)"/><path d="M-12,10 L-2,50 M12,10 L2,50" stroke="#8a1a14" stroke-width="7"/></g>`;
+  // ballast panel (right wall)
+  s+=`<g transform="translate(838,330) scale(.16)">${ballastArt(false)}</g>`;
+  // speaking tube
+  s+=`<g filter="url(#shS)"><g${BEVS}><path d="M820,560 L820,520 Q820,500 800,500" fill="none" stroke="url(#brassV)" stroke-width="12"/><path d="M806,500 L786,488 L786,512 Z" fill="url(#brass)"/></g></g>`;
+  // lantern
+  s+=`<g class="swing" style="transform-origin:500px 0px;animation-duration:4.4s">
+    <line x1="500" y1="0" x2="500" y2="64" stroke="#2a2a2a" stroke-width="4" stroke-dasharray="6 3"/>
+    <circle cx="500" cy="96" r="70" fill="url(#warm)" class="screen flick"/>
+    <g${BEVS}><path d="M478,66 L522,66 L516,74 L484,74 Z" fill="url(#brassH)"/><rect x="480" y="120" width="40" height="8" fill="url(#brassH)"/></g>
+    <rect x="484" y="74" width="32" height="46" fill="#ffcf80" opacity=".35" stroke="url(#brassH)" stroke-width="3"/>
+    <path class="flame" d="M500,84 C505,95 506,102 500,110 C494,102 495,95 500,84 Z" fill="#ffd36a" filter="url(#glow)"/></g>`;
+  // telescope by the window
+  s+=`<g filter="url(#shS)"><g${BEVS}><path d="M200,600 L230,520 L260,600 M230,520 L230,600" stroke="url(#brassV)" stroke-width="6" fill="none"/>
+    <g transform="rotate(-24 230 512)"><rect x="160" y="500" width="150" height="20" rx="6" fill="url(#brassH)"/><rect x="140" y="503" width="26" height="14" rx="4" fill="url(#brass)"/><rect x="300" y="496" width="22" height="28" rx="5" fill="url(#brass)"/></g></g></g>`;
+  // nav table
+  s+=`<g filter="url(#sh)"><g${CARVE}>${woodRect(10,700,230,22,'pWood','url(#shVr)')}</g></g>
+  <path d="M30,722 L36,860 M220,722 L214,860" stroke="#3a2010" stroke-width="14"/>
+  <g transform="rotate(-3 120 690)">${tex('rect','x="30" y="664" width="150" height="42"','#ead6a6','pParchS','')}<path d="M44,700 C70,676 110,690 150,672" stroke="#8a1a14" stroke-width="2" stroke-dasharray="4 3" fill="none"/></g>
+  <rect x="150" y="676" width="70" height="26" rx="2" fill="#5a1a14"/><rect x="150" y="676" width="70" height="4" fill="#e9d4a3" opacity=".6"/>`;
+  // floor hatch to the engine room
+  s+=`<path d="M262,880 L420,880 L432,960 L250,960 Z" fill="#1a0e06"/>${tex('path','d="M266,884 L416,884 L426,956 L256,956 Z"','#3a2010','pFloor','url(#shV)')}
+  ${f.engineOn?`<path d="M262,880 L420,880 L432,960 L250,960 Z" fill="none" stroke="#ffb050" stroke-width="3" opacity=".8" filter="url(#glow)"/>`:''}
+  <g${BEVS}><ellipse cx="340" cy="924" rx="16" ry="8" fill="none" stroke="url(#brassH)" stroke-width="4"/><rect x="270" y="900" width="26" height="8" fill="url(#brassH)"/><rect x="390" y="900" width="26" height="8" fill="url(#brassH)"/></g>`;
+  // binnacle
+  s+=`<g transform="translate(225,560) scale(.32)">${binnacleArt(false)}</g>`;
+  // telegraph
+  s+=`<g transform="translate(620,560) scale(.26)">${telegraphArt(false)}</g>`;
+  // professor + wheel
+  s+=profFigure(560,430,.92);
+  s+=`<g${BEV}><rect x="508" y="700" width="24" height="140" fill="url(#brassV)"/></g><g${CARVE}>${woodRect(470,830,100,30,'pWood','url(#shVr)')}</g>`;
+  s+=shipWheel(520,690,110,{rot:f.escaped?22:0});
+  s+=glint(72,428,'wrench')+glint(340,920,'engine')+glint(900,420,'ballast')+glint(90,680,'nav')+glint(230,520,'scope')+glint(290,640,'binnacle')+glint(690,620,'telegraph');
+  s+=vignette();
+  s+=hot(150,120,700,370,'say','data-say="shipwin"')
+    +hot(140,470,140,140,'go','data-go="scope"')
+    +hot(10,300,130,210,'wrench')
+    +hot(240,870,200,100,'go','data-go="engine"')
+    +hot(10,640,240,90,'go','data-go="nav"')
+    +hot(830,320,170,260,'go','data-go="ballast"')
+    +hot(230,560,130,250,'go','data-go="binnacle"')
+    +hot(620,560,130,260,'go','data-go="telegraph"')
+    +hot(470,430,180,190,'prof3')
+    +`<circle class="hot" cx="520" cy="690" r="120" fill="transparent" data-act="prof3"/>`;
+  return s;
+}
+
+/* --- engine room --- */
+function engineScene(){
+  const f=S.f, on=f.engineOn;
+  let s=`${tex('rect','x="-1000" y="-1000" width="3000" height="1900"','#3a2a1a','pBrush','url(#shWall)')}
+  <rect x="-1000" y="-1000" width="3000" height="1900" fill="url(#pGrime)" opacity=".8"/>
+  ${Array.from({length:8},(_,i)=>`<rect x="${-60+i*160}" y="0" width="30" height="900" fill="url(#steel)" opacity=".7"/>`).join('')}
+  ${tex('rect','x="-1000" y="880" width="3000" height="1120"','#1a1a18','pBrush','url(#shV)')}
+  <circle cx="500" cy="620" r="${on?520:300}" fill="url(#warm)" class="screen flick" opacity="${on?1:.5}"/>`;
+  // boiler
+  s+=`<g filter="url(#sh)"><g${BEVL}><rect x="150" y="470" width="700" height="340" rx="170" fill="url(#copperH)"/><rect x="150" y="470" width="700" height="340" rx="170" fill="url(#pPatina)" opacity=".5"/></g></g>
+  ${[260,380,500,620,740].map(x=>`<rect x="${x}" y="470" width="10" height="340" fill="url(#brassV)" opacity=".8"/>`).join('')}
+  ${Array.from({length:12},(_,i)=>rivet(190+i*56,486,4)+rivet(190+i*56,794,4)).join('')}
+  <g${BEV}><rect x="400" y="640" width="200" height="150" rx="16" fill="#1a0e06" stroke="url(#brassH)" stroke-width="10"/></g>
+  <rect x="418" y="660" width="164" height="114" rx="8" fill="${on?'url(#fireG)':'#120604'}" ${on?'class="flick" filter="url(#glow)"':''}/>
+  ${[440,470,500,530,560].map(x=>`<rect x="${x}" y="660" width="8" height="114" fill="#1a0e06"/>`).join('')}
+  ${gauge(780,560,56,on?60:-110,{label:'АТМ',cls:'gauge-n'})}`;
+  // manifold + valves
+  s+=`<rect x="80" y="300" width="840" height="34" fill="url(#copperH)"/><rect x="80" y="300" width="840" height="34" fill="url(#pPatina)" opacity=".5"/>
+  ${[150,850].map(x=>`<rect x="${x-14}" y="334" width="28" height="140" fill="url(#copperV)"/>`).join('')}`;
+  for(let i=0;i<6;i++){ const x=170+i*132, open=S.vl[i];
+    s+=`<g class="hot" data-act="valve" data-i="${i}">
+      <rect x="${x-10}" y="230" width="20" height="74" fill="url(#copperV)"/>
+      <circle cx="${x}" cy="200" r="16" fill="${open?'#5ae07a':'#e0402a'}" filter="url(#glow)" id="vlamp${i}"/>
+      <circle cx="${x}" cy="200" r="16" fill="none" stroke="url(#brassH)" stroke-width="4"/>
+      <g${BEVS}><g class="vwheel" id="vw${i}" style="transform-origin:${x}px 317px;transform:rotate(${open?90:0}deg)">
+        <circle cx="${x}" cy="317" r="44" fill="none" stroke="${open?'#2a7a3a':'#9c2a1e'}" stroke-width="10"/>
+        ${[0,60,120].map(a=>`<line x1="${f1(x+Math.cos(rad(a))*-40)}" y1="${f1(317+Math.sin(rad(a))*-40)}" x2="${f1(x+Math.cos(rad(a))*40)}" y2="${f1(317+Math.sin(rad(a))*40)}" stroke="${open?'#1f5a2a':'#7a2016'}" stroke-width="7"/>`).join('')}
+        <circle cx="${x}" cy="317" r="12" fill="url(#brassR)"/></g></g>
+      <circle cx="${x}" cy="270" r="66" fill="transparent"/>
+    </g>`; }
+  // flywheel + piston
+  s+=`<g${BEV}><g class="${on?'spin':''}" style="transform-origin:110px 760px;animation-duration:2s">${gear(110,760,90,24,{holes:6})}</g></g>
+  <g class="${on?'piston':''}"><rect x="830" y="700" width="140" height="22" fill="url(#steel)"/></g>
+  <g${BEVS}><rect x="900" y="620" width="70" height="180" rx="8" fill="url(#brassV)"/></g>
+  <path d="M100,880 C140,840 220,830 300,880 Z" fill="#141414"/><path d="M110,870 l20,-10 l18,8 l22,-12 l26,10" stroke="#3a3a3a" stroke-width="5" fill="none"/>
+  ${vignette()}`;
+  return s;
+}
+function lightsOut(i){ [i-1,i,i+1].forEach(j=>{ if(j>=0&&j<6) S.vl[j]^=1; }); }
+
+/* --- ballast --- */
+function ballastArt(act){
+  const f=S.f, sum=BALLAST.reduce((a,w,i)=>a+(S.bl[i]?w:0),0);
+  let s=`<g filter="url(#sh)"><g${CARVE}>${woodRect(40,60,920,860,'pWoodV','url(#shCyl)')}</g></g>
+  <rect x="70" y="90" width="860" height="800" fill="#1a0e06" opacity=".55"/>
+  ${brassBar(70,330,860,16)}
+  ${gauge(500,200,100,f.ballastDone?95:-60,{label:'ФУТЫ',cls:'gauge-n'})}`;
+  BALLAST.forEach((w,i)=>{ const x=160+i*170, dropped=f.ballastDone&&S.bl[i];
+    s+=`<g ${act?`class="hot" data-act="bag" data-i="${i}"`:''}>
+      <g class="${dropped?'dropped':''}">
+        <path d="M${x},346 L${x},380" stroke="#3a2a1a" stroke-width="5"/>
+        <path d="M${x-50},420 C${x-62},500 ${x-60},590 ${x-40},620 L${x+40},620 C${x+60},590 ${x+62},500 ${x+50},420 C${x+30},400 ${x-30},400 ${x-50},420 Z" fill="#8a6a40"/>
+        <path d="M${x-50},420 C${x-62},500 ${x-60},590 ${x-40},620 L${x+40},620 C${x+60},590 ${x+62},500 ${x+50},420 C${x+30},400 ${x-30},400 ${x-50},420 Z" fill="url(#pLeatherS)" opacity=".25"/>
+        <path d="M${x-50},420 C${x-62},500 ${x-60},590 ${x-40},620 L${x+40},620 C${x+60},590 ${x+62},500 ${x+50},420 C${x+30},400 ${x-30},400 ${x-50},420 Z" fill="url(#shCyl)" opacity=".8"/>
+        <path d="M${x-24},392 C${x-10},404 ${x+10},404 ${x+24},392 L${x+16},380 L${x-16},380 Z" fill="#6a4a28"/>
+        <path d="M${x-30},404 Q${x},414 ${x+30},404" stroke="#3a2a14" stroke-width="5" fill="none"/>
+        <path d="M${x-40},470 L${x+40},470 M${x-44},560 L${x+44},560" stroke="#5a4020" stroke-width="2" stroke-dasharray="5 4"/>
+        <g filter="url(#shS)"><g${BEVS}><circle cx="${x}" cy="515" r="30" fill="url(#brass)"/></g></g>
+        <text x="${x}" y="526" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="30" fill="#2a1606">${w}</text>
+      </g>
+      <g${BEVS}><rect x="${x-34}" y="690" width="68" height="120" rx="10" fill="#2a2420"/></g>
+      <g class="lever" style="transform-origin:${x}px 750px;transform:rotate(${S.bl[i]?150:30}deg)"><rect x="${x-6}" y="680" width="12" height="70" rx="5" fill="url(#steel)"/><circle cx="${x}" cy="680" r="13" fill="${S.bl[i]?'#c0241a':'#3a3a3a'}"/></g>
+      ${disc(x,750,10,'url(#brassR)',.5)}
+      <text x="${x}" y="840" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="20" fill="#e9c47a">${S.bl[i]?'СБРОС':'ДЕРЖАТЬ'}</text>
+    </g>`;
+  });
+  s+=`<g filter="url(#shS)"><g${BEV}><rect x="380" y="850" width="240" height="56" rx="6" fill="url(#brass)"/></g></g>
+  <text id="blsum" x="500" y="887" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" fill="#2a1606">К сбросу: ${sum} пуд.</text>`;
+  return s;
+}
+function ballastScene(){
+  const f=S.f;
+  return `${tex('rect','x="-1000" y="-1000" width="3000" height="3000"','#3a2010','pWood','url(#shWall)')}<circle cx="500" cy="400" r="600" fill="url(#warm)" opacity=".5" class="screen"/>
+  ${ballastArt(true)}
+  ${f.ballastDone?'':`<g class="hot" data-act="drop"><g filter="url(#sh)"><g${BEV}><rect x="880" y="380" width="90" height="300" rx="12" fill="#2a2420"/></g></g>
+    <rect x="918" y="420" width="14" height="140" rx="6" fill="url(#steel)"/><circle cx="925" cy="420" r="24" fill="#c0241a" filter="url(#shS)"/>
+    <text x="925" y="640" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="20" fill="#e9c47a">СБРОС</text></g>`}
+  ${vignette()}`;
+}
+
+/* --- navigation table --- */
+function navScene(){
+  let s=`${woodRect(-1000,-1000,3000,3000,'pWood','')}<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#pGrime)" opacity=".4"/>
+  <circle cx="300" cy="200" r="700" fill="url(#warm)" class="screen flick"/>`;
+  // map
+  s+=`<g transform="rotate(-4 300 380)"><path d="M40,90 L560,70 L580,620 L60,650 Z" fill="#000" opacity=".45" transform="translate(10,12)" filter="url(#soft)"/>
+    ${tex('path','d="M40,90 L560,70 L580,620 L60,650 Z"','#ead6a6','pParch','')}
+    <path d="M40,90 L560,70 L580,620 L60,650 Z" fill="url(#parchEdge)"/>
+    <path d="M80,520 C140,470 180,500 230,460 C280,420 260,380 320,360 C380,340 360,280 420,260" stroke="#6a8aa8" stroke-width="3" fill="none"/>
+    <path d="M300,250 l30,-60 l30,60 Z M350,240 l26,-50 l26,50 Z M400,250 l34,-70 l34,70 Z" fill="#7a6a50" opacity=".7"/>
+    <g transform="translate(430,160)"><path d="M-30,30 l30,-60 l30,60 Z" fill="#5a4a34"/><circle cy="-36" r="8" fill="#c0241a"/></g>
+    <text x="430" y="216" text-anchor="middle" font-family="Caveat,cursive" font-size="24" font-weight="700" fill="#3a2210">Пик Бурь</text>
+    <circle cx="150" cy="540" r="10" fill="#3a2210"/><text x="150" y="578" text-anchor="middle" font-family="Caveat,cursive" font-size="24" fill="#3a2210">Новый Лондон</text>
+    <path d="M150,540 C220,470 330,300 430,190" stroke="#8a1a14" stroke-width="3" stroke-dasharray="8 6" fill="none"/>
+    <g transform="translate(470,520)"><circle r="44" fill="none" stroke="#3a2210" stroke-width="2"/><path d="M0,-50 L8,0 L0,50 L-8,0 Z" fill="#3a2210"/><path d="M-50,0 L0,-8 L50,0 L0,8 Z" fill="#3a2210" opacity=".6"/><text y="-56" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="18" fill="#3a2210">С</text></g>
+  </g>`;
+  // logbook
+  s+=`<g transform="rotate(3 760 300)"><rect x="600" y="70" width="340" height="420" rx="6" fill="#000" opacity=".45" transform="translate(10,12)" filter="url(#soft)"/>
+    <rect x="600" y="70" width="340" height="420" rx="6" fill="#4a1410"/>
+    ${tex('rect','x="614" y="82" width="312" height="396"','#ead6a6','pParchS','')}
+    <text x="770" y="124" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" fill="#3a2210">Бортовой журнал</text>
+    ${['«Аврора», рейс к Пику Бурь.','Хребет Бурь выше нас','на 330 футов.','Каждый пуд балласта —','10 футов подъёма.','Сбросить ровно столько,','сколько нужно: лишнее','унесёт нас в грозу.'].map((t,i)=>`<text x="636" y="${168+i*36}" font-family="Caveat,cursive" font-size="27" fill="#2e1a0a">${t}</text>`).join('')}
+  </g>`;
+  // morse codebook
+  s+=`<g transform="rotate(-2 700 760)"><rect x="560" y="560" width="390" height="380" rx="6" fill="#000" opacity=".45" transform="translate(10,12)" filter="url(#soft)"/>
+    <rect x="560" y="560" width="390" height="380" rx="6" fill="#1a2a4a"/>
+    ${tex('rect','x="574" y="572" width="362" height="356"','#ead6a6','pParchS','')}
+    <text x="755" y="610" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="22" fill="#3a2210">Код Морзе · цифры</text>
+    ${Object.entries(MORSE).map(([d,c],i)=>{ const col=i<5?0:1, row=i%5, x=600+col*180, y=650+row*56;
+      return `<text x="${x}" y="${y}" font-family="Cormorant SC,serif" font-weight="700" font-size="30" fill="#3a2210">${d}</text>`+
+        [...c].map((ch,k)=> ch==='.'?`<circle cx="${x+40+k*24}" cy="${y-10}" r="5" fill="#3a2210"/>`:`<rect x="${x+32+k*24}" y="${y-13}" width="18" height="6" rx="2" fill="#3a2210"/>`).join(''); }).join('')}
+  </g>`;
+  // sextant & dividers
+  s+=`<g transform="translate(200,800) rotate(-15)" filter="url(#shS)"><g${BEVS}><path d="M0,0 L-120,-160 A200,200 0 0 1 120,-160 Z" fill="none" stroke="url(#brassH)" stroke-width="10"/><path d="M-110,-150 A190,190 0 0 1 110,-150" fill="none" stroke="url(#brass)" stroke-width="18"/><rect x="-6" y="-170" width="12" height="170" fill="url(#brassV)"/></g></g>
+  ${vignette()}`;
+  s+=hot(40,70,560,600,'say','data-say="map"')+hot(590,60,370,450,'say','data-say="logbook"')+hot(550,550,410,400,'say','data-say="codebook"');
+  return s;
+}
+
+/* --- telescope view: the Morse beacon --- */
+function scopeScene(){
+  const f=S.f, high=f.ballastDone;
+  let s=`<rect x="-1000" y="-1000" width="3000" height="3000" fill="#050403"/>
+  <clipPath id="scopeC"><circle cx="500" cy="420" r="340"/></clipPath>
+  <g clip-path="url(#scopeC)"><g transform="translate(500,420) scale(2.4) translate(-760,-200)">${skyView()}</g>
+    <circle cx="500" cy="420" r="340" fill="url(#recess)"/></g>
+  <path d="M500,80 L500,760 M160,420 L840,420" stroke="#000" stroke-width="1.5" opacity=".5"/>
+  <g filter="url(#sh)"><g${BEVL}>${annulus(500,420,380,340,'url(#brass)',.6)}</g></g>${knurl(500,420,372,160,8)}`;
+  if(high && !f.headingDone){
+    s+=`<circle id="beacon" cx="500" cy="380" r="30" fill="#fff6c0" filter="url(#glow)" opacity="0"/>
+    <g filter="url(#shS)"><rect x="80" y="830" width="840" height="110" rx="8" fill="#ead6a6"/><rect x="80" y="830" width="840" height="110" rx="8" fill="url(#pParchS)"/></g>
+    <text x="100" y="858" font-family="Cormorant SC,serif" font-size="18" fill="#6a4a20">ЛЕНТА ТЕЛЕГРАФА</text>
+    <text id="tape" x="500" y="912" text-anchor="middle" font-family="Courier New,monospace" font-weight="700" font-size="44" fill="#2a1606"></text>`;
+  }
+  return s+vignette();
+}
+function mountScope(){
+  const f=S.f; if(!f.ballastDone){ later(()=>say('Хребет закрывает обзор: впереди только скалы и тучи. Сначала нужно подняться выше.'),300); return; }
+  if(f.headingDone){ later(()=>say('Огонь обсерватории горит ровно: нас заметили и ждут.'),300); return; }
+  const seq=morseSchedule(); let txt='';
+  const run=(k)=>{ if(S.scene!=='scope') return; const [on,d,c]=seq[k%seq.length], b=$('#beacon'), t=$('#tape');
+    if(k%seq.length===0){ txt=''; }
+    if(b) b.setAttribute('opacity',on?1:0);
+    if(on){ txt+=c==='.'?'•':'—'; AU.tone(880,d*.9,'sine',.05); }
+    else if(c==='gap') txt+='   ';
+    if(t) t.textContent=txt;
+    later(()=>run(k+1), d*1000); };
+  later(()=>{ say('В трубу виден огонёк на Пике Бурь. Он мигает — это морзянка. Лента телеграфа записывает сигнал.'); run(0); },400);
+}
+
+/* --- binnacle (compass) --- */
+function binnacleArt(act){
+  const f=S.f, hdg=f.headingDone?45:S.hd[0]*100+S.hd[1]*10+S.hd[2];
+  let s=`<g filter="url(#sh)"><g${CARVE}>${tex('path','d="M380,880 L620,880 L580,500 L420,500 Z"','#3a2010','pWoodV','url(#shCyl)')}</g></g>
+  ${brassBar(370,870,260,20)}${brassBar(410,494,180,16)}
+  <g${BEV}><path d="M330,500 L670,500 L640,380 L360,380 Z" fill="url(#brass)"/><path d="M330,500 L670,500 L640,380 L360,380 Z" fill="url(#pBrush)" opacity=".4"/></g>
+  ${[[240,400,'#a8241a'],[760,400,'#2a6a3a']].map(([x,y,c])=>`<g${BEVS}><rect x="${x<500?x+40:x-110}" y="${y+6}" width="70" height="12" fill="url(#brassH)"/></g><g filter="url(#shS)"><circle cx="${x}" cy="${y}" r="56" fill="${c}"/><circle cx="${x}" cy="${y}" r="56" fill="url(#pSpun)" opacity=".5"/><circle cx="${x-18}" cy="${y-20}" r="14" fill="#fff" opacity=".3"/></g>`).join('')}
+  <ellipse cx="500" cy="380" rx="150" ry="42" fill="#0c0a08"/>
+  <g transform="translate(500,330) scale(1,.42)"><g class="card" style="transform:rotate(${-hdg}deg);transition:transform 1.4s cubic-bezier(.3,1.3,.5,1)">
+    <circle r="138" fill="url(#ivory)"/>
+    ${Array.from({length:72},(_,i)=>`<line x1="0" y1="${i%2?-128:-120}" x2="0" y2="-136" stroke="#2a1a0c" stroke-width="${i%6?1.2:2.4}" transform="rotate(${i*5})"/>`).join('')}
+    <path d="M0,-110 L14,0 L0,110 L-14,0 Z" fill="#2a1a0c"/><path d="M0,-110 L14,0 L-14,0 Z" fill="#a8241a"/>
+    ${[['С',0],['В',90],['Ю',180],['З',270]].map(([t,a])=>`<text transform="rotate(${a}) translate(0,-86)" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="30" fill="#2a1a0c">${t}</text>`).join('')}
+  </g></g>
+  <path d="M500,286 L490,262 L510,262 Z" fill="#c0241a"/>
+  <path d="M340,330 A160,120 0 0 1 660,330 L660,380 L340,380 Z" fill="#cfe0f0" opacity=".14"/>
+  <path d="M360,320 A150,110 0 0 1 520,230" fill="none" stroke="#fff" stroke-width="7" opacity=".35" stroke-linecap="round"/>
+  <g${BEV}><path d="M340,330 A160,120 0 0 1 660,330" fill="none" stroke="url(#brassH)" stroke-width="10"/><circle cx="500" cy="212" r="16" fill="url(#brassR)"/></g>`;
+  // heading wheels
+  s+=`<rect x="380" y="560" width="240" height="120" rx="10" fill="#120a06"/><rect x="380" y="560" width="240" height="120" rx="10" fill="url(#recess)"/>
+  <text x="500" y="720" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" letter-spacing="4" fill="#e9c47a">КУРС</text>`;
+  for(let i=0;i<3;i++){ const x=420+i*80;
+    s+=`<g ${act?`class="hot" data-act="hdw" data-i="${i}"`:''}>
+      <g${BEVS}><rect x="${x-32}" y="570" width="64" height="100" rx="8" fill="url(#brassH)"/></g>
+      <rect x="${x-32}" y="570" width="64" height="100" rx="8" fill="url(#shCylH)"/>
+      <text id="hd${i}" x="${x}" y="638" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="50" fill="#2a1606">${f.headingDone?HEADING[i]:S.hd[i]}</text>
+    </g>`; }
+  return s;
+}
+function binnacleScene(){ return `${tex('rect','x="-1000" y="-1000" width="3000" height="1880"','#3a2010','pWood','url(#shWall)')}${tex('rect','x="-1000" y="880" width="3000" height="1120"','#2a170b','pFloor','url(#shFloor)')}<circle cx="500" cy="400" r="600" fill="url(#warm)" opacity=".55" class="screen"/>${binnacleArt(true)}${vignette()}`; }
+
+/* --- engine order telegraph --- */
+function telegraphArt(act){
+  const cx=500, cy=430, R=300, a=-120+40*S.tg;
+  let s=`<g filter="url(#sh)"><g${BEV}><rect x="470" y="700" width="60" height="200" fill="url(#brassV)"/><path d="M400,900 L600,900 L580,860 L420,860 Z" fill="url(#brassH)"/></g></g>
+  <g filter="url(#sh)"><g${BEVL}>${disc(cx,cy,R+30,'url(#brass)',.6)}</g></g>
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#ivory)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#pParchS)" opacity=".3"/>`;
+  TG_LABELS.forEach(([l1,l2],i)=>{ const ang=-120+40*i, a1=rad(ang-20), a2=rad(ang+20), r1=120, r2=R-8;
+    const p=`M${f1(cx+Math.sin(a1)*r1)},${f1(cy-Math.cos(a1)*r1)} L${f1(cx+Math.sin(a1)*r2)},${f1(cy-Math.cos(a1)*r2)} A${r2},${r2} 0 0 1 ${f1(cx+Math.sin(a2)*r2)},${f1(cy-Math.cos(a2)*r2)} L${f1(cx+Math.sin(a2)*r1)},${f1(cy-Math.cos(a2)*r1)} A${r1},${r1} 0 0 0 ${f1(cx+Math.sin(a1)*r1)},${f1(cy-Math.cos(a1)*r1)} Z`;
+    const fill=i<3?'#c8d4e0':i===3?'#e8d8a0':'#f0c8b8';
+    s+=`<path d="${p}" fill="${fill}" stroke="#2a1a0c" stroke-width="2" ${act?`class="hot" data-act="tgset" data-i="${i}"`:''}/>
+      <g transform="rotate(${ang} ${cx} ${cy})" pointer-events="none"><text x="${cx}" y="${cy-218}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${l2?20:26}" fill="#2a1a0c">${l1}</text>${l2?`<text x="${cx}" y="${cy-194}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="20" fill="#2a1a0c">${l2}</text>`:''}</g>`;
+  });
+  s+=`<text x="${cx}" y="${cy+120}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" letter-spacing="3" fill="#5a3a14">МАШИНА</text>
+  <g id="tglever" style="transform-origin:${cx}px ${cy}px;transform:rotate(${a}deg);transition:transform .6s cubic-bezier(.3,1.4,.5,1)" pointer-events="none">
+    <g${BEVS}><path d="M${cx-10},${cy} L${cx-4},${cy-R+10} L${cx+4},${cy-R+10} L${cx+10},${cy} Z" fill="url(#steel)"/><rect x="${cx-22}" y="${cy-R-30}" width="44" height="60" rx="14" fill="url(#brassH)"/></g></g>
+  <g${BEV}>${disc(cx,cy,50,'url(#brassR)',.6)}</g>
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#glassG)" pointer-events="none"/>`;
+  return s;
+}
+function telegraphScene(){ return `${tex('rect','x="-1000" y="-1000" width="3000" height="1900"','#3a2010','pWood','url(#shWall)')}${tex('rect','x="-1000" y="900" width="3000" height="1100"','#2a170b','pFloor','url(#shFloor)')}<circle cx="500" cy="400" r="600" fill="url(#warm)" opacity=".55" class="screen"/>${telegraphArt(true)}${vignette()}`; }
+
+/* --- boarding cutscene + ending --- */
+function jumpScene(){
+  return `<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#night)"/>
+  ${Array.from({length:40},(_,i)=>{const r=rng(i*5+2);return `<circle class="twinkle" style="animation-delay:${f1(r()*3)}s" cx="${f1(r()*1000)}" cy="${f1(r()*500)}" r="${f1(.8+r()*1.4)}" fill="#fff"/>`}).join('')}
+  <circle cx="820" cy="140" r="34" fill="#f1ead2"/><circle cx="820" cy="140" r="90" fill="#d9e4ff" opacity=".15" filter="url(#soft)"/>
+  <rect x="-1000" y="820" width="3000" height="400" fill="#0c1220"/>
+  ${Array.from({length:120},(_,i)=>{const r=rng(i*7+5);return `<rect x="${f1(-200+r()*1400)}" y="${f1(830+r()*170)}" width="3" height="3" fill="#ffc35a" opacity="${f1(.4+r()*.6)}"/>`}).join('')}
+  <g transform="translate(120,200)"><g class="sweep" style="transform-origin:0px 30px"><path d="M0,30 L-200,520 L160,520 Z" fill="url(#searchG)" class="screen"/></g></g>
+  ${airship(120,200,18,{dark:true})}
+  ${tex('rect','x="40" y="420" width="300" height="700"','#4a4038','pStone','url(#shCyl)')}
+  <path d="M20,420 L360,420 L340,380 L40,380 Z" fill="#2e2a26"/><path d="M60,380 L190,200 L320,380 Z" fill="#26221e"/>
+  ${dialArt(190,560,100,true,true)}
+  ${airship(660,330,62)}
+  <path d="M340,420 Q470,470 580,450" stroke="#c9a062" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
+  <g transform="translate(430,380)"><circle r="9" fill="#1a1410"/><path d="M-6,8 L6,8 L10,40 L-10,40 Z M-4,40 l-12,20 M4,40 l14,16 M-6,14 l-18,-12 M6,14 l18,-16" stroke="#1a1410" stroke-width="7" stroke-linecap="round" fill="#1a1410"/></g>
+  <g transform="translate(500,360)"><rect x="-9" y="-30" width="18" height="18" fill="#100a06"/><rect x="-14" y="-14" width="28" height="4" fill="#100a06"/><circle r="10" fill="#2e2218"/><path d="M-8,8 L8,8 L12,44 L-12,44 Z M-4,44 l-10,22 M4,44 l14,18 M-6,14 l-22,-6 M6,14 l20,-20" stroke="#1c1410" stroke-width="7" stroke-linecap="round" fill="#1c1410"/></g>
+  ${Array.from({length:14},(_,i)=>{const r=rng(i*11+1);return `<line x1="${f1(r()*1000)}" y1="${f1(100+r()*700)}" x2="${f1(r()*1000-80)}" y2="${f1(100+r()*700)}" stroke="#a9c3e8" stroke-width="1.2" opacity=".2"/>`}).join('')}
+  ${vignette()}
+  ${cta(500,930,'Прыгнуть на борт!','board')}`;
+}
+function end3Scene(){
+  const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
+  const lines=['Гроза сомкнулась за кормой, и прожектор Гильдии утонул в тучах.','К рассвету «Аврора» вышла к Пику Бурь, где светился купол обсерватории.'];
+  const note=['«Там, наверху, нас ждёт старый друг — и ответ на вопрос,','зачем Гильдии понадобилось само время», — сказал профессор.'];
+  return `<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#dawnSky)"/>
+  <circle cx="500" cy="380" r="200" fill="#fff0c0" opacity=".45" filter="url(#soft)"/><circle cx="500" cy="390" r="64" fill="#fff4d0"/>
+  <path d="M-1000,420 L80,300 L230,380 L400,240 L560,360 L720,200 L860,330 L2000,300 L2000,2000 L-1000,2000 Z" fill="#4a3050"/>
+  <g transform="translate(720,200)"><rect x="-22" y="-26" width="44" height="26" fill="#2a1a30"/><path d="M-26,-24 A26,26 0 0 1 26,-24 Z" fill="#3a2a40"/><circle cy="-14" r="6" fill="#fff2b0" filter="url(#glow)"/></g>
+  ${Array.from({length:7},(_,i)=>`<ellipse class="drift" style="animation-duration:${60+i*8}s;animation-delay:${-i*7}s" cx="${-100+i*170}" cy="${420+(i%3)*30}" rx="180" ry="36" fill="#f6d6c0" opacity=".6" filter="url(#blur4)"/>`).join('')}
+  <g class="bob">${airship(330,300,30,{name:'АВРОРА'})}</g>
+  <rect x="-500" y="440" width="2000" height="1000" fill="#000" opacity=".35"/>
+  <g${BEV}><text x="500" y="560" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="62" letter-spacing="5" fill="url(#goldText)">Навстречу рассвету</text></g>
+  ${lines.map((t,i)=>`<text x="500" y="${618+i*36}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="25" fill="#f8ecd8">${t}</text>`).join('')}
+  ${note.map((t,i)=>`<text x="500" y="${712+i*38}" text-anchor="middle" font-family="Caveat,cursive" font-size="31" fill="#ffe0a0">${t}</text>`).join('')}
+  <text x="500" y="818" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#ffd8a0">Конец третьей главы · общее время ${mm}:${ss} · продолжение следует</text>
+  ${cta(500,900,'Сыграть снова','start')}
   ${vignette()}`;
 }
 
@@ -1711,7 +2166,16 @@ const SC={
   dial:{title:'Циферблат',bleed:['#3a3430','#2a170b',960,'pStoneL','pFloor'],draw:dialScene,back:'tower',hint:1},
   core:{title:'Главный механизм',bleed:['#3a3430','#2a170b',900,'pStoneL','pFloor'],draw:coreScene,back:'tower',hint:1},
   lock:{title:'Замок Гильдии',bleed:['#3a3430','#2a170b',860,'pStoneL','pFloor'],draw:lockScene,back:'core',hint:1},
-  end2:{title:'Финал',bleed:['#120e10','#120e10',500],draw:end2Scene}
+  end2:{title:'Финал',bleed:['#120e10','#120e10',500],draw:end2Scene},
+  jump:{title:'Карниз башни',draw:jumpScene},
+  ship:{title:'Мостик «Авроры»',draw:shipScene,hint:1},
+  engine:{title:'Машинное отделение',draw:engineScene,back:'ship',hint:1},
+  ballast:{title:'Балласт',draw:ballastScene,back:'ship',hint:1},
+  nav:{title:'Штурманский стол',draw:navScene,back:'ship',hint:1},
+  scope:{title:'Подзорная труба',draw:scopeScene,mount:mountScope,back:'ship',hint:1},
+  binnacle:{title:'Нактоуз',draw:binnacleScene,back:'ship',hint:1},
+  telegraph:{title:'Машинный телеграф',draw:telegraphScene,back:'ship',hint:1},
+  end3:{title:'Финал',draw:end3Scene}
 };
 const SAY={
   window:'За окном ночной дождь над Новым Лондоном. Вдали плывёт огонёк дирижабля. Рамы заклёпаны намертво.',
@@ -1728,6 +2192,10 @@ const SAY={
   hourglass:'Песочные часы. Песок застыл посередине и не сыплется.',
   letter:'Письмо профессора. Перечитай внимательно: здесь все подсказки.',
   dial:'Циферблат башни изнутри. Свет города пробивается сквозь матовое стекло, а все цифры видны задом наперёд.',
+  shipwin:'Внизу проплывает ночной город. Прожектор корабля Гильдии шарит по облакам у нас за кормой.',
+  map:'Карта: от Нового Лондона пунктир ведёт на северо-восток, к Пику Бурь. Там, на вершине, обсерватория.',
+  logbook:'Хребет Бурь выше нас на 330 футов, каждый пуд балласта даёт 10 футов. Лишний сброс унесёт в грозу.',
+  codebook:'Кодовая книга: цифры азбуки Морзе. Точка — короткая вспышка, тире — длинная.',
   boxtop:'Крышка украшена латунной розой ветров и девизом «Время открывает всё». Она не поддаётся.'
 };
 const ITEMS={
@@ -1736,6 +2204,7 @@ const ITEMS={
   gS:{name:'Малая шестерня',desc:'Малая шестерня, восемь зубьев.',icon:()=>gear(50,50,24,8,{bev:true})},
   gM:{name:'Средняя шестерня',desc:'Средняя шестерня, четырнадцать зубьев.',icon:()=>gear(50,50,34,14,{bev:true})},
   gL:{name:'Большая шестерня',desc:'Большая шестерня, двадцать зубьев. Тяжёлая.',icon:()=>gear(50,50,44,20,{bev:true,holes:6})},
+  wrench:{name:'Гаечный ключ',desc:'Тяжёлый разводной ключ. Таким можно провернуть даже прикипевший вентиль.',icon:()=>wrenchIcon(50,52,.55)},
   heart:{name:'Сердце Хроноса',desc:'Сердце Хроноса. Оно тёплое и тихо тикает, как живое.',icon:()=>heartObj(50,52,30,false)}
 };
 
@@ -1748,7 +2217,7 @@ function hideMsg(){ msgEl.hidden=true; }
 msgEl.addEventListener('click',()=>{ if(msgQueue.length) showMsg(msgQueue.shift()); else hideMsg(); });
 
 function renderInv(){
-  const inv=$('#inv'); const showInv = !['title','end','end2'].includes(S.scene);
+  const inv=$('#inv'); const showInv = !['title','end','end2','end3','jump'].includes(S.scene);
   inv.hidden=!showInv; if(!showInv) return;
   let h=''; for(let i=0;i<4;i++){ const id=S.inv[i];
     h+=`<button class="slot${id&&S.sel===id?' sel':''}" data-slot="${i}" aria-label="${id?ITEMS[id].name:'Пустой слот'}">${id?`<svg viewBox="0 0 100 100">${ITEMS[id].icon()}</svg>`:''}</button>`; }
@@ -1769,6 +2238,7 @@ function removeItem(id){ S.inv=S.inv.filter(x=>x!==id); if(S.sel===id) S.sel=nul
 function render(){
   const sc=SC[S.scene]||SC.room;
   svgEl.onpointerdown=svgEl.onpointermove=svgEl.onpointerup=svgEl.onpointercancel=null;
+  sceneTimers.forEach(clearTimeout); sceneTimers=[];
   sceneG.innerHTML=(sc.bleed?bleed(sc.bleed):'')+sc.draw();
   sceneG.classList.remove('fade'); void sceneG.getBoundingClientRect(); sceneG.classList.add('fade');
   if(sc.mount) sc.mount();
@@ -1801,7 +2271,18 @@ function hint2(){
   else h='По лестнице спускается профессор. Коснись его.';
   say(h);
 }
+function hint3(){
+  const f=S.f; let h;
+  if(!f.gotWrench) h='У левой стены мостика — стойка с инструментами. Возьми гаечный ключ.';
+  else if(!f.engineOn) h=f.v_engine?'Каждый вентиль переключает себя и двух соседей. Нужно, чтобы горели все шесть зелёных ламп.':'Спустись в машинное отделение через люк в полу.';
+  else if(!f.ballastDone) h=f.v_nav?'Нужно сбросить ровно 33 пуда (330 футов по 10 футов за пуд). Подбери мешки, чтобы сумма весов была 33, и дёрни рычаг сброса.':'Загляни в бортовой журнал на штурманском столе: там сказано, на сколько нужно подняться.';
+  else if(!f.headingDone) h=f.v_scope?'Сигнал: «— — — — —», «• • • • —», «• • • • •». Сверь с кодовой книгой и выставь эти цифры на нактоузе.':'Посмотри в подзорную трубу у окна: с Пика Бурь сигналят морзянкой.';
+  else if(!f.escaped) h='Машинный телеграф: переводи рычаг по порядку — МАЛЫЙ, СРЕДНИЙ, затем ПОЛНЫЙ ВПЕРЁД.';
+  else h='Коснись профессора у штурвала.';
+  say(h);
+}
 function hint(){
+  if(S.level===3) return hint3();
   if(S.level===2) return hint2();
   const f=S.f; let h;
   if(!f.v_letter) h='Начни с письма на столе: оно адресовано тебе.';
@@ -1830,7 +2311,7 @@ const ACT={
       'Ты — его подмастерье. Едва ты вошёл, дверь мастерской захлопнулась, и замок щёлкнул. Изнутри ключа нет.',
       'Единственный другой выход — круглый латунный люк в стене. Но его механизм мёртв.',
       'На столе лежит письмо, адресованное тебе. Касайся предметов, чтобы рассмотреть их.']); },
-  cont:()=>{ AU.init(); go(resumeScene && !['title','end','end2'].includes(resumeScene) ? resumeScene : 'room'); },
+  cont:()=>{ AU.init(); go(resumeScene && !['title','end','end2','end3'].includes(resumeScene) ? resumeScene : 'room'); },
   knob:el=>{
     if(S.f.clockDone){ say('Часы уже пробили своё. Механизм стрелок застопорился.'); return; }
     const k=el.dataset.k; if(k==='h') S.hs++; else S.ms++;
@@ -1965,6 +2446,58 @@ const ACT={
     else say('Гнездо в форме сердца. Пустое.');
   },
   prof:()=>{ S.tEnd=Date.now(); save(); go('end2'); },
+  toAirship:()=>{ AU.init(); S.level=3; S.f.ch2=true; S.inv=[]; S.sel=null; S.tEnd=0; go('jump');
+    sayAll(['Башня гудит и звенит. Вдруг небо прорезает прожектор: к башне идут корабли Гильдии.',
+      '— Слышишь второй гул, пониже? — улыбается профессор. — Это моя «Аврора». Я вызвал её с часовой комнаты.',
+      'Дирижабль подходит к самому карнизу башни. Остаётся только прыгнуть.']); },
+  board:()=>{ AU.whirr(); go('ship');
+    sayAll(['Палуба «Авроры» качается под ногами. Профессор хватается за штурвал.',
+      '«Гильдия побывала здесь до нас: топка залита, вентили перекрыты. А их корабль уже идёт по нашему следу!»',
+      '«Я держу штурвал. Ты — механик. Возьми ключ на стойке у левой стены и спустись в машинное через люк.»']); },
+  prof3:()=>{ const f=S.f;
+    if(f.escaped){ S.tEnd=Date.now(); save(); go('end3'); return; }
+    say(!f.gotWrench?'«Ключ — на стойке у левой стены! Без него вентили не провернуть.»'
+      :!f.engineOn?'«В машинное, скорее! Открой все вентили — тогда котёл оживёт.»'
+      :!f.ballastDone?'«Машина работает! Теперь вверх, через хребет. Сколько сбросить балласта — записано в журнале на штурманском столе.»'
+      :!f.headingDone?'«Мы над облаками! С Пика Бурь сигналят — глянь в подзорную трубу и выставь курс на нактоузе.»'
+      :'«Курс верный. Теперь телеграф — и не гони машину: малый, средний, полный!»'); },
+  wrench:()=>{ if(S.f.gotWrench){ say('На стойке остались молоток и клещи.'); return; } S.f.gotWrench=true; addItem('wrench'); render(); say('Тяжёлый гаечный ключ. Теперь — в машинное.'); },
+  valve:el=>{ const f=S.f; if(f.engineOn) return;
+    if(!f.gotWrench){ say('Вентиль прикипел намертво. Голыми руками не провернуть — нужен гаечный ключ.'); return; }
+    lightsOut(+el.dataset.i); AU.click(); AU.noise(.3,.06,2500,'highpass'); save(); render();
+    if(S.vl.every(Boolean)){ f.engineOn=true; save(); AU.hiss();
+      setTimeout(()=>{ AU.whirr(); render(); AU.chime(); say('Пар пошёл по магистрали, в топке загудело пламя, маховик закрутился. «Аврора» ожила!'); },500); } },
+  bag:el=>{ if(S.f.ballastDone) return; const i=+el.dataset.i; S.bl[i]^=1; AU.click(); save(); render(); },
+  drop:()=>{ const f=S.f; if(f.ballastDone) return;
+    if(!f.engineOn){ AU.clank(); say('Без машины подниматься нельзя: ветер бросит нас на скалы. Сначала котёл.'); return; }
+    const sum=BALLAST.reduce((a,w,i)=>a+(S.bl[i]?w:0),0);
+    if(!sum){ say('Ни один мешок не выбран к сбросу.'); return; }
+    if(sum===BALLAST_TARGET){ f.ballastDone=true; save(); AU.clank();
+      BALLAST.forEach((w,i)=>{ if(S.bl[i]) document.querySelector(`[data-act="bag"][data-i="${i}"] > g`)?.classList.add('dropped'); });
+      setTimeout(()=>{ AU.whirr(); render(); AU.chime(); say('Мешки ушли вниз, и «Аврора» плавно поднялась над хребтом — прямо над облаками!'); },1300); return; }
+    AU.clank(); S.bl=[0,0,0,0,0]; save(); render();
+    say(sum>BALLAST_TARGET?'Слишком много! Нас вынесет прямо в грозу. Профессор успел перехватить рычаг.':'Слишком мало: такого подъёма не хватит, чтобы перевалить хребет. Рычаг вернулся на место.'); },
+  hdw:el=>{ const f=S.f; if(f.headingDone) return; const i=+el.dataset.i; S.hd[i]=(S.hd[i]+1)%10; $('#hd'+i).textContent=S.hd[i]; AU.click(); save();
+    const c=document.querySelector('.card'); if(c) c.style.transform=`rotate(${-(S.hd[0]*100+S.hd[1]*10+S.hd[2])}deg)`;
+    if(S.hd.join()===HEADING.join()){ f.headingDone=true; save(); AU.chime();
+      say(f.ballastDone?'Нактоуз щёлкнул: курс 045, северо-восток — прямо на Пик Бурь. Профессор переложил штурвал.':'Курс 045 — северо-восток. Профессор кивает: «Верно. Откуда ты знал?»'); } },
+  tgset:el=>{ const f=S.f; if(f.escaped) return; const i=+el.dataset.i, lv=$('#tglever');
+    const setL=v=>{ if(lv) lv.style.transform=`rotate(${-120+40*v}deg)`; };
+    const bounce=(msg)=>{ setL(i); AU.clank(); setTimeout(()=>{ S.tg=3; setL(3); save(); },700); say(msg); };
+    AU.tone(1500,.4,'sine',.08); AU.tone(1500,.4,'sine',.06,.18);
+    if(i===3){ S.tg=3; setL(3); save(); say('Стоп машина.'); return; }
+    if(i<3) return bounce('Назад нельзя — там корабль Гильдии!');
+    if(!f.engineOn) return bounce('Из переговорной трубы — тишина. Котёл холодный, машина не отвечает.');
+    if(!f.ballastDone) return bounce('Профессор: «Рано! Впереди хребет — сначала нужно подняться.»');
+    if(!f.headingDone) return bounce('Профессор: «Полный — а куда? Курс не задан!»');
+    if(i===S.tg) return;
+    if(i!==S.tg+1) return bounce('Машина захлебнулась от рывка, рычаг отбросило на СТОП. Переводи по порядку!');
+    S.tg=i; setL(i); save();
+    if(i===4) say('Малый вперёд! Винты закрутились, корпус вздрогнул.');
+    else if(i===5) say('Средний вперёд! «Аврора» набирает ход, за кормой воет ветер.');
+    else { f.escaped=true; save(); AU.whirr(); AU.hiss(); AU.chime();
+      say('Полный вперёд!');
+      setTimeout(()=>{ go('ship'); sayAll(['«Аврора» рванулась вперёд и нырнула в грозовой фронт. Прожектор Гильдии метнулся и погас за кормой.','Тучи расступаются — впереди рассвет. Профессор смеётся у штурвала: «Держись!» Коснись профессора.']); },1600); } },
   wheel:()=>{ if(S.f.heartIn) return; AU.clank(); const w=$('#wheel'); w.classList.remove('shake'); void w.getBoundingClientRect(); w.classList.add('shake');
     say('Колесо не поддаётся ни на миллиметр. Механизму не хватает сердца.'); }
 };
