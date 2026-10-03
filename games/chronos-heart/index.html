@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Caveat:wght@500;700&display=swap">
 <style>
-/* Layout: one-screen game. Top bar, square SVG stage, inventory tray. Single dark look by design. */
+/* Layout: one-screen game. Top bar, square SVG stage that bleeds to the edges, inventory tray. Single dark look by design. */
 :root{
   --soot:#120b07; --char:#1d130c; --brass:#d6a64e; --brass-hi:#f4d68f; --parch:#ead7ac; --ember:#e8752a;
   --line:rgba(214,166,78,.32);
@@ -20,35 +20,39 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflow:hidden;
   -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-#app{height:100%;display:flex;flex-direction:column;
-  background:radial-gradient(ellipse at 50% 42%,#2b1b10 0%,#120b07 70%)}
-#top{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+#app{height:100%;display:flex;flex-direction:column;background:#0b0705}
+#top{flex:0 0 auto;display:flex;align-items:center;gap:10px;position:relative;z-index:2;
   padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;
-  background:linear-gradient(#24170e,#170f09);border-bottom:1px solid var(--line)}
+  background:linear-gradient(#2a1b10,#150d08);border-bottom:1px solid var(--line);box-shadow:0 4px 18px rgba(0,0,0,.6)}
 #loc{flex:1;min-width:0;text-align:center;font:600 21px/1.1 var(--display);letter-spacing:.09em;color:var(--brass-hi);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.btn{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:1px solid var(--brass);
-  background:radial-gradient(circle at 35% 30%,#5b3d1b,#24170c 75%);color:var(--brass-hi);
-  font:700 20px/1 var(--display);display:grid;place-items:center;cursor:pointer;padding:0}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 #000,0 0 14px rgba(244,214,143,.25)}
+.btn{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:1px solid #8a6428;
+  background:radial-gradient(circle at 35% 28%,#f6d48a 0%,#b8862f 38%,#5e3b10 100%);color:#2a1606;
+  box-shadow:inset 0 1px 1px rgba(255,240,200,.7),inset 0 -2px 3px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.6);
+  font:700 22px/1 var(--display);display:grid;place-items:center;cursor:pointer;padding:0}
 .btn:focus-visible,.slot:focus-visible,.cta:focus-visible{outline:2px solid var(--brass-hi);outline-offset:2px}
 .btn svg{width:22px;height:22px}
-.btn.off{opacity:.45}
+.btn.off{filter:saturate(.2) brightness(.7)}
 .spacer{width:42px;flex:0 0 auto}
 #stage{flex:1 1 auto;position:relative;min-height:0}
 #view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #msg{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(calc(100% - 32px),640px);box-sizing:border-box;
-  padding:14px 18px 12px;background:rgba(18,11,6,.9);border:1px solid rgba(214,166,78,.55);border-radius:3px;
-  box-shadow:0 10px 30px rgba(0,0,0,.6),inset 0 0 0 4px rgba(214,166,78,.07);cursor:pointer;animation:msgIn .35s ease}
+  padding:14px 20px 12px;background:linear-gradient(rgba(30,19,11,.94),rgba(16,10,6,.94));border:1px solid rgba(214,166,78,.6);border-radius:3px;
+  box-shadow:0 10px 30px rgba(0,0,0,.65),inset 0 0 0 4px rgba(214,166,78,.08);cursor:pointer;animation:msgIn .35s ease}
+#msg::before,#msg::after{content:"";position:absolute;top:50%;width:9px;height:9px;margin-top:-5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff1c4,#b8862f 55%,#4a2e0e)}
+#msg::before{left:-5px}#msg::after{right:-5px}
 #msg p{margin:0;font:500 19px/1.38 var(--body);color:var(--parch);text-wrap:pretty}
 #msg .more{display:block;margin-top:6px;text-align:right;font:500 13px/1 var(--display);letter-spacing:.14em;color:var(--brass)}
 @keyframes msgIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
-#inv{flex:0 0 auto;display:flex;justify-content:center;gap:10px;
+#inv{flex:0 0 auto;display:flex;justify-content:center;gap:10px;position:relative;z-index:2;
   padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
-  background:linear-gradient(#170f09,#0d0805);border-top:1px solid var(--line)}
-.slot{width:64px;height:64px;border-radius:8px;border:1px solid rgba(214,166,78,.35);padding:4px;box-sizing:border-box;
-  background:radial-gradient(circle at 50% 40%,#2e1f13,#120b07 80%);cursor:pointer;transition:box-shadow .2s,transform .2s}
+  background:linear-gradient(#1c120a,#0d0805);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.6)}
+.slot{width:64px;height:64px;border-radius:50%;border:2px solid #7a5626;padding:6px;box-sizing:border-box;
+  background:radial-gradient(circle at 50% 45%,#2a1c11 0%,#0e0805 75%);
+  box-shadow:inset 0 3px 8px rgba(0,0,0,.8),0 0 0 3px #2a1a0c,0 0 0 4px #8a6428;cursor:pointer;transition:box-shadow .2s,transform .2s}
 .slot svg{width:100%;height:100%;display:block}
-.slot.sel{box-shadow:0 0 0 2px var(--brass-hi),0 0 22px rgba(244,214,143,.55);transform:translateY(-3px)}
+.slot.sel{box-shadow:inset 0 3px 8px rgba(0,0,0,.8),0 0 0 3px #2a1a0c,0 0 0 4px var(--brass-hi),0 0 22px rgba(244,214,143,.6);transform:translateY(-3px)}
 .slot.new{animation:newItem 1s ease}
 @keyframes newItem{0%{transform:scale(.6)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
 
@@ -70,6 +74,14 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
 .puff{transform-box:fill-box;transform-origin:center;animation:puff 3.4s ease-out infinite}
 @keyframes dust{0%{transform:translate(0,0);opacity:0}25%{opacity:.8}100%{transform:translate(30px,-120px);opacity:0}}
 .dust{animation:dust 9s linear infinite}
+@keyframes bubble{0%{transform:translateY(0);opacity:0}20%{opacity:.9}100%{transform:translateY(-26px);opacity:0}}
+.bubble{animation:bubble 2.4s ease-in infinite}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+.twinkle{animation:twinkle 3s ease-in-out infinite}
+@keyframes drift{from{transform:translateX(-60px)}to{transform:translateX(260px)}}
+.drift{animation:drift 70s linear infinite}
+@keyframes blink{0%,80%,100%{opacity:0}85%,95%{opacity:1}}
+.blink{animation:blink 2.2s linear infinite}
 @keyframes glint{0%,70%,100%{opacity:0;transform:scale(.2) rotate(0)}82%{opacity:1;transform:scale(1) rotate(45deg)}}
 .glint{transform-box:fill-box;transform-origin:center;animation:glint 3.6s ease-in-out infinite;pointer-events:none}
 @keyframes needle{0%,100%{transform:rotate(-30deg)}40%{transform:rotate(-12deg)}70%{transform:rotate(-24deg)}}
@@ -92,7 +104,7 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
 .prot{transition:transform .25s ease}
 .tile{cursor:pointer}
 .tile .pg{opacity:0;stroke-dasharray:14 18}
-.tile.on .pm{stroke:#cf6f2e}
+.tile.on .pm{stroke:#d27532}
 .tile.on .pg{opacity:.9;animation:dash .7s linear infinite}
 .book{transition:transform .25s ease;cursor:pointer}
 .book .shade{opacity:0;transition:opacity .25s}
@@ -106,65 +118,127 @@ html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflo
 .gauge-n{transition:transform 2s cubic-bezier(.3,1.4,.5,1)}
 .hot{cursor:pointer}
 .cta{cursor:pointer}
-.cta:hover rect.face{filter:brightness(1.12)}
+.cta:hover .face{filter:brightness(1.12)}
+.screen{mix-blend-mode:screen}
 @media (prefers-reduced-motion:reduce){
-  .spin,.swing,.rain,.puff,.dust,.glint,.needle,.pulse,.bob,.flick,.flame,.dashpulse{animation:none!important}
+  .spin,.swing,.rain,.puff,.dust,.glint,.needle,.pulse,.bob,.flick,.flame,.dashpulse,.bubble,.twinkle,.drift,.blink{animation:none!important}
 }
 </style>
 </head>
 <body>
 <div id="app">
   <header id="top">
-    <button class="btn" id="back" aria-label="Назад" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="btn" id="back" aria-label="Назад" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <span class="spacer" id="backSpacer"></span>
     <div id="loc">Сердце Хроноса</div>
-    <button class="btn" id="snd" aria-label="Звук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    <button class="btn" id="snd" aria-label="Звук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
     <button class="btn" id="hint" aria-label="Подсказка" hidden>?</button>
   </header>
   <main id="stage">
     <svg id="view" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <!-- metals -->
         <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7dc9a"/><stop offset=".28" stop-color="#d4a24a"/><stop offset=".55" stop-color="#8c5a1f"/><stop offset=".78" stop-color="#d09a43"/><stop offset="1" stop-color="#6a4314"/></linearGradient>
-        <linearGradient id="brassH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2d18a"/><stop offset=".45" stop-color="#b8862f"/><stop offset="1" stop-color="#5e3b10"/></linearGradient>
+        <linearGradient id="brassH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d896"/><stop offset=".45" stop-color="#b8862f"/><stop offset="1" stop-color="#5e3b10"/></linearGradient>
+        <linearGradient id="brassV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5e3b10"/><stop offset=".35" stop-color="#e6bd68"/><stop offset=".55" stop-color="#fbe2a6"/><stop offset="1" stop-color="#6a4314"/></linearGradient>
         <radialGradient id="brassR" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fff0c2"/><stop offset=".22" stop-color="#e4b65c"/><stop offset=".65" stop-color="#9b6a28"/><stop offset="1" stop-color="#4a2e0e"/></radialGradient>
-        <radialGradient id="brassD" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#b58a4a"/><stop offset=".5" stop-color="#6e4a22"/><stop offset="1" stop-color="#2e1c0a"/></radialGradient>
+        <radialGradient id="brassD" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#c49a58"/><stop offset=".5" stop-color="#7a5428"/><stop offset="1" stop-color="#32200c"/></radialGradient>
         <radialGradient id="rivet" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff3cf"/><stop offset=".4" stop-color="#c99a4a"/><stop offset="1" stop-color="#3e260c"/></radialGradient>
-        <linearGradient id="copperH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b285"/><stop offset=".35" stop-color="#c06a34"/><stop offset=".72" stop-color="#6e3416"/><stop offset="1" stop-color="#3a1a08"/></linearGradient>
-        <linearGradient id="copperV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a1a08"/><stop offset=".3" stop-color="#c06a34"/><stop offset=".5" stop-color="#f2b285"/><stop offset="1" stop-color="#4a220c"/></linearGradient>
-        <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22261c"/><stop offset=".55" stop-color="#2f2c1e"/><stop offset="1" stop-color="#1a1610"/></linearGradient>
-        <pattern id="damask" width="90" height="120" patternUnits="userSpaceOnUse">
-          <path d="M45,8 C62,28 72,44 45,60 C18,44 28,28 45,8 Z M45,60 C58,76 62,92 45,112 C28,92 32,76 45,60 Z" fill="#d9b070" opacity=".07"/>
-          <circle cx="0" cy="60" r="5" fill="#d9b070" opacity=".06"/><circle cx="90" cy="60" r="5" fill="#d9b070" opacity=".06"/>
-        </pattern>
+        <linearGradient id="copperH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a2810"/><stop offset=".18" stop-color="#f4b88c"/><stop offset=".4" stop-color="#c06a34"/><stop offset=".75" stop-color="#6e3416"/><stop offset="1" stop-color="#2e1406"/></linearGradient>
+        <linearGradient id="copperV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2e1406"/><stop offset=".25" stop-color="#c06a34"/><stop offset=".45" stop-color="#f4b88c"/><stop offset=".7" stop-color="#8a4420"/><stop offset="1" stop-color="#2e1406"/></linearGradient>
+        <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a8a86"/><stop offset=".5" stop-color="#3e3e3c"/><stop offset="1" stop-color="#6a6a66"/></linearGradient>
+        <!-- woods, fabrics, papers (base colours; textures overlay these) -->
         <linearGradient id="woodV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f2e18"/><stop offset="1" stop-color="#2a170b"/></linearGradient>
-        <linearGradient id="woodH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a170b"/><stop offset=".5" stop-color="#55331b"/><stop offset="1" stop-color="#2a170b"/></linearGradient>
-        <linearGradient id="woodTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e2212"/><stop offset="1" stop-color="#6e4224"/></linearGradient>
-        <linearGradient id="floorG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0f07"/><stop offset=".4" stop-color="#3a2213"/><stop offset="1" stop-color="#160c05"/></linearGradient>
         <linearGradient id="mahog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a321a"/><stop offset=".5" stop-color="#55200f"/><stop offset="1" stop-color="#2e1108"/></linearGradient>
-        <linearGradient id="mahogTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e170b"/><stop offset="1" stop-color="#83391d"/></linearGradient>
         <radialGradient id="ivory" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#fffaf0"/><stop offset=".7" stop-color="#efe0bd"/><stop offset="1" stop-color="#c9ad78"/></radialGradient>
-        <linearGradient id="parch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4e6c2"/><stop offset=".5" stop-color="#e9d4a3"/><stop offset="1" stop-color="#d2b47a"/></linearGradient>
-        <radialGradient id="parchEdge" r=".72"><stop offset=".62" stop-color="#6b3d14" stop-opacity="0"/><stop offset="1" stop-color="#6b3d14" stop-opacity=".55"/></radialGradient>
+        <radialGradient id="parchEdge" r=".72"><stop offset=".6" stop-color="#5a2e0c" stop-opacity="0"/><stop offset=".92" stop-color="#5a2e0c" stop-opacity=".45"/><stop offset="1" stop-color="#2a1404" stop-opacity=".8"/></radialGradient>
+        <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a1420"/><stop offset="1" stop-color="#2a0408"/></linearGradient>
+        <linearGradient id="folds" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="26" y2="0" spreadMethod="repeat"><stop offset="0" stop-color="#2e060c"/><stop offset=".35" stop-color="#7a1824"/><stop offset=".55" stop-color="#9a2632"/><stop offset=".75" stop-color="#5a0e18"/><stop offset="1" stop-color="#2e060c"/></linearGradient>
+        <linearGradient id="greenGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab88a"/><stop offset=".25" stop-color="#1f6a46"/><stop offset=".7" stop-color="#0c3a24"/><stop offset="1" stop-color="#062014"/></linearGradient>
+        <!-- shading overlays -->
+        <linearGradient id="shV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+        <linearGradient id="shVr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".3" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+        <linearGradient id="shWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset=".25" stop-color="#000" stop-opacity=".1"/><stop offset=".8" stop-color="#000" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+        <linearGradient id="shFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".75"/><stop offset=".45" stop-color="#000" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+        <linearGradient id="shCyl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".6"/><stop offset=".28" stop-color="#fff" stop-opacity=".14"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient>
+        <radialGradient id="shAO" r=".72"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".6"/></radialGradient>
+        <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="moonBeam" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#b8ceff" stop-opacity=".28"/><stop offset="1" stop-color="#b8ceff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe0a0" stop-opacity=".45"/><stop offset="1" stop-color="#ffe0a0" stop-opacity="0"/></linearGradient>
+        <!-- lights & scenes -->
         <radialGradient id="warm"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".55"/><stop offset=".45" stop-color="#ff9a3a" stop-opacity=".16"/><stop offset="1" stop-color="#ff9a3a" stop-opacity="0"/></radialGradient>
         <radialGradient id="vig" r=".5"><stop offset=".38" stop-color="#000" stop-opacity="0"/><stop offset=".68" stop-color="#000" stop-opacity=".62"/><stop offset=".9" stop-color="#000" stop-opacity=".95"/><stop offset="1" stop-color="#000"/></radialGradient>
-        <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050a18"/><stop offset=".6" stop-color="#142640"/><stop offset="1" stop-color="#2d3d52"/></linearGradient>
+        <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#040814"/><stop offset=".55" stop-color="#13243e"/><stop offset="1" stop-color="#34465c"/></linearGradient>
         <linearGradient id="sunset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1638"/><stop offset=".35" stop-color="#6a2c4a"/><stop offset=".62" stop-color="#d0603a"/><stop offset=".8" stop-color="#f4b25a"/><stop offset="1" stop-color="#f7d38a"/></linearGradient>
         <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a4a3a"/><stop offset="1" stop-color="#1e1028"/></linearGradient>
-        <radialGradient id="varnish" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#fff2c8" stop-opacity=".1"/><stop offset="1" stop-color="#3a1a00" stop-opacity=".5"/></radialGradient>
-        <linearGradient id="glassG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity=".02"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <radialGradient id="varnish" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#fff2c8" stop-opacity=".1"/><stop offset="1" stop-color="#3a1a00" stop-opacity=".55"/></radialGradient>
+        <linearGradient id="glassG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".35" stop-color="#fff" stop-opacity=".02"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
         <linearGradient id="ringG0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efca7c"/><stop offset=".5" stop-color="#a87634"/><stop offset="1" stop-color="#e1b45e"/></linearGradient>
         <linearGradient id="ringG1" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cf9d50"/><stop offset=".5" stop-color="#7a4f1e"/><stop offset="1" stop-color="#c08a3e"/></linearGradient>
-        <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5e452a"/><stop offset="1" stop-color="#2a1b0e"/></linearGradient>
         <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#e2b257"/><stop offset="1" stop-color="#8a5a1a"/></linearGradient>
-        <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a1420"/><stop offset="1" stop-color="#2a0408"/></linearGradient>
         <radialGradient id="heartG" cx=".42" cy=".38" r=".72"><stop offset="0" stop-color="#fff4c4"/><stop offset=".25" stop-color="#ffb070"/><stop offset=".62" stop-color="#e3401c"/><stop offset="1" stop-color="#5e0a05"/></radialGradient>
         <radialGradient id="lightR"><stop offset="0" stop-color="#fffbe8"/><stop offset=".35" stop-color="#ffd98a" stop-opacity=".9"/><stop offset="1" stop-color="#ffb040" stop-opacity="0"/></radialGradient>
         <radialGradient id="fireG" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff0a0"/><stop offset=".4" stop-color="#ff8a20"/><stop offset="1" stop-color="#5a1000"/></radialGradient>
+        <radialGradient id="potion" cx=".4" cy=".4" r=".7"><stop offset="0" stop-color="#d8ffb0"/><stop offset=".5" stop-color="#4ad06a"/><stop offset="1" stop-color="#0a4a1a"/></radialGradient>
+        <radialGradient id="recess" r=".5"><stop offset=".7" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></radialGradient>
+        <!-- procedural textures (filled in by script at start) -->
+        <pattern id="pWood" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.7)"><image data-tx="wood" width="512" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pWoodV" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="rotate(90) scale(.7)"><image data-tx="wood" width="512" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pFloor" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="rotate(90) scale(1.2 .9)"><image data-tx="wood" width="512" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pMahog" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.6)"><image data-tx="mahog" width="512" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pMahogS" width="512" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.25)"><image data-tx="mahog" width="512" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pPaperS" width="256" height="320" patternUnits="userSpaceOnUse" patternTransform="scale(.42)"><image data-tx="paper" width="256" height="320" preserveAspectRatio="none"/></pattern>
+        <pattern id="pPaperL" width="256" height="320" patternUnits="userSpaceOnUse" patternTransform="scale(.72)"><image data-tx="paper" width="256" height="320" preserveAspectRatio="none"/></pattern>
+        <pattern id="pLeather" width="256" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.9)"><image data-tx="leather" width="256" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pLeatherS" width="256" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.35)"><image data-tx="leather" width="256" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pParch" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(2)"><image data-tx="parch" width="384" height="384" preserveAspectRatio="none"/></pattern>
+        <pattern id="pParchS" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(.4)"><image data-tx="parch" width="384" height="384" preserveAspectRatio="none"/></pattern>
+        <pattern id="pSpun" patternUnits="objectBoundingBox" patternContentUnits="objectBoundingBox" width="1" height="1"><image data-tx="spun" width="1" height="1" preserveAspectRatio="none"/></pattern>
+        <pattern id="pBrush" width="256" height="256" patternUnits="userSpaceOnUse"><image data-tx="brush" width="256" height="256" preserveAspectRatio="none"/></pattern>
+        <pattern id="pGrime" width="384" height="384" patternUnits="userSpaceOnUse" patternTransform="scale(1.3)"><image data-tx="grime" width="384" height="384" preserveAspectRatio="none"/></pattern>
+        <pattern id="pPatina" width="256" height="256" patternUnits="userSpaceOnUse" patternTransform="scale(.6)"><image data-tx="patina" width="256" height="256" preserveAspectRatio="none"/></pattern>
+        <!-- filters -->
         <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+        <filter id="blur4" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter>
         <filter id="sh" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".6"/></filter>
-        <filter id="grain" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="3" seed="7"/><feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.05  0 0 0 0 0.02  1.8 0 0 0 -0.72"/></filter>
-        <filter id="paper" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.1  1.2 0 0 0 -0.52"/></filter>
+        <filter id="shS" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".7"/></filter>
+        <filter id="bevel" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="b"/>
+          <feSpecularLighting in="b" surfaceScale="3.5" specularConstant=".95" specularExponent="18" lighting-color="#fff0c8" result="sp"><feDistantLight azimuth="225" elevation="40"/></feSpecularLighting>
+          <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+          <feDiffuseLighting in="b" surfaceScale="3.5" diffuseConstant="1" lighting-color="#fff" result="df"><feDistantLight azimuth="225" elevation="52"/></feDiffuseLighting>
+          <feComposite in="SourceGraphic" in2="df" operator="arithmetic" k1="1.2" k2="0" k3="0" k4="0" result="lit"/>
+          <feComposite in="lit" in2="sp2" operator="arithmetic" k2="1" k3=".8" result="out"/>
+          <feComposite in="out" in2="SourceAlpha" operator="in"/>
+        </filter>
+        <filter id="bevelS" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="b"/>
+          <feSpecularLighting in="b" surfaceScale="2.5" specularConstant=".9" specularExponent="16" lighting-color="#fff0c8" result="sp"><feDistantLight azimuth="225" elevation="40"/></feSpecularLighting>
+          <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+          <feDiffuseLighting in="b" surfaceScale="2.5" diffuseConstant="1" lighting-color="#fff" result="df"><feDistantLight azimuth="225" elevation="52"/></feDiffuseLighting>
+          <feComposite in="SourceGraphic" in2="df" operator="arithmetic" k1="1.2" k2="0" k3="0" k4="0" result="lit"/>
+          <feComposite in="lit" in2="sp2" operator="arithmetic" k2="1" k3=".8" result="out"/>
+          <feComposite in="out" in2="SourceAlpha" operator="in"/>
+        </filter>
+        <filter id="bevelL" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="b"/>
+          <feSpecularLighting in="b" surfaceScale="5" specularConstant="1" specularExponent="20" lighting-color="#fff0c8" result="sp"><feDistantLight azimuth="225" elevation="38"/></feSpecularLighting>
+          <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+          <feDiffuseLighting in="b" surfaceScale="5" diffuseConstant="1" lighting-color="#fff" result="df"><feDistantLight azimuth="225" elevation="52"/></feDiffuseLighting>
+          <feComposite in="SourceGraphic" in2="df" operator="arithmetic" k1="1.2" k2="0" k3="0" k4="0" result="lit"/>
+          <feComposite in="lit" in2="sp2" operator="arithmetic" k2="1" k3=".8" result="out"/>
+          <feComposite in="out" in2="SourceAlpha" operator="in"/>
+        </filter>
+        <filter id="carve" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b"/>
+          <feSpecularLighting in="b" surfaceScale="3" specularConstant=".45" specularExponent="12" lighting-color="#ffd9a8" result="sp"><feDistantLight azimuth="225" elevation="45"/></feSpecularLighting>
+          <feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/>
+          <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1" lighting-color="#fff" result="df"><feDistantLight azimuth="225" elevation="55"/></feDiffuseLighting>
+          <feComposite in="SourceGraphic" in2="df" operator="arithmetic" k1="1.15" k2="0" k3="0" k4="0" result="lit"/>
+          <feComposite in="lit" in2="sp2" operator="arithmetic" k2="1" k3=".7" result="out"/>
+          <feComposite in="out" in2="SourceAlpha" operator="in"/>
+        </filter>
         <clipPath id="lensClip"><circle id="lensC" cx="-500" cy="-500" r="100"/></clipPath>
         <clipPath id="winClip"><path d="M72,398 L72,182 A98,98 0 0 1 268,182 L268,398 Z"/></clipPath>
       </defs>
@@ -187,14 +261,14 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 const SAVE_KEY = 'chronos-heart-v1';
 
 /* ---------------- state ---------------- */
-function freshState(){
-  return { inv:[], sel:null, f:{}, hs:0, ms:0, rs:[0,0,0], pr:PIPE_SOL.map((t,i)=>t[1]+PIPE_SCR[i]),
-    shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false };
-}
 const PIPE_SOL = [['c',1],['s',0],['c',2],['s',1], ['s',1],['c',2],['c',1],['c',2], ['c',3],['c',0],['c',3],['c',0], ['s',0],['c',1],['s',1],['c',3]];
 const PIPE_SCR = [1,1,3,2, 1,2,1,3, 0,1,2,3, 1,3,2,1];
 const RINGS = [['sun','moon','star','tri','wave','earth'],['wave','earth','sun','star','moon','tri'],['moon','tri','earth','wave','sun','star']];
 const CODE = ['moon','star','tri'];
+function freshState(){
+  return { inv:[], sel:null, f:{}, hs:0, ms:0, rs:[0,0,0], pr:PIPE_SOL.map((t,i)=>t[1]+PIPE_SCR[i]),
+    shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false };
+}
 let S = freshState();
 let soundOn = true;
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const d = JSON.parse(raw); if (d && d.f) S = Object.assign(freshState(), d); } } catch(e) {}
@@ -250,8 +324,141 @@ setInterval(()=>{
   if(sc==='room') AU.tick(true); else if(sc==='clock' && !S.f.clockDone) AU.tick(false);
 }, 1000);
 
-/* ---------------- drawing helpers ---------------- */
+/* ---------------- procedural textures ---------------- */
 function rng(seed){ let s=seed; return ()=> (s = (s*16807) % 2147483647) / 2147483647; }
+function makeNoise(seed){
+  const r=rng(seed*7919+13), p=new Uint8Array(256), v=new Float32Array(256);
+  for(let i=0;i<256;i++){ p[i]=i; v[i]=r(); }
+  for(let i=255;i>0;i--){ const j=Math.floor(r()*(i+1)), t=p[i]; p[i]=p[j]; p[j]=t; }
+  const h=(x,y)=>v[p[(p[x&255]+y)&255]];
+  return (x,y,Px,Py)=>{
+    const ix=Math.floor(x), iy=Math.floor(y), fx=x-ix, fy=y-iy, u=fx*fx*(3-2*fx), w=fy*fy*(3-2*fy);
+    const x0=((ix%Px)+Px)%Px, y0=((iy%Py)+Py)%Py, x1=(x0+1)%Px, y1=(y0+1)%Py;
+    const a=h(x0,y0), b=h(x1,y0), c=h(x0,y1), d=h(x1,y1);
+    return a+(b-a)*u+(c-a)*w+(a-b-c+d)*u*w;
+  };
+}
+// tileable fractal noise: u,v in [0,1), fx/fy base periods
+function fbm(n,u,v,fx,fy,oct){
+  let s=0, a=.5, t=0;
+  for(let k=0;k<oct;k++){ const m=1<<k; s+=n(u*fx*m, v*fy*m, fx*m, fy*m)*a; t+=a; a*=.5; }
+  return s/t;
+}
+const sm=(a,b,x)=>{ const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t); };
+const mix=(a,b,t)=>a+(b-a)*t;
+function canvasTex(w,h,fn){
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d'), im=g.createImageData(w,h), d=im.data, o=[0,0,0,255];
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ o[3]=255; fn(x/w,y/h,o,x,y); const i=(y*w+x)*4; d[i]=o[0]; d[i+1]=o[1]; d[i+2]=o[2]; d[i+3]=o[3]; }
+  g.putImageData(im,0,0); return c;
+}
+function woodTex(seed,dark,light){
+  const n=makeNoise(seed);
+  return canvasTex(512,256,(u,v,o)=>{
+    const warp=fbm(n,u,v,3,2,3), fib=fbm(n,u,v,6,64,3);
+    const ring=.5+.5*Math.sin(Math.PI*2*(v*5+warp*1.8));
+    let k=Math.pow(ring,2.5)*.55+fib*.5;
+    if(fib>.72) k*=.75;
+    for(let i=0;i<3;i++) o[i]=mix(dark[i],light[i],Math.max(0,Math.min(1,k)));
+  });
+}
+function paperTex(){ // dark green wallpaper with gold damask, half-drop repeat
+  const n=makeNoise(5);
+  const c=canvasTex(256,320,(u,v,o,x)=>{
+    const m=fbm(n,u,v,4,5,4);
+    o[0]=mix(18,34,m); o[1]=mix(30,48,m); o[2]=mix(24,38,m);
+    if(x%64<2){ o[0]+=22; o[1]+=17; o[2]+=6; }
+  });
+  const g=c.getContext('2d');
+  const motif=new Path2D('M128,40 C150,70 172,92 160,132 C186,120 208,142 202,172 C192,204 160,208 146,192 C152,218 146,242 128,272 C110,242 104,218 110,192 C96,208 64,204 54,172 C48,142 70,120 96,132 C84,92 106,70 128,40 Z');
+  const inner=new Path2D('M128,92 C140,118 140,150 128,176 C116,150 116,118 128,92 Z M128,196 m-11,0 a11,11 0 1 0 22,0 a11,11 0 1 0 -22,0');
+  for(const [dx,dy] of [[0,0],[-128,-160],[128,-160],[-128,160],[128,160]]){
+    g.save(); g.translate(dx,dy);
+    g.fillStyle='rgba(201,160,98,.17)'; g.fill(motif);
+    g.strokeStyle='rgba(240,200,130,.22)'; g.lineWidth=1.5; g.stroke(motif);
+    g.fillStyle='rgba(10,20,14,.55)'; g.fill(inner);
+    g.strokeStyle='rgba(201,160,98,.2)'; g.stroke(inner);
+    g.restore();
+  }
+  return c;
+}
+function leatherTex(){
+  const n=makeNoise(9);
+  return canvasTex(256,256,(u,v,o)=>{
+    const g=fbm(n,u,v,32,32,2), m=fbm(n,u,v,3,3,3);
+    const pebble=Math.pow(Math.abs(g-.5)*2,.6);
+    const k=.62+.38*m-pebble*.22;
+    o[0]=24*k+6; o[1]=58*k+6; o[2]=40*k+4;
+  });
+}
+function parchTex(){
+  const n=makeNoise(21);
+  return canvasTex(384,384,(u,v,o)=>{
+    const m=fbm(n,u,v,3,3,5), fib=fbm(n,u,v,48,6,2), spot=fbm(n,u,v,12,12,2);
+    const t=sm(.38,.85,m)*.8 + (spot>.74?.25:0);
+    const k=.93+.1*fib;
+    o[0]=mix(242,196,t)*k; o[1]=mix(226,158,t)*k; o[2]=mix(186,100,t)*k;
+  });
+}
+function spunTex(){ // circular brushed metal, alpha-only highlights
+  const n=makeNoise(3);
+  return canvasTex(384,384,(u,v,o)=>{
+    const x=u*2-1, y=v*2-1, r=Math.hypot(x,y), th=Math.atan2(y,x);
+    if(r>1){ o[3]=0; return; }
+    const ring=n(r*140,1.5,256,256), fine=n(u*256,v*256,256,256);
+    const b=.5+.32*Math.cos(2*(th+Math.PI/4))*(.4+.6*r)+(ring-.5)*.4+(fine-.5)*.08;
+    if(b>.5){ o[0]=o[1]=o[2]=255; o[3]=Math.min(255,(b-.5)*2*210); }
+    else { o[0]=o[1]=o[2]=0; o[3]=Math.min(255,(.5-b)*2*190); }
+  });
+}
+function brushTex(){
+  const n=makeNoise(4);
+  return canvasTex(256,256,(u,v,o)=>{
+    const b=.5+(fbm(n,u,v,2,128,2)-.5)*1.3;
+    if(b>.5){ o[0]=o[1]=o[2]=255; o[3]=(b-.5)*2*150; } else { o[0]=o[1]=o[2]=0; o[3]=(.5-b)*2*150; }
+  });
+}
+function grimeTex(){
+  const n=makeNoise(17);
+  return canvasTex(384,384,(u,v,o)=>{
+    const g=fbm(n,u,v,4,4,5), sp=n(u*192,v*192,192,192);
+    o[0]=14; o[1]=9; o[2]=4; o[3]=sm(.46,.8,g)*170 + (sp>.94?110:0);
+  });
+}
+function patinaTex(){
+  const n=makeNoise(29);
+  return canvasTex(256,256,(u,v,o)=>{
+    const g=fbm(n,u,v,6,6,4);
+    o[0]=70; o[1]=140; o[2]=112; o[3]=sm(.56,.8,g)*200;
+  });
+}
+let TEX_READY=false;
+async function buildTextures(progress){
+  const jobs=[
+    ['wood',()=>woodTex(1,[34,18,9],[118,70,36]),'jpeg'],
+    ['mahog',()=>woodTex(2,[52,14,6],[152,58,28]),'jpeg'],
+    ['paper',paperTex,'jpeg'],
+    ['leather',leatherTex,'jpeg'],
+    ['parch',parchTex,'jpeg'],
+    ['spun',spunTex,'png'],
+    ['brush',brushTex,'png'],
+    ['grime',grimeTex,'png'],
+    ['patina',patinaTex,'png']
+  ];
+  for(let i=0;i<jobs.length;i++){
+    await new Promise(r=>setTimeout(r,0));
+    const [id,fn,fmt]=jobs[i];
+    try{
+      const url=fn().toDataURL(fmt==='jpeg'?'image/jpeg':'image/png', .9);
+      document.querySelectorAll(`image[data-tx="${id}"]`).forEach(im=>{ im.setAttribute('href',url); im.setAttributeNS('http://www.w3.org/1999/xlink','href',url); });
+    }catch(e){}
+    progress((i+1)/jobs.length);
+  }
+  TEX_READY=true;
+}
+
+/* ---------------- drawing helpers ---------------- */
+const BEV=' filter="url(#bevel)"', BEVS=' filter="url(#bevelS)"', BEVL=' filter="url(#bevelL)"', CARVE=' filter="url(#carve)"';
 function gearPath(cx,cy,ro,ri,n){
   let d=''; const st=Math.PI*2/n;
   for(let i=0;i<n;i++){ const a=i*st-Math.PI/2;
@@ -260,21 +467,50 @@ function gearPath(cx,cy,ro,ri,n){
   }
   return d+'Z';
 }
+const circlePath=(cx,cy,r)=>`M${f1(cx-r)},${f1(cy)} a${f1(r)},${f1(r)} 0 1 0 ${f1(2*r)},0 a${f1(r)},${f1(r)} 0 1 0 ${f1(-2*r)},0 Z`;
 function gear(cx,cy,r,n,o={}){
   const ri=r*.84, cls=[o.cls||'', o.spin?'spin':'', o.rev?'rev':''].join(' ').trim();
   const st=`transform-origin:${cx}px ${cy}px;${o.spin?`animation-duration:${o.spin}s;`:''}`;
   let holes='';
-  if(r>26 && !o.solid){ const k=o.holes||5; for(let i=0;i<k;i++){ const a=i*Math.PI*2/k; holes+=`<circle cx="${f1(cx+Math.cos(a)*r*.48)}" cy="${f1(cy+Math.sin(a)*r*.48)}" r="${f1(r*.15)}" fill="${o.hole||'#140b05'}"/>`; } }
-  return `<g class="${cls}" style="${st}"${o.id?` id="${o.id}"`:''}${o.op?` opacity="${o.op}"`:''}>
-    <path d="${gearPath(cx,cy,r,ri,n)}" fill="${o.fill||'url(#brass)'}" stroke="#3a240c" stroke-width="${o.sw||2}"/>
-    <circle cx="${cx}" cy="${cy}" r="${f1(ri*.8)}" fill="none" stroke="#4a2e0e" stroke-width="${f1(Math.max(1.5,r*.05))}" opacity=".55"/>
-    ${holes}
-    <circle cx="${cx}" cy="${cy}" r="${f1(r*.2)}" fill="url(#brassR)" stroke="#3a240c" stroke-width="1.5"/>
-    <circle cx="${cx}" cy="${cy}" r="${f1(r*.06)}" fill="#1a0f06"/>${o.extra||''}
+  if(r>24 && !o.solid){ const k=o.holes||5; for(let i=0;i<k;i++){ const a=i*Math.PI*2/k+.3; holes+=circlePath(cx+Math.cos(a)*r*.5, cy+Math.sin(a)*r*.5, r*.16); } }
+  const d=gearPath(cx,cy,r,ri,n)+holes;
+  const inner=`<g class="${cls}" style="${st}"${o.id?` id="${o.id}"`:''}>
+    <path d="${d}" fill-rule="evenodd" fill="${o.fill||'url(#brass)'}" stroke="#2e1c08" stroke-width="${o.sw||1.5}"/>
+    <path d="${d}" fill-rule="evenodd" fill="url(#pSpun)" opacity="${o.spun??.45}"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(ri*.8)}" fill="none" stroke="#3a240a" stroke-width="${f1(Math.max(1.2,r*.04))}" opacity=".5"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.22)}" fill="url(#brassR)" stroke="#2e1c08" stroke-width="1.2"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.08)}" fill="${o.jewel?'#c0142a':'#1a0f06'}"/>${o.extra||''}
   </g>`;
+  return `<g${o.bev?(r>40?BEV:BEVS):''}${o.op?` opacity="${o.op}"`:''}>${inner}</g>`;
 }
 const rivet = (x,y,r=6) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="${r}" fill="url(#rivet)" stroke="#2a1806" stroke-width="1"/>`;
 function rivetRing(cx,cy,R,n,r=6,off=0){ let s=''; for(let i=0;i<n;i++){ const a=i*Math.PI*2/n+off; s+=rivet(cx+Math.cos(a)*R, cy+Math.sin(a)*R, r); } return s; }
+function bolt(x,y,r){ let p=''; for(let i=0;i<6;i++){ const a=rad(i*60+30); p+=`${f1(x+Math.cos(a)*r)},${f1(y+Math.sin(a)*r)} `; }
+  return `<polygon points="${p}" fill="url(#brassR)" stroke="#2a1806" stroke-width="1"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r*.45)}" fill="url(#brass)" stroke="#2a1806" stroke-width=".8"/>`; }
+function boltRing(cx,cy,R,n,r){ let s=''; for(let i=0;i<n;i++){ const a=i*Math.PI*2/n; s+=bolt(cx+Math.cos(a)*R, cy+Math.sin(a)*R, r); } return s; }
+function disc(cx,cy,r,fill='url(#brassR)',spun=.55){ return `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="${fill}"/><circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="url(#pSpun)" opacity="${spun}"/>`; }
+function annulus(cx,cy,ro,ri,fill='url(#brass)',spun=.5){ const d=circlePath(cx,cy,ro)+circlePath(cx,cy,ri);
+  return `<path d="${d}" fill-rule="evenodd" fill="${fill}"/><path d="${d}" fill-rule="evenodd" fill="url(#pSpun)" opacity="${spun}"/>`; }
+function knurl(cx,cy,r,n,len,col='#2e1c08',w=1.4){ let s=''; for(let i=0;i<n;i++){ const a=i*Math.PI*2/n;
+  s+=`M${f1(cx+Math.cos(a)*(r-len/2))},${f1(cy+Math.sin(a)*(r-len/2))}L${f1(cx+Math.cos(a)*(r+len/2))},${f1(cy+Math.sin(a)*(r+len/2))}`; }
+  return `<path d="${s}" stroke="${col}" stroke-width="${w}" opacity=".7"/>`; }
+function tex(tag,geom,base,pat,shade){ return `<${tag} ${geom} fill="${base}"/>`+(pat?`<${tag} ${geom} fill="url(#${pat})"/>`:'')+(shade?`<${tag} ${geom} fill="${shade}"/>`:''); }
+const R4=(x,y,w,h,rx=0)=>`x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}"${rx?` rx="${rx}"`:''}`;
+function woodRect(x,y,w,h,pat='pWood',shade='url(#shV)',base='#3a2010',rx=0){ return tex('rect',R4(x,y,w,h,rx),base,pat,shade); }
+function molding(x,y,w,h,pat='pWood'){ return `<g${CARVE}>${woodRect(x,y,w,h,pat,'url(#shVr)')}</g><rect ${R4(x,y+h-2,w,2)} fill="#000" opacity=".5"/><rect ${R4(x,y,w,1.5)} fill="#f0c890" opacity=".3"/>`; }
+function carvedPanel(x,y,w,h,pat='pWoodV'){
+  return `<rect ${R4(x,y,w,h)} fill="#000" opacity=".45"/>
+  <g${CARVE}>${woodRect(x+5,y+5,w-10,h-10,pat,'url(#shVr)','#4a2a14',2)}</g>
+  <rect ${R4(x+16,y+16,w-32,h-32)} fill="none" stroke="#000" stroke-opacity=".4" stroke-width="2"/>
+  <rect ${R4(x+17.5,y+17.5,w-32,h-32)} fill="none" stroke="#f0c090" stroke-opacity=".16" stroke-width="1.2"/>`;
+}
+function brassBar(x,y,w,h,o=''){ return `<g${BEVS}><rect ${R4(x,y,w,h,Math.min(3,h/2))} fill="url(#brassH)"${o}/><rect ${R4(x,y,w,h,Math.min(3,h/2))} fill="url(#pBrush)" opacity=".5"/></g>`; }
+function filigree(x,y,s,rot){
+  return `<g transform="translate(${f1(x)},${f1(y)}) rotate(${rot}) scale(${s})"${BEVS}>
+    <path d="M0,0 C14,-4 26,-16 22,-28 C18,-38 6,-36 6,-28 C6,-22 14,-22 14,-27 M0,0 C4,14 16,26 28,22 C38,18 36,6 28,6 C22,6 22,14 27,14" fill="none" stroke="url(#brassH)" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M6,6 C18,0 32,6 38,18 C26,22 14,20 6,6 Z" fill="url(#brass)"/>
+    <circle r="5" fill="url(#brassR)"/></g>`;
+}
 function heartPath(cx,cy,s){
   return `M${f1(cx)},${f1(cy+s*.92)} C${f1(cx-s*1.45)},${f1(cy+s*.08)} ${f1(cx-s*.95)},${f1(cy-s*.95)} ${f1(cx)},${f1(cy-s*.36)} C${f1(cx+s*.95)},${f1(cy-s*.95)} ${f1(cx+s*1.45)},${f1(cy+s*.08)} ${f1(cx)},${f1(cy+s*.92)} Z`;
 }
@@ -283,8 +519,8 @@ function heartObj(cx,cy,s,glow=true){
     ${glow?`<circle cx="${cx}" cy="${cy}" r="${f1(s*2.3)}" fill="url(#warm)" class="pulse"/>`:''}
     <path d="${heartPath(cx,cy,s)}" fill="url(#heartG)" stroke="#4a0a03" stroke-width="${f1(s*.05)}"${glow?' filter="url(#glow)"':''}/>
     <path d="M${cx},${f1(cy-s*.36)} L${f1(cx-s*.35)},${f1(cy+s*.1)} L${cx},${f1(cy+s*.9)} M${cx},${f1(cy-s*.36)} L${f1(cx+s*.4)},${f1(cy+s*.05)} L${cx},${f1(cy+s*.9)} M${f1(cx-s*.35)},${f1(cy+s*.1)} L${f1(cx+s*.4)},${f1(cy+s*.05)}" stroke="#fff2c8" stroke-width="${f1(s*.025)}" fill="none" opacity=".45"/>
-    <path d="${heartPath(cx,cy,s*1.1)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.07)}"/>
-    <ellipse cx="${cx}" cy="${f1(cy+s*.05)}" rx="${f1(s*1.02)}" ry="${f1(s*.22)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.05)}"/>
+    <g${s>30?BEVS:''}><path d="${heartPath(cx,cy,s*1.1)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.08)}"/>
+    <ellipse cx="${cx}" cy="${f1(cy+s*.05)}" rx="${f1(s*1.02)}" ry="${f1(s*.22)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.055)}"/></g>
     ${gear(cx, cy-s*.6, s*.24, 8, {solid:true})}
   </g>`;
 }
@@ -305,23 +541,69 @@ const glint = (x,y,key) => S.f['v_'+key] ? '' :
   `<path class="glint" style="animation-delay:${(x%7)/3}s" d="M${x},${y-16} L${x+3.5},${y-3.5} L${x+16},${y} L${x+3.5},${y+3.5} L${x},${y+16} L${x-3.5},${y+3.5} L${x-16},${y} L${x-3.5},${y-3.5} Z" fill="#fff6d6"/>`;
 const hot = (x,y,w,h,act,extra='') => `<rect class="hot" x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent" data-act="${act}" ${extra}/>`;
 const vignette = () => `<rect x="-500" y="-500" width="2000" height="2000" fill="url(#vig)" pointer-events="none"/>`;
-/* Extends a scene beyond its square so tall or wide screens show room, not empty bars */
-const bleed = ([top,bot,y]) => `<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="${top}"/>${y>=760?`<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="url(#damask)"/>`:''}<rect x="-1500" y="${y}" width="4000" height="3000" fill="${bot}"/>`;
+const bleed = ([top,bot,y,tp,bp]) => `<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="${top}"/>${tp?`<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="url(#${tp})"/>`:''}<rect x="-1500" y="${y}" width="4000" height="3000" fill="${bot}"/>${bp?`<rect x="-1500" y="${y}" width="4000" height="3000" fill="url(#${bp})"/>`:''}`;
 function handDeg(){ return [S.hs*30 + S.ms*2.5, S.ms*30]; }
 const curH = () => ((S.hs % 12) + 12) % 12, curM = () => (S.ms % 12) * 5;
 
+function gauge(cx,cy,r,deg,o={}){
+  let ticks='';
+  for(let i=0;i<11;i++){ const a=rad(-125+i*25); ticks+=`<line x1="${f1(cx+Math.sin(a)*r*.56)}" y1="${f1(cy-Math.cos(a)*r*.56)}" x2="${f1(cx+Math.sin(a)*r*.7)}" y2="${f1(cy-Math.cos(a)*r*.7)}" stroke="#2a1a0c" stroke-width="${i%5?r*.025:r*.05}"/>`; }
+  const a1=rad(50), a2=rad(125), rr=r*.63;
+  const arc=`M${f1(cx+Math.sin(a1)*rr)},${f1(cy-Math.cos(a1)*rr)} A${f1(rr)},${f1(rr)} 0 0 1 ${f1(cx+Math.sin(a2)*rr)},${f1(cy-Math.cos(a2)*rr)}`;
+  return `<g${o.shadow===false?'':' filter="url(#shS)"'}><g${r>30?BEV:BEVS}>${disc(cx,cy,r,'url(#brass)')}</g></g>
+    ${knurl(cx,cy,r*.93,Math.round(r*1.6),r*.08)}
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.84)}" fill="#1e1006"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.79)}" fill="url(#ivory)"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.79)}" fill="url(#pParchS)" opacity=".35"/>
+    <path d="${arc}" fill="none" stroke="#a8241a" stroke-width="${f1(r*.08)}"/>${ticks}
+    ${o.label?`<text x="${cx}" y="${f1(cy+r*.42)}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${f1(r*.2)}" fill="#5a3a14">${o.label}</text>`:''}
+    <g${o.id?` id="${o.id}"`:''} class="${o.anim?'needle':o.cls||''}" style="transform-origin:${cx}px ${cy}px;${o.anim?'':`transform:rotate(${deg}deg)`}">
+      <path d="M${f1(cx-r*.05)},${f1(cy+r*.16)} L${cx},${f1(cy-r*.7)} L${f1(cx+r*.05)},${f1(cy+r*.16)} Z" fill="#7a1408"/></g>
+    ${disc(cx,cy,r*.12,'url(#brassR)',.4)}
+    <ellipse cx="${f1(cx-r*.22)}" cy="${f1(cy-r*.32)}" rx="${f1(r*.42)}" ry="${f1(r*.2)}" transform="rotate(-32 ${f1(cx-r*.22)} ${f1(cy-r*.32)})" fill="#fff" opacity=".22"/>`;
+}
+function bulb(x,y,s){
+  return `<circle cx="${x}" cy="${y}" r="${f1(s*4)}" fill="url(#warm)" class="flick screen"/>
+  <path d="M${f1(x-s*.42)},${f1(y-s*1.0)} C${f1(x-s*1.15)},${f1(y-s*.4)} ${f1(x-s*1.05)},${f1(y+s*.95)} ${x},${f1(y+s*1.15)} C${f1(x+s*1.05)},${f1(y+s*.95)} ${f1(x+s*1.15)},${f1(y-s*.4)} ${f1(x+s*.42)},${f1(y-s*1.0)} Z" fill="#ffcf80" opacity=".28" stroke="#fff4d0" stroke-opacity=".5" stroke-width="1.2"/>
+  <path d="M${f1(x-s*.2)},${f1(y-s*.9)} L${f1(x-s*.2)},${f1(y-s*.1)} l${f1(s*.1)},${f1(s*.15)} l${f1(s*.1)},${f1(-s*.15)} l${f1(s*.1)},${f1(s*.15)} l${f1(s*.1)},${f1(-s*.15)} L${f1(x+s*.2)},${f1(y-s*.9)}" fill="none" stroke="#ffd27a" stroke-width="${f1(s*.07)}" filter="url(#glow)"/>
+  <path d="M${f1(x-s*.6)},${f1(y-s*.3)} C${f1(x-s*.7)},${f1(y+s*.2)} ${f1(x-s*.5)},${f1(y+s*.6)} ${f1(x-s*.25)},${f1(y+s*.8)}" fill="none" stroke="#fff" stroke-width="${f1(s*.08)}" opacity=".45" stroke-linecap="round"/>
+  ${brassBar(x-s*.48,y-s*1.65,s*.96,s*.7)}
+  <path d="M${f1(x-s*.48)},${f1(y-s*1.45)} h${f1(s*.96)} M${f1(x-s*.48)},${f1(y-s*1.25)} h${f1(s*.96)}" stroke="#3a240a" stroke-width="1"/>`;
+}
+function orrery(cx,cy,s){
+  const sy=cy-s*1.05;
+  return `<g filter="url(#shS)"><g${BEVS}>
+    <path d="M${f1(cx-s*.55)},${cy} L${f1(cx-s*.08)},${f1(cy-s*.25)} L${f1(cx+s*.08)},${f1(cy-s*.25)} L${f1(cx+s*.55)},${cy} L${f1(cx+s*.42)},${cy} L${cx},${f1(cy-s*.12)} L${f1(cx-s*.42)},${cy} Z" fill="url(#brassH)"/>
+    <rect x="${f1(cx-s*.05)}" y="${f1(sy)}" width="${f1(s*.1)}" height="${f1(cy-s*.2-sy)}" fill="url(#brassV)"/>
+    <ellipse cx="${cx}" cy="${f1(sy)}" rx="${f1(s*.95)}" ry="${f1(s*.24)}" fill="none" stroke="url(#brassH)" stroke-width="${f1(s*.05)}"/>
+    <path d="M${f1(cx-s*.95)},${f1(sy)} A${f1(s*.95)},${f1(s*.95)} 0 0 1 ${f1(cx+s*.95)},${f1(sy)}" fill="none" stroke="url(#brassH)" stroke-width="${f1(s*.035)}"/>
+  </g></g>
+  <circle cx="${cx}" cy="${f1(sy)}" r="${f1(s*.45)}" fill="#ffd27a" opacity=".3" filter="url(#glow)"/>
+  <circle cx="${cx}" cy="${f1(sy)}" r="${f1(s*.2)}" fill="url(#heartG)"/>
+  <circle r="${f1(s*.09)}" fill="#6aa0c8" stroke="#1a2a3a"><animateMotion dur="7s" repeatCount="indefinite" path="M${f1(cx+s*.6)},${f1(sy)} A${f1(s*.6)},${f1(s*.15)} 0 1 1 ${f1(cx-s*.6)},${f1(sy)} A${f1(s*.6)},${f1(s*.15)} 0 1 1 ${f1(cx+s*.6)},${f1(sy)}"/></circle>
+  <circle r="${f1(s*.07)}" fill="#c86a3a" stroke="#3a1a0a"><animateMotion dur="13s" repeatCount="indefinite" path="M${f1(cx-s*.9)},${f1(sy)} A${f1(s*.9)},${f1(s*.22)} 0 1 1 ${f1(cx+s*.9)},${f1(sy)} A${f1(s*.9)},${f1(s*.22)} 0 1 1 ${f1(cx-s*.9)},${f1(sy)}"/></circle>`;
+}
+
 /* Shared backgrounds */
 function wallBg(){
-  let s=`<rect width="1000" height="1000" fill="url(#wallG)"/><rect width="1000" height="1000" fill="url(#damask)"/>
-  <rect y="760" width="1000" height="240" fill="url(#woodV)"/><rect y="752" width="1000" height="14" fill="#5c3a1e"/><rect y="752" width="1000" height="3" fill="#b8864a" opacity=".55"/>`;
-  for(let x=24;x<1000;x+=190) s+=`<rect x="${x}" y="786" width="160" height="190" fill="none" stroke="#120904" stroke-width="4" opacity=".7"/><rect x="${x+4}" y="790" width="160" height="190" fill="none" stroke="#8a5e36" stroke-width="1.5" opacity=".3"/>`;
+  let s=`<rect x="-1000" width="3000" height="760" fill="#22281d"/><rect x="-1000" width="3000" height="760" fill="url(#pPaperL)"/>
+  <rect x="-1000" width="3000" height="760" fill="url(#pGrime)" opacity=".6"/><rect x="-1000" width="3000" height="760" fill="url(#shWall)"/>`;
+  s+=woodRect(-1000,760,3000,1240,'pWood','url(#shV)');
+  for(let x=24-190*6;x<2000;x+=190) s+=carvedPanel(x,792,160,180);
+  s+=molding(-1000,746,3000,22);
   return s;
 }
 function deskBg(){
-  return `<rect width="1000" height="1000" fill="url(#woodTop)"/>
-  <rect width="1000" height="1000" filter="url(#grain)" opacity=".9"/>
-  ${[120,260,430,610,800,930].map(y=>`<line x1="0" y1="${y}" x2="1000" y2="${y+6}" stroke="#1a0b04" stroke-width="3" opacity=".5"/>`).join('')}
-  <circle cx="160" cy="120" r="700" fill="url(#warm)" class="flick"/>`;
+  let s=woodRect(0,0,1000,1000,'pWood','');
+  s+=`<rect x="0" y="0" width="1000" height="1000" fill="url(#pGrime)" opacity=".4"/>
+  <rect x="36" y="36" width="928" height="928" fill="#000" opacity=".55" filter="url(#blur4)"/>
+  <rect x="40" y="40" width="920" height="920" fill="#1c3626"/><rect x="40" y="40" width="920" height="920" fill="url(#pLeather)"/>
+  <rect x="40" y="40" width="920" height="920" fill="url(#shAO)"/>
+  <rect x="60" y="60" width="880" height="880" fill="none" stroke="#c9a062" stroke-width="2.4" opacity=".75"/>
+  <rect x="70" y="70" width="860" height="860" fill="none" stroke="#c9a062" stroke-width="1.2" stroke-dasharray="2 5" opacity=".7"/>`;
+  [[60,60,0],[940,60,90],[940,940,180],[60,940,270]].forEach(([x,y,r])=> s+=`<g transform="translate(${x},${y}) rotate(${r})" fill="#c9a062" opacity=".75"><path d="M0,0 C14,2 24,10 26,26 C10,24 2,14 0,0 Z"/><circle cx="16" cy="16" r="3"/></g>`);
+  s+=`<circle cx="160" cy="120" r="760" fill="url(#warm)" class="flick screen"/>`;
+  return s;
 }
 
 /* ---------------- painting art (reused small in the room) ---------------- */
@@ -336,7 +618,6 @@ function paintingArt(){
   <path d="M0,470 L0,420 L40,420 L40,395 L70,395 L70,430 L110,430 L110,380 L125,365 L140,380 L140,440 L200,440 L200,410 L240,410 L240,450 L300,450 L300,400 L330,400 L330,370 L350,370 L350,470 Z" fill="#2a1530"/>
   <path d="M480,470 L480,410 L520,410 L520,380 L560,380 L560,420 L600,420 L600,395 L630,395 L630,430 L660,430 L660,470 Z" fill="#2a1530"/>`;
   [[50,430],[85,440],[118,400],[210,425],[255,430],[312,415],[495,425],[540,395],[575,435],[612,410]].forEach(([x,y])=> s+=`<rect x="${x}" y="${y}" width="6" height="8" fill="#ffc35a" opacity=".85"/>`);
-  // tower
   s+=`<rect x="385" y="250" width="70" height="225" fill="#2d1830"/>
   <rect x="368" y="140" width="104" height="120" fill="#341c38"/><rect x="368" y="140" width="104" height="8" fill="#4a2a4a"/>
   <path d="M362,142 L478,142 L420,30 Z" fill="#2d1830"/><line x1="420" y1="30" x2="420" y2="6" stroke="#2d1830" stroke-width="4"/>
@@ -347,9 +628,8 @@ function paintingArt(){
   <line x1="420" y1="200" x2="${f1(420+Math.sin(rad(120))*34)}" y2="${f1(200-Math.cos(rad(120))*34)}" stroke="#1a0f06" stroke-width="3" stroke-linecap="round"/>
   <circle cx="420" cy="200" r="4" fill="#1a0f06"/>
   <rect x="400" y="300" width="14" height="22" rx="7" fill="#ffc35a" opacity=".8"/><rect x="426" y="300" width="14" height="22" rx="7" fill="#ffc35a" opacity=".8"/>
-  <rect x="412" y="370" width="16" height="26" rx="8" fill="#ffc35a" opacity=".6"/>`;
-  // airship
-  s+=`<g transform="translate(170,165) rotate(-4)">
+  <rect x="412" y="370" width="16" height="26" rx="8" fill="#ffc35a" opacity=".6"/>
+  <g transform="translate(170,165) rotate(-4)">
     <path d="M-120,0 C-120,-40 100,-44 130,0 C100,44 -120,40 -120,0 Z" fill="#8a4e30"/>
     <path d="M-120,0 C-120,-40 100,-44 130,0" fill="none" stroke="#f0b27a" stroke-width="3" opacity=".6"/>
     ${[-70,-30,10,50,90].map(x=>`<path d="M${x},-36 C${x+8},-12 ${x+8},12 ${x},36" fill="none" stroke="#4a2414" stroke-width="2.5" opacity=".7"/>`).join('')}
@@ -361,243 +641,344 @@ function paintingArt(){
   </g>
   <path d="M520,250 q8,-8 16,0 q8,-8 16,0 M560,270 q6,-6 12,0 q6,-6 12,0 M500,285 q5,-5 10,0 q5,-5 10,0" fill="none" stroke="#2a1530" stroke-width="3"/>
   <rect width="660" height="590" fill="url(#varnish)"/>
-  <rect width="660" height="590" filter="url(#paper)" opacity=".35"/>`;
+  <rect width="660" height="590" fill="url(#pGrime)" opacity=".35"/>`;
+  return s;
+}
+function ornateFrame(x,y,w,h,t){
+  const outer=`M${x},${y} h${w} v${h} h${-w} Z`, inner=`M${x+t},${y+t} v${h-2*t} h${w-2*t} v${-(h-2*t)} Z`;
+  let s=`<g filter="url(#sh)"><path d="${outer} ${inner}" fill="#6a4416"/></g>
+  <g${t>30?BEVL:BEV}><path d="${outer} ${inner}" fill="url(#brass)"/><path d="${outer} ${inner}" fill="url(#pBrush)" opacity=".35"/></g>
+  <rect ${R4(x+t*.3,y+t*.3,w-t*.6,h-t*.6)} fill="none" stroke="#5a3810" stroke-width="${f1(t*.12)}"/>
+  <rect ${R4(x+t*.55,y+t*.55,w-t*1.1,h-t*1.1)} fill="none" stroke="#f8e0a0" stroke-width="${f1(t*.1)}" stroke-dasharray="${f1(t*.12)} ${f1(t*.12)}" opacity=".7"/>
+  <rect ${R4(x+t-3,y+t-3,w-2*t+6,h-2*t+6)} fill="none" stroke="#2a1606" stroke-width="5"/>`;
+  [[x+t/2,y+t/2],[x+w-t/2,y+t/2],[x+w-t/2,y+h-t/2],[x+t/2,y+h-t/2]].forEach(([rx,ry])=>{
+    let pet=''; for(let i=0;i<8;i++){ const a=rad(i*45); pet+=`<ellipse cx="${f1(rx+Math.cos(a)*t*.32)}" cy="${f1(ry+Math.sin(a)*t*.32)}" rx="${f1(t*.2)}" ry="${f1(t*.11)}" transform="rotate(${i*45} ${f1(rx+Math.cos(a)*t*.32)} ${f1(ry+Math.sin(a)*t*.32)})" fill="url(#brass)"/>`; }
+    s+=`<g filter="url(#shS)"><g${t>30?BEV:BEVS}>${pet}<circle cx="${f1(rx)}" cy="${f1(ry)}" r="${f1(t*.26)}" fill="url(#brassR)"/></g></g><circle cx="${f1(rx)}" cy="${f1(ry)}" r="${f1(t*.1)}" fill="#8a1420"/>`;
+  });
+  s+=`<g${BEVS}><ellipse cx="${x+w/2}" cy="${y+t*.5}" rx="${f1(t*.9)}" ry="${f1(t*.42)}" fill="url(#brass)"/><ellipse cx="${x+w/2}" cy="${y+h-t*.5}" rx="${f1(t*.9)}" ry="${f1(t*.42)}" fill="url(#brass)"/></g>
+  <circle cx="${x+w/2}" cy="${y+t*.5}" r="${f1(t*.18)}" fill="#8a1420" stroke="#3a0608"/><circle cx="${x+w/2}" cy="${y+h-t*.5}" r="${f1(t*.18)}" fill="#8a1420" stroke="#3a0608"/>`;
   return s;
 }
 
 /* ---------------- ROOM ---------------- */
+function roomBooks(x0,x1,base,seed){
+  let s='', x=x0; const r=rng(seed*97+3), cols=['#6b1d1d','#1f4a33','#1d2f52','#5a3a1c','#8a6420','#3d1a2c','#2a1e16','#4d1426','#2a3a4a'];
+  while(x<x1-10){
+    const w=10+r()*12; if(x+w>x1) break; const h=60+r()*34, c=cols[Math.floor(r()*cols.length)];
+    const lean = r()<.1 && x>x0+30 ? -(7+r()*6) : 0;
+    s+=`<g${lean?` transform="rotate(${f1(lean)} ${f1(x)} ${base})"`:''}>
+      <rect ${R4(x,base-h,w,h,1.5)} fill="${c}"/><rect ${R4(x,base-h,w,h,1.5)} fill="url(#shCyl)"/>
+      <rect ${R4(x,base-h+8,w,3)} fill="#d6a64e" opacity=".75"/><rect ${R4(x,base-h+14,w,1.4)} fill="#d6a64e" opacity=".5"/>
+      <rect ${R4(x,base-16,w,3)} fill="#d6a64e" opacity=".6"/>
+      ${r()<.45?`<rect ${R4(x+2,base-h*.6,w-4,12)} fill="#e9d4a3" opacity=".5"/>`:''}
+    </g>`;
+    x+=w+1.2; if(lean) x+=8; if(r()<.07) x+=10;
+  }
+  return s;
+}
 function roomScene(){
   const f=S.f; let s='';
-  s+=`<rect width="1000" height="1000" fill="url(#wallG)"/><rect width="1000" height="600" fill="url(#damask)"/>
-  <rect width="1000" height="22" fill="#120a05"/><rect y="22" width="1000" height="8" fill="url(#brassH)" opacity=".5"/>
-  <rect y="590" width="1000" height="180" fill="url(#woodV)"/>
-  <rect y="584" width="1000" height="12" fill="#5c3a1e"/><rect y="584" width="1000" height="3" fill="#b8864a" opacity=".6"/>`;
-  for(let x=20;x<1000;x+=140) s+=`<rect x="${x}" y="612" width="116" height="140" fill="none" stroke="#120904" stroke-width="3" opacity=".7"/><rect x="${x+3}" y="615" width="116" height="140" fill="none" stroke="#8a5e36" stroke-width="1.5" opacity=".3"/>`;
-  s+=`<rect y="770" width="1000" height="230" fill="url(#floorG)"/>`;
-  for(let i=-8;i<=20;i++){ const xb=i*70, xt=500+(xb-500)*.42; s+=`<line x1="${f1(xt)}" y1="770" x2="${xb}" y2="1000" stroke="#0e0703" stroke-width="2" opacity=".6"/>`; }
-  [800,838,886,948].forEach(y=> s+=`<line x1="0" y1="${y}" x2="1000" y2="${y}" stroke="#0e0703" stroke-width="1.5" opacity=".35"/>`);
-  s+=`<ellipse cx="560" cy="905" rx="350" ry="72" fill="#4a1216" opacity=".9"/>
-  <ellipse cx="560" cy="905" rx="320" ry="60" fill="none" stroke="#c9a062" stroke-width="3" stroke-dasharray="14 8" opacity=".55"/>
-  <ellipse cx="560" cy="905" rx="250" ry="42" fill="none" stroke="#8a2a28" stroke-width="10" opacity=".7"/>`;
-
+  // wall + crown
+  s+=`<rect x="-1000" width="3000" height="600" fill="#22281d"/><rect x="-1000" width="3000" height="600" fill="url(#pPaperS)"/>
+  <rect x="-1000" width="3000" height="600" fill="url(#pGrime)" opacity=".55"/><rect x="-1000" width="3000" height="600" fill="url(#shWall)"/>`;
+  s+=molding(-1000,0,3000,26);
+  let dent=''; for(let x=4-16*60;x<2000;x+=16) dent+=`M${x},20h9v8h-9Z`; s+=`<path d="${dent}" fill="#120904" opacity=".8"/>`;
+  s+=brassBar(-1000,28,3000,5);
+  // wainscot
+  s+=woodRect(-1000,590,3000,180,'pWood','url(#shV)');
+  for(let x=20-140*8;x<2000;x+=140) s+=carvedPanel(x,610,116,144);
+  s+=molding(-1000,580,3000,16)+molding(-1000,752,3000,20);
+  // floor
+  s+=tex('rect','x="-1000" y="770" width="3000" height="1230"','#2a170b','pFloor','url(#shFloor)');
+  for(let i=-8;i<=20;i++){ const xb=i*70, xt=500+(xb-500)*.42; s+=`<line x1="${f1(xt)}" y1="770" x2="${xb}" y2="1000" stroke="#0a0502" stroke-width="2" opacity=".65"/>`; }
+  [800,838,886,948].forEach(y=> s+=`<line x1="0" y1="${y}" x2="1000" y2="${y}" stroke="#0a0502" stroke-width="1.5" opacity=".35"/>`);
+  s+=`<ellipse cx="430" cy="800" rx="230" ry="24" fill="#ffcf8a" opacity=".12" filter="url(#soft)"/>`;
+  // rug
+  s+=`<ellipse cx="560" cy="911" rx="354" ry="76" fill="#000" opacity=".5" filter="url(#blur4)"/>
+  <ellipse cx="560" cy="905" rx="350" ry="72" fill="#5a1418"/><ellipse cx="560" cy="905" rx="350" ry="72" fill="url(#pGrime)" opacity=".5"/>
+  <ellipse cx="560" cy="905" rx="328" ry="63" fill="none" stroke="#1e2a4a" stroke-width="16"/>
+  <ellipse cx="560" cy="905" rx="328" ry="63" fill="none" stroke="#c9a062" stroke-width="2.2" stroke-dasharray="3 8"/>
+  <ellipse cx="560" cy="905" rx="344" ry="69" fill="none" stroke="#c9a062" stroke-width="1.5" opacity=".6"/>
+  <ellipse cx="560" cy="905" rx="280" ry="48" fill="#6e1c20"/>
+  <ellipse cx="560" cy="905" rx="110" ry="22" fill="#1e2a4a" stroke="#c9a062" stroke-width="2"/>`;
+  for(let i=0;i<28;i++){ const a=i*Math.PI*2/28, x=560+Math.cos(a)*300, y=905+Math.sin(a)*55; s+=`<path d="M${f1(x)},${f1(y-5)} l6,5 l-6,5 l-6,-5 Z" fill="#c9a062" opacity=".8"/>`; }
   // pipes
-  s+=`<rect x="0" y="36" width="1000" height="26" fill="url(#copperH)"/>
-  ${[150,300,480,660,820].map(x=>`<rect x="${x}" y="30" width="16" height="38" rx="2" fill="url(#brassH)"/>`).join('')}
-  <rect x="331" y="60" width="22" height="530" fill="url(#copperV)"/>
-  <rect x="325" y="110" width="34" height="14" rx="2" fill="url(#brass)"/><rect x="325" y="520" width="34" height="14" rx="2" fill="url(#brass)"/>
-  <rect x="699" y="60" width="20" height="530" fill="url(#copperV)"/>
-  <rect x="693" y="140" width="32" height="12" rx="2" fill="url(#brass)"/>
-  <g transform="translate(709,420)"><circle r="22" fill="none" stroke="#9c2a1e" stroke-width="6"/>
-    ${[0,60,120].map(a=>`<line x1="${f1(Math.cos(rad(a))*-20)}" y1="${f1(Math.sin(rad(a))*-20)}" x2="${f1(Math.cos(rad(a))*20)}" y2="${f1(Math.sin(rad(a))*20)}" stroke="#7a2016" stroke-width="4"/>`).join('')}<circle r="6" fill="url(#brassR)"/></g>
-  <g transform="translate(940,49)"><circle r="20" fill="none" stroke="url(#brass)" stroke-width="5"/><circle r="5" fill="url(#brassR)"/></g>
+  s+=`<rect x="-1000" y="36" width="3000" height="26" fill="url(#copperH)"/><rect x="-1000" y="36" width="3000" height="26" fill="url(#pPatina)" opacity=".55"/>
+  <rect x="-1000" y="40" width="3000" height="2" fill="#ffd8b0" opacity=".4"/>`;
+  [150,300,480,660,820].forEach(x=> s+=brassBar(x,30,16,38)+bolt(x+8,33.5,2.6)+bolt(x+8,64.5,2.6));
+  [[342,22],[709,20],[965,16]].forEach(([x,w])=>{
+    s+=`<rect x="${x-w/2}" y="60" width="${w}" height="${x===965?470:530}" fill="url(#copperV)"/><rect x="${x-w/2}" y="60" width="${w}" height="${x===965?470:530}" fill="url(#pPatina)" opacity=".5"/>`;
+    s+=`<g${BEVS}><circle cx="${x}" cy="49" r="${w*.75}" fill="url(#copperH)"/></g>`;
+  });
+  [[342,140],[342,500],[709,150],[709,520]].forEach(([x,y])=> s+=brassBar(x-18,y,36,11)+bolt(x-13,y+5.5,2.5)+bolt(x+13,y+5.5,2.5));
+  s+=`<g${BEVS}><circle cx="709" cy="420" r="23" fill="none" stroke="#9c2a1e" stroke-width="7"/>
+    ${[0,60,120].map(a=>`<line x1="${f1(709+Math.cos(rad(a))*-21)}" y1="${f1(420+Math.sin(rad(a))*-21)}" x2="${f1(709+Math.cos(rad(a))*21)}" y2="${f1(420+Math.sin(rad(a))*21)}" stroke="#7a2016" stroke-width="4.5"/>`).join('')}
+    <circle cx="709" cy="420" r="7" fill="url(#brassR)"/></g>
+  <g${BEVS}><circle cx="940" cy="49" r="20" fill="none" stroke="url(#brass)" stroke-width="5"/><circle cx="940" cy="49" r="6" fill="url(#brassR)"/></g>
   <circle cx="972" cy="40" r="12" fill="#ddd2c0" class="puff"/><circle cx="972" cy="40" r="10" fill="#ddd2c0" class="puff" style="animation-delay:1.1s"/><circle cx="972" cy="40" r="14" fill="#ddd2c0" class="puff" style="animation-delay:2.2s"/>`;
-
-  // window with drapes
-  s+=`<path d="M60,410 L60,182 A110,110 0 0 1 280,182 L280,410 Z" fill="#2a170b"/>
+  s+=gauge(965,545,26,0,{anim:true});
+  // window
+  s+=`<path d="M56,414 L56,182 A114,114 0 0 1 284,182 L284,414 Z" fill="#1a0e06"/>
   <g clip-path="url(#winClip)">
     <rect x="60" y="60" width="230" height="360" fill="url(#night)"/>
-    <circle cx="210" cy="150" r="60" fill="#d9e4ff" opacity=".18" filter="url(#soft)"/>
-    <circle cx="210" cy="150" r="24" fill="#f1ead2"/><circle cx="218" cy="145" r="20" fill="#d8d0b4" opacity=".35"/>
-    ${[[100,120],[140,95],[250,220],[90,200],[180,240],[120,170]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.6" fill="#fff" opacity=".8"/>`).join('')}
-    <path d="M60,410 L60,330 L90,330 L90,300 L115,300 L115,340 L140,340 L140,280 L150,262 L160,280 L160,330 L190,330 L190,310 L215,310 L215,345 L240,345 L240,300 L265,300 L265,410 Z" fill="#0b1220"/>
-    ${[[72,340],[98,312],[124,350],[146,292],[196,320],[222,355],[248,312]].map(([x,y])=>`<rect x="${x}" y="${y}" width="5" height="7" fill="#f5c062" opacity=".85"/>`).join('')}
-    ${Array.from({length:22},(_,i)=>{const r=rng(i+11);const x=60+r()*240,y=40+r()*340;return `<line class="rain" style="animation-delay:${f1(-r()*.9)}s" x1="${f1(x)}" y1="${f1(y-150)}" x2="${f1(x-6)}" y2="${f1(y-128)}" stroke="#a9c3e8" stroke-width="1.4" opacity=".45"/>`}).join('')}
+    <ellipse cx="150" cy="200" rx="90" ry="18" fill="#2a3a58" opacity=".7" filter="url(#blur4)"/>
+    <circle cx="210" cy="150" r="64" fill="#d9e4ff" opacity=".2" filter="url(#soft)"/>
+    <circle cx="210" cy="150" r="24" fill="#f1ead2"/><circle cx="203" cy="144" r="5" fill="#cfc6a8"/><circle cx="217" cy="158" r="3.5" fill="#cfc6a8"/><circle cx="214" cy="141" r="2.5" fill="#cfc6a8"/>
+    <ellipse cx="230" cy="170" rx="60" ry="9" fill="#34466a" opacity=".75" filter="url(#blur4)"/>
+    ${[[100,120],[140,95],[250,220],[90,200],[180,240],[120,170],[260,110],[85,140]].map(([x,y],i)=>`<circle class="twinkle" style="animation-delay:${i*.4}s" cx="${x}" cy="${y}" r="1.6" fill="#fff"/>`).join('')}
+    <g class="drift"><g transform="translate(60,228)"><path d="M0,0 C0,-9 34,-10 42,0 C34,10 0,9 0,0 Z" fill="#0d1626"/><rect x="14" y="7" width="12" height="4" fill="#0d1626"/><circle class="blink" cx="20" cy="12" r="1.5" fill="#ff5040"/></g></g>
+    <path d="M60,410 L60,345 L80,345 L80,320 L98,320 L98,350 L120,350 L120,300 L128,286 L136,300 L136,340 L160,340 L160,325 L178,325 L178,355 L200,355 L200,316 L214,316 L214,300 L228,300 L228,340 L250,340 L250,326 L270,326 L270,410 Z" fill="#162236"/>
+    <path d="M60,410 L60,330 L90,330 L90,300 L115,300 L115,340 L140,340 L140,278 L150,258 L160,278 L160,330 L190,330 L190,310 L215,310 L215,345 L240,345 L240,300 L265,300 L265,410 Z" fill="#0a111e"/>
+    <rect x="60" y="360" width="230" height="50" fill="#5a6a80" opacity=".18" filter="url(#blur4)"/>
+    ${[[72,340],[98,312],[124,350],[146,292],[196,320],[222,355],[248,312],[150,300],[178,345]].map(([x,y])=>`<rect x="${x}" y="${y}" width="5" height="7" fill="#f5c062" opacity=".9"/>`).join('')}
+    ${Array.from({length:22},(_,i)=>{const r=rng(i+11);const x=60+r()*240,y=40+r()*340;return `<line class="rain" style="animation-delay:${f1(-r()*.9)}s" x1="${f1(x)}" y1="${f1(y-150)}" x2="${f1(x-6)}" y2="${f1(y-128)}" stroke="#a9c3e8" stroke-width="1.3" opacity=".42"/>`}).join('')}
+    ${Array.from({length:30},(_,i)=>{const r=rng(i*7+3);const x=72+r()*196,y=110+r()*290,rr=1.2+r()*2.4;return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rr)}" fill="#9ab4d8" opacity=".35"/><circle cx="${f1(x-rr*.3)}" cy="${f1(y-rr*.3)}" r="${f1(rr*.35)}" fill="#fff" opacity=".7"/>`}).join('')}
     <rect x="60" y="60" width="230" height="360" fill="url(#glassG)"/>
   </g>
-  <path d="M72,398 L72,182 A98,98 0 0 1 268,182 L268,398 Z" fill="none" stroke="#3a2010" stroke-width="10"/>
-  <path d="M60,410 L60,182 A110,110 0 0 1 280,182 L280,410" fill="none" stroke="url(#brass)" stroke-width="3" opacity=".6"/>
-  <line x1="170" y1="74" x2="170" y2="398" stroke="#3a2010" stroke-width="7"/><line x1="72" y1="260" x2="268" y2="260" stroke="#3a2010" stroke-width="7"/>
-  <rect x="44" y="404" width="252" height="16" rx="3" fill="#5a3418"/><rect x="44" y="404" width="252" height="3" fill="#a87745" opacity=".6"/>
-  <path d="M22,40 C40,40 70,44 82,60 C70,160 92,300 80,430 L22,430 Z" fill="#5a1418"/>
-  <path d="M34,48 C44,160 30,300 40,430 M58,52 C66,160 56,300 64,430" stroke="#2a0608" stroke-width="5" fill="none" opacity=".6"/>
-  <path d="M318,40 C300,40 270,44 258,60 C270,160 248,300 260,430 L318,430 Z" fill="#5a1418"/>
-  <path d="M306,48 C296,160 310,300 300,430 M282,52 C274,160 284,300 276,430" stroke="#2a0608" stroke-width="5" fill="none" opacity=".6"/>
-  <rect x="14" y="30" width="316" height="12" rx="6" fill="url(#brassH)"/><circle cx="14" cy="36" r="9" fill="url(#brassR)"/><circle cx="330" cy="36" r="9" fill="url(#brassR)"/>`;
-
-  s+=`<g transform="translate(342,250)" filter="url(#sh)"><circle r="40" fill="url(#brass)"/><circle r="32" fill="url(#ivory)"/>
-    ${Array.from({length:9},(_,i)=>{const a=rad(-120+i*30);return `<line x1="${f1(Math.sin(a)*24)}" y1="${f1(-Math.cos(a)*24)}" x2="${f1(Math.sin(a)*29)}" y2="${f1(-Math.cos(a)*29)}" stroke="${i>6?'#b02a1a':'#3a2210'}" stroke-width="2"/>`}).join('')}
-    <g class="needle"><line x1="0" y1="4" x2="0" y2="-24" stroke="#1a0f06" stroke-width="3" stroke-linecap="round"/></g><circle r="4" fill="url(#brassR)"/></g>`;
-  // painting
-  s+=`<g filter="url(#sh)"><rect x="380" y="104" width="260" height="222" fill="url(#brass)" stroke="#3a2208" stroke-width="2"/></g>
-  <rect x="392" y="116" width="236" height="198" fill="none" stroke="#6a4416" stroke-width="3"/>
-  <svg x="402" y="126" width="216" height="178" viewBox="0 0 660 590" preserveAspectRatio="none">${paintingArt()}</svg>
-  ${[[380,104],[640,104],[380,326],[640,326]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="url(#brassR)"/>`).join('')}
-  <rect x="470" y="334" width="80" height="16" rx="2" fill="url(#brass)"/>`;
-
+  <g${CARVE}><path d="M56,414 L56,182 A114,114 0 0 1 284,182 L284,414 L268,414 L268,182 A98,98 0 0 0 72,182 L72,414 Z" fill="#4a2a14"/><path d="M56,414 L56,182 A114,114 0 0 1 284,182 L284,414 L268,414 L268,182 A98,98 0 0 0 72,182 L72,414 Z" fill="url(#pWoodV)"/></g>
+  <g${CARVE}><rect x="166" y="74" width="8" height="326" fill="#3a2010"/><rect x="72" y="256" width="196" height="8" fill="#3a2010"/></g>
+  <path d="M56,182 A114,114 0 0 1 284,182" fill="none" stroke="url(#brassH)" stroke-width="2.5" opacity=".7"/>
+  ${molding(42,402,256,18)}`;
+  // curtains + valance
+  s+=`<path d="M20,46 C40,46 70,50 84,66 C72,150 88,240 74,300 C80,340 76,390 82,436 L20,436 Z" fill="url(#folds)"/>
+  <path d="M20,46 C40,46 70,50 84,66 C72,150 88,240 74,300 C80,340 76,390 82,436 L20,436 Z" fill="url(#shV)" opacity=".7"/>
+  <path d="M320,46 C300,46 270,50 256,66 C268,150 252,240 266,300 C260,340 264,390 258,436 L320,436 Z" fill="url(#folds)"/>
+  <path d="M320,46 C300,46 270,50 256,66 C268,150 252,240 266,300 C260,340 264,390 258,436 L320,436 Z" fill="url(#shV)" opacity=".7"/>
+  <path d="M16,42 L324,42 L324,82 C300,100 280,100 262,84 C240,104 210,104 190,86 C170,104 140,104 120,86 C100,104 70,104 50,84 C36,98 22,96 16,86 Z" fill="url(#folds)"/>
+  <path d="M16,42 L324,42 L324,82 C300,100 280,100 262,84 C240,104 210,104 190,86 C170,104 140,104 120,86 C100,104 70,104 50,84 C36,98 22,96 16,86 Z" fill="url(#shVr)"/>
+  <path d="M16,86 C22,96 36,98 50,84 C70,104 100,104 120,86 C140,104 170,104 190,86 C210,104 240,104 262,84 C280,100 300,100 324,82" fill="none" stroke="#d6a64e" stroke-width="3" stroke-dasharray="1.5 2.5"/>
+  ${[[78,300],[262,300]].map(([x,y])=>`<path d="M${x-14},${y} C${x-8},${y+10} ${x+8},${y+10} ${x+14},${y}" fill="none" stroke="#d6a64e" stroke-width="4"/><circle cx="${x}" cy="${y+8}" r="5" fill="url(#brassR)"/><path d="M${x-5},${y+12} L${x-9},${y+40} L${x+9},${y+40} L${x+5},${y+12} Z" fill="#c9a062"/><path d="M${x-8},${y+40} v6 M${x-4},${y+40} v8 M${x},${y+40} v8 M${x+4},${y+40} v8 M${x+8},${y+40} v6" stroke="#c9a062" stroke-width="1.5"/>`).join('')}
+  <g${BEVS}><rect x="10" y="38" width="320" height="8" rx="4" fill="url(#brassH)"/><circle cx="10" cy="42" r="9" fill="url(#brassR)"/><circle cx="330" cy="42" r="9" fill="url(#brassR)"/></g>`;
+  // painting + picture light
+  s+=ornateFrame(376,100,268,230,22);
+  s+=`<svg x="398" y="122" width="224" height="186" viewBox="0 0 660 590" preserveAspectRatio="none">${paintingArt()}</svg>
+  <path d="M398,122 L470,122 L398,200 Z" fill="#fff" opacity=".07"/>
+  <path d="M440,92 L580,92 L640,330 L380,330 Z" fill="url(#cone)" class="screen" opacity=".55" pointer-events="none"/>
+  <g filter="url(#shS)"><g${BEVS}><rect x="506" y="70" width="8" height="18" fill="url(#brassV)"/><path d="M450,86 L570,86 L560,98 L460,98 Z" fill="url(#brassH)"/></g></g>
+  <rect x="462" y="96" width="96" height="3" fill="#fff4c8" filter="url(#glow)"/>
+  <g filter="url(#shS)">${brassBar(468,336,84,16)}</g>`;
   // wall clock
   const [hd,md]=handDeg();
-  s+=`<rect x="812" y="262" width="76" height="210" rx="6" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
-  <rect x="826" y="280" width="48" height="172" rx="24" fill="#0c0704" stroke="url(#brass)" stroke-width="4"/>
-  <g class="swing" style="transform-origin:850px 282px"><line x1="850" y1="282" x2="850" y2="418" stroke="url(#brassH)" stroke-width="4"/><circle cx="850" cy="424" r="16" fill="url(#brassR)"/></g>
-  <rect x="826" y="280" width="48" height="172" rx="24" fill="url(#glassG)"/>
-  <g filter="url(#sh)"><circle cx="850" cy="190" r="88" fill="url(#brass)"/></g>
-  <circle cx="850" cy="190" r="78" fill="url(#brassR)"/><circle cx="850" cy="190" r="69" fill="url(#ivory)"/>
-  ${RN.map((n,i)=>{const a=rad(i*30);return `<text x="${f1(850+Math.sin(a)*55)}" y="${f1(190-Math.cos(a)*55+5)}" font-family="Cormorant SC,serif" font-size="14" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`}).join('')}
-  <g transform="rotate(${hd} 850 190)"><path d="M847,196 L850,152 L853,196 Z" fill="#1a0f06"/></g>
-  <g transform="rotate(${md} 850 190)"><path d="M848.5,198 L850,132 L851.5,198 Z" fill="#1a0f06"/></g>
-  <circle cx="850" cy="190" r="6" fill="url(#brassR)"/>
-  ${gear(850,94,18,10,{solid:true})}`;
-
+  s+=`<g filter="url(#sh)"><g${CARVE}>${woodRect(810,262,80,212,'pWoodV','url(#shCyl)','#3a2010',6)}</g></g>
+  <path d="M810,474 L890,474 L878,492 L822,492 Z" fill="#2a170b"/>${brassBar(806,262,88,8)}${brassBar(806,466,88,8)}
+  <rect x="826" y="282" width="48" height="170" rx="24" fill="#0c0704"/>
+  <g class="swing" style="transform-origin:850px 284px"><rect x="848" y="284" width="4" height="132" fill="url(#brassV)"/>${disc(850,424,16,'url(#brassR)',.5)}</g>
+  <rect x="826" y="282" width="48" height="170" rx="24" fill="url(#glassG)"/>
+  <rect x="826" y="282" width="48" height="170" rx="24" fill="none" stroke="url(#brassH)" stroke-width="4"/>
+  <g filter="url(#sh)"><g${BEV}>${annulus(850,190,89,70,'url(#brass)',.6)}</g></g>
+  ${knurl(850,190,85,90,5)}
+  <circle cx="850" cy="190" r="70" fill="url(#ivory)"/><circle cx="850" cy="190" r="70" fill="url(#pParchS)" opacity=".3"/>
+  ${RN.map((n,i)=>{const a=rad(i*30);return `<text x="${f1(850+Math.sin(a)*56)}" y="${f1(190-Math.cos(a)*56+5)}" font-family="Cormorant SC,serif" font-size="13" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`}).join('')}
+  <circle cx="850" cy="190" r="36" fill="#140a04"/>
+  <svg x="814" y="154" width="72" height="72" viewBox="814 154 72 72"><clipPath id="rc"><circle cx="850" cy="190" r="35"/></clipPath><g clip-path="url(#rc)">${gear(838,182,22,12,{spin:12})}${gear(868,204,16,10,{spin:9,rev:true})}</g></svg>
+  <circle cx="850" cy="190" r="36" fill="none" stroke="url(#brassH)" stroke-width="3"/>
+  <g transform="rotate(${hd} 850 190)"><path d="M846,196 L850,150 L854,196 Z" fill="url(#brassH)" stroke="#1a0f06" stroke-width="1.2"/></g>
+  <g transform="rotate(${md} 850 190)"><path d="M847.5,198 L850,130 L852.5,198 Z" fill="url(#brassH)" stroke="#1a0f06" stroke-width="1.2"/></g>
+  ${disc(850,190,6,'url(#brassR)',.3)}
+  <circle cx="850" cy="190" r="70" fill="url(#glassG)" pointer-events="none"/>
+  ${gear(850,93,18,10,{solid:true,bev:true})}<g${BEVS}><circle cx="850" cy="72" r="6" fill="url(#brassR)"/></g>`;
   // hatch
-  s+=`<circle cx="872" cy="692" r="116" fill="#0e0704"/>
-  <g filter="url(#sh)"><circle cx="872" cy="690" r="108" fill="url(#brass)"/></g>
-  <circle cx="872" cy="690" r="94" fill="url(#brassD)"/>${rivetRing(872,690,101,18,4)}
-  <circle cx="872" cy="690" r="78" fill="url(#brassR)" opacity=".85"/><circle cx="872" cy="690" r="72" fill="none" stroke="#3a240c" stroke-width="2"/>
-  <circle cx="872" cy="690" r="50" fill="none" stroke="url(#brass)" stroke-width="9"/>
-  ${[0,60,120].map(a=>`<line x1="${f1(872+Math.cos(rad(a))*50)}" y1="${f1(690+Math.sin(rad(a))*50)}" x2="${f1(872-Math.cos(rad(a))*50)}" y2="${f1(690-Math.sin(rad(a))*50)}" stroke="url(#brassH)" stroke-width="7"/>`).join('')}
-  <circle cx="872" cy="690" r="18" fill="#120a05"/><path d="${heartPath(872,690,10)}" fill="${f.heartIn?'url(#heartG)':'none'}" stroke="#ffb35c" stroke-width="1.5" opacity=".8"/>`;
-
+  s+=`<circle cx="872" cy="692" r="120" fill="#060302"/><circle cx="872" cy="692" r="120" fill="url(#recess)"/>
+  <g filter="url(#sh)"><g${BEV}>${annulus(872,690,108,90,'url(#brass)',.6)}</g></g>
+  ${boltRing(872,690,99,16,4.2)}
+  <g${BEV}>${disc(872,690,88,'url(#brassD)',.6)}</g>
+  <circle cx="872" cy="690" r="74" fill="none" stroke="#2a1806" stroke-width="2"/><circle cx="872" cy="690" r="72" fill="none" stroke="#f0c880" stroke-width="1" opacity=".3"/>
+  <g${BEVS}><circle cx="872" cy="690" r="50" fill="none" stroke="url(#brass)" stroke-width="10"/>
+  ${[0,60,120].map(a=>`<line x1="${f1(872+Math.cos(rad(a))*50)}" y1="${f1(690+Math.sin(rad(a))*50)}" x2="${f1(872-Math.cos(rad(a))*50)}" y2="${f1(690-Math.sin(rad(a))*50)}" stroke="url(#brassH)" stroke-width="8"/>`).join('')}
+  ${[0,60,120,180,240,300].map(a=>`<circle cx="${f1(872+Math.cos(rad(a))*58)}" cy="${f1(690+Math.sin(rad(a))*58)}" r="6" fill="url(#brassR)"/>`).join('')}</g>
+  <circle cx="872" cy="690" r="19" fill="#120a05" stroke="#3a240c" stroke-width="2"/><path d="${heartPath(872,690,10)}" fill="${f.heartIn?'url(#heartG)':'none'}" stroke="#ffb35c" stroke-width="1.5" opacity=".85"/>`;
   // bookshelf
-  s+=`<rect x="30" y="444" width="274" height="490" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
-  <rect x="24" y="436" width="286" height="16" fill="#5a3418"/><rect x="24" y="436" width="286" height="3" fill="#a87745" opacity=".6"/>
-  <rect x="46" y="456" width="242" height="458" fill="#160c06"/>`;
+  s+=`<g filter="url(#sh)"><g${CARVE}>${woodRect(30,444,274,490,'pWoodV','url(#shCyl)')}</g></g>
+  <rect x="46" y="456" width="242" height="458" fill="#0e0704"/><rect x="46" y="456" width="242" height="458" fill="url(#pGrime)" opacity=".6"/>
+  ${molding(22,432,290,18)}`;
+  let shelfDent=''; for(let x=26;x<308;x+=12) shelfDent+=`M${x},444h6v6h-6Z`; s+=`<path d="${shelfDent}" fill="#0e0704" opacity=".8"/>`;
   [[560,1],[680,2],[800,3]].forEach(([b,seed])=>{
-    let x=50; const r=rng(seed*97+3), cols=['#6b1d1d','#1f4a33','#1d2f52','#5a3a1c','#8a6420','#3d1a2c','#241a14','#4d1426'];
-    while(x<276){ const w=10+r()*13; if(x+w>284) break; const h=62+r()*34, c=cols[Math.floor(r()*cols.length)];
-      s+=`<rect x="${f1(x)}" y="${f1(b-h)}" width="${f1(w)}" height="${f1(h)}" fill="${c}"/><rect x="${f1(x)}" y="${f1(b-h+9)}" width="${f1(w)}" height="3" fill="#d6a64e" opacity=".55"/><rect x="${f1(x)}" y="${f1(b-14)}" width="${f1(w)}" height="2" fill="#d6a64e" opacity=".45"/>`;
-      x+=w+1.5; if(r()<.1) x+=12; }
-    s+=`<rect x="40" y="${b}" width="254" height="12" fill="#4a2a14"/><rect x="40" y="${b}" width="254" height="2" fill="#9a6a3a" opacity=".6"/>`;
+    s+=`<rect x="46" y="${b-104}" width="242" height="104" fill="url(#shAO)" opacity=".8"/>`;
+    s+=roomBooks(50, seed===1?250:seed===2?286:286, b, seed);
+    s+=`<g${CARVE}>${woodRect(40,b,254,12,'pWood','url(#shVr)')}</g><rect x="46" y="${b+12}" width="242" height="8" fill="#000" opacity=".45"/>`;
   });
-  s+=`<rect x="52" y="824" width="230" height="96" fill="#3a2010" stroke="#120904" stroke-width="2"/>
-  <rect x="130" y="864" width="74" height="10" rx="5" fill="url(#brass)"/>
-  <g><circle cx="92" cy="410" r="24" fill="#2a4a5a"/><path d="M72,400 C84,396 92,410 108,402 M70,418 C86,414 96,424 112,416" stroke="#c9a062" stroke-width="2" fill="none" opacity=".7"/>
-  <path d="M64,410 A28,28 0 0 1 120,410" fill="none" stroke="url(#brass)" stroke-width="3"/><rect x="88" y="434" width="8" height="6" fill="url(#brass)"/></g>
-  <g transform="translate(250,412)"><path d="M-14,-24 L14,-24 L2,0 L14,24 L-14,24 L-2,0 Z" fill="#e9d4a3" opacity=".25" stroke="url(#brass)" stroke-width="2"/><path d="M-6,-12 L6,-12 L0,-2 Z M-10,22 L10,22 L0,12 Z" fill="#e6c27a"/><rect x="-18" y="-28" width="36" height="5" fill="url(#brass)"/><rect x="-18" y="23" width="36" height="5" fill="url(#brass)"/></g>`;
-
+  // potion jar on top row + bubbles
+  s+=`<circle cx="268" cy="536" r="30" fill="#4ad06a" opacity=".2" filter="url(#soft)" class="screen"/>
+  <path d="M254,520 L282,520 L284,556 C284,560 252,560 252,556 Z" fill="url(#potion)" opacity=".85"/>
+  ${[0,1,2].map(i=>`<circle class="bubble" style="animation-delay:${i*.8}s" cx="${262+i*6}" cy="552" r="2" fill="#e8ffd0"/>`).join('')}
+  <path d="M252,512 L284,512 L284,560 C284,564 252,564 252,560 Z" fill="url(#glassG)" stroke="#cfe8d8" stroke-opacity=".4"/>
+  <rect x="256" y="504" width="24" height="10" rx="2" fill="#8a6a44"/>`;
+  // cabinet below
+  s+=`${carvedPanel(52,822,112,98,'pWoodV')}${carvedPanel(170,822,112,98,'pWoodV')}
+  <g${BEVS}><circle cx="156" cy="871" r="5" fill="url(#brassR)"/><circle cx="178" cy="871" r="5" fill="url(#brassR)"/></g>`;
+  // orrery + hourglass on top of shelf
+  s+=orrery(96,432,46);
+  s+=`<g transform="translate(250,410)"><path d="M-14,-24 L14,-24 L2,0 L14,24 L-14,24 L-2,0 Z" fill="#e9d4a3" opacity=".22" stroke="#fff4d0" stroke-opacity=".4" stroke-width="1.5"/><path d="M-6,-12 L6,-12 L0,-2 Z M-10,22 L10,22 L0,12 Z" fill="#e6c27a"/>
+    <g${BEVS}><rect x="-19" y="-29" width="38" height="6" rx="2" fill="url(#brassH)"/><rect x="-19" y="23" width="38" height="6" rx="2" fill="url(#brassH)"/><rect x="-17" y="-24" width="3" height="48" fill="url(#brassV)"/><rect x="14" y="-24" width="3" height="48" fill="url(#brassV)"/></g></g>`;
   // desk
-  s+=`<ellipse cx="540" cy="935" rx="290" ry="18" fill="#000" opacity=".45"/>
-  <path d="M298,762 L328,762 L322,930 L304,930 Z M752,762 L782,762 L776,930 L758,930 Z" fill="#3a2010"/>
-  <path d="M300,800 L326,800 M754,800 L780,800" stroke="url(#brass)" stroke-width="4"/>
-  <rect x="290" y="686" width="500" height="80" fill="url(#woodV)" stroke="#120904" stroke-width="2"/>
-  <rect x="304" y="698" width="220" height="56" fill="none" stroke="#120904" stroke-width="2"/><rect x="556" y="698" width="220" height="56" fill="none" stroke="#120904" stroke-width="2"/>
-  <rect x="390" y="720" width="48" height="10" rx="5" fill="url(#brass)"/><rect x="642" y="720" width="48" height="10" rx="5" fill="url(#brass)"/>
-  <path d="M300,640 L780,640 L800,672 L280,672 Z" fill="url(#woodTop)"/>
-  <rect x="278" y="672" width="524" height="16" fill="#3a2010"/><rect x="278" y="672" width="524" height="3" fill="#a87745" opacity=".55"/>`;
-  // lamp
-  s+=`<circle cx="415" cy="560" r="400" fill="url(#warm)" class="flick" style="mix-blend-mode:screen"/>
-  <ellipse cx="345" cy="642" rx="36" ry="9" fill="url(#brass)"/><path d="M345,640 L356,520 L414,480" stroke="url(#brassH)" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <circle cx="356" cy="520" r="7" fill="url(#brassR)"/>
-  <ellipse cx="418" cy="508" rx="34" ry="10" fill="#fff4c8" opacity=".9" filter="url(#glow)"/>
-  <path d="M378,470 L456,462 L474,506 L362,516 Z" fill="#1d4a34"/><path d="M378,470 L456,462" stroke="url(#brass)" stroke-width="5"/><path d="M362,516 L474,506" stroke="url(#brass)" stroke-width="4"/>
-  <path d="M392,474 L384,510" stroke="#6ab08a" stroke-width="4" opacity=".4"/>`;
+  s+=`<ellipse cx="540" cy="935" rx="300" ry="20" fill="#000" opacity=".55" filter="url(#blur4)"/>`;
+  [313,767].forEach(x=>{ const leg=`M${x-15},762 L${x+15},762 L${x+10},790 Q${x+19},805 ${x+9},822 L${x+7},898 Q${x+15},914 ${x+8},930 L${x-8},930 Q${x-15},914 ${x-7},898 L${x-9},822 Q${x-19},805 ${x-10},790 Z`;
+    s+=`<path d="${leg}" fill="#3a2010"/><path d="${leg}" fill="url(#pWoodV)"/><path d="${leg}" fill="url(#shCyl)"/>${brassBar(x-9,912,18,6)}`; });
+  s+=`<g${CARVE}>${woodRect(290,686,500,80,'pWood','url(#shV)')}</g>
+  ${carvedPanel(304,696,220,60,'pWood')}${carvedPanel(556,696,220,60,'pWood')}`;
+  [414,666].forEach(x=> s+=`<g filter="url(#shS)"><g${BEVS}><rect x="${x-26}" y="716" width="10" height="14" rx="2" fill="url(#brass)"/><rect x="${x+16}" y="716" width="10" height="14" rx="2" fill="url(#brass)"/><path d="M${x-21},724 C${x-21},738 ${x+21},738 ${x+21},724" fill="none" stroke="url(#brassH)" stroke-width="4"/></g></g><path d="M${x},706 m-3,0 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0 M${x-1.5},708 h3 l1,6 h-5 Z" fill="#120904"/>`);
+  s+=tex('path','d="M300,640 L780,640 L800,672 L280,672 Z"','#4a2a14','pWood','url(#gloss)');
+  s+=`<path d="M318,644 L762,644 L778,667 L302,667 Z" fill="#1c3626"/><path d="M318,644 L762,644 L778,667 L302,667 Z" fill="url(#pLeatherS)"/>
+  <path d="M324,646 L756,646 L770,665 L310,665 Z" fill="none" stroke="#c9a062" stroke-width="1" stroke-dasharray="2 3" opacity=".8"/>
+  <g${CARVE}>${woodRect(278,672,524,16,'pWood','url(#shVr)')}</g>${brassBar(278,684,524,3)}`;
+  // inkwell + quill
+  s+=`<path d="M326,640 L346,640 L344,624 L328,624 Z" fill="#101820" opacity=".85"/><path d="M328,626 L344,626" stroke="#fff" stroke-opacity=".3"/>
+  <g${BEVS}><rect x="329" y="618" width="14" height="7" rx="2" fill="url(#brassH)"/></g>
+  <path d="M337,620 C330,600 318,580 300,556 C312,566 326,584 340,616 Z" fill="#efe6d4"/><path d="M337,620 C328,598 316,578 300,556" stroke="#8a7a60" stroke-width="1" fill="none"/>`;
+  // banker's lamp
+  s+=`<ellipse cx="415" cy="642" rx="44" ry="10" fill="#000" opacity=".5" filter="url(#blur4)"/>
+  <g${BEVS}><ellipse cx="415" cy="638" rx="40" ry="10" fill="url(#brassH)"/><path d="M375,638 L375,632 C375,626 455,626 455,632 L455,638 Z" fill="url(#brass)"/>
+  <rect x="411" y="546" width="8" height="84" fill="url(#brassV)"/><circle cx="415" cy="600" r="6" fill="url(#brassR)"/></g>
+  <ellipse cx="415" cy="550" rx="56" ry="10" fill="#fff4c8" opacity=".95" filter="url(#glow)"/>
+  <path d="M355,550 C355,510 475,510 475,550 Z" fill="url(#greenGlass)"/>
+  <path d="M368,540 C372,520 400,514 420,514" fill="none" stroke="#bff0d0" stroke-width="4" opacity=".45" stroke-linecap="round"/>
+  <g${BEVS}><path d="M352,552 L478,552 L476,546 L354,546 Z" fill="url(#brassH)"/><ellipse cx="355" cy="548" rx="5" ry="8" fill="url(#brassR)"/><ellipse cx="475" cy="548" rx="5" ry="8" fill="url(#brassR)"/></g>
+  <path d="M440,556 L440,584" stroke="#c9a062" stroke-width="1.5" stroke-dasharray="1.5 2"/><circle cx="440" cy="587" r="3" fill="url(#brassR)"/>`;
   // candle
-  s+=`<ellipse cx="768" cy="638" rx="20" ry="6" fill="url(#brass)"/><rect x="760" y="590" width="16" height="48" fill="#efe2c0"/><rect x="760" y="590" width="5" height="48" fill="#fff" opacity=".4"/>
-  <circle cx="768" cy="572" r="26" fill="#ffd36a" opacity=".35" filter="url(#soft)"/>
-  <path class="flame" d="M768,560 C774,572 776,580 768,588 C760,580 762,572 768,560 Z" fill="#ffd36a" filter="url(#glow)"/>`;
+  s+=`<g${BEVS}><ellipse cx="768" cy="640" rx="24" ry="7" fill="url(#brassH)"/><path d="M790,638 C800,636 802,626 792,626" fill="none" stroke="url(#brass)" stroke-width="3"/><rect x="759" y="630" width="18" height="8" fill="url(#brass)"/></g>
+  <rect x="761" y="588" width="14" height="44" fill="#efe2c0"/><rect x="761" y="588" width="14" height="44" fill="url(#shCyl)" opacity=".5"/>
+  <path d="M761,590 C761,600 764,604 764,610 C764,614 767,614 767,608 L767,592 Z M770,590 L775,590 L775,598 C775,602 772,602 772,598 Z" fill="#fff6e0"/>
+  <circle cx="768" cy="572" r="34" fill="#ffd36a" opacity=".3" filter="url(#soft)" class="screen"/>
+  <line x1="768" y1="588" x2="768" y2="582" stroke="#1a0f06" stroke-width="1.4"/>
+  <path class="flame" d="M768,558 C775,571 777,579 768,587 C759,579 761,571 768,558 Z" fill="#ffd36a" filter="url(#glow)"/>
+  <path d="M768,574 C771,579 771,583 768,586 C765,583 765,579 768,574 Z" fill="#6aa8ff" opacity=".7"/>`;
   // letter
-  s+=`<path d="M640,628 L736,620 L746,650 L648,658 Z" fill="url(#parch)" stroke="#9a7442" stroke-width="1.5"/>
-  ${[632,638,644].map((y,i)=>`<line x1="${652+i}" y1="${y+i*1.5}" x2="${720+i*2}" y2="${y-5+i*1.5}" stroke="#5a3a1a" stroke-width="1.4" opacity=".55"/>`).join('')}
-  <circle cx="726" cy="645" r="6" fill="#9a1a16"/>
-  ${gear(630,664,9,8,{solid:true})}${gear(645,668,6,7,{solid:true})}`;
+  s+=`<path d="M640,628 L736,620 L746,650 L648,658 Z" fill="#000" opacity=".4" transform="translate(3,3)" filter="url(#blur4)"/>
+  ${tex('path','d="M640,628 L736,620 L746,650 L648,658 Z"','#ead6a6','pParchS','')}
+  <path d="M688,624 L697,654" stroke="#8a6a3a" stroke-width="1" opacity=".5"/>
+  ${[632,638,644].map((y,i)=>`<line x1="${652+i}" y1="${y+i*1.5}" x2="${680+i}" y2="${y-2+i*1.5}" stroke="#4a2a10" stroke-width="1.2" opacity=".6"/><line x1="${700+i}" y1="${y-3+i*1.5}" x2="${724+i*2}" y2="${y-5+i*1.5}" stroke="#4a2a10" stroke-width="1.2" opacity=".6"/>`).join('')}
+  <g${BEVS}><circle cx="726" cy="645" r="6.5" fill="#9a1a16"/></g>
+  ${gear(630,664,9,8,{solid:true,bev:true})}${gear(645,668,6,7,{solid:true})}`;
   // puzzle box on desk
-  if(f.ringsDone) s+=`<path d="M465,545 L595,545 L606,476 L454,476 Z" fill="url(#mahog)" stroke="#2a0e05" stroke-width="1.5"/><path d="M470,541 L590,541 L598,484 L462,484 Z" fill="url(#velvet)"/>`;
-  s+=`<path d="M445,585 L615,585 L595,545 L465,545 Z" fill="url(#mahogTop)" stroke="#2a0e05" stroke-width="1.5"/>`;
-  if(!f.topOpen) s+=`<ellipse cx="530" cy="565" rx="44" ry="11" fill="none" stroke="url(#brass)" stroke-width="3"/><ellipse cx="530" cy="565" rx="10" ry="3" fill="url(#brass)"/>`;
-  else if(!f.ringsDone) s+=`<ellipse cx="530" cy="565" rx="48" ry="13" fill="url(#brass)" stroke="#3a240c"/><ellipse cx="530" cy="565" rx="32" ry="9" fill="url(#ringG1)" stroke="#3a240c"/><ellipse cx="530" cy="565" rx="15" ry="4.5" fill="url(#brassR)"/>`;
+  if(f.ringsDone) s+=`<path d="M465,545 L595,545 L606,476 L454,476 Z" fill="#55200f"/><path d="M465,545 L595,545 L606,476 L454,476 Z" fill="url(#pMahogS)"/><path d="M470,541 L590,541 L598,484 L462,484 Z" fill="url(#velvet)"/>`;
+  s+=tex('path','d="M445,585 L615,585 L595,545 L465,545 Z"','#5a2010','pMahogS','url(#gloss)');
+  if(!f.topOpen) s+=`<g${BEVS}><ellipse cx="530" cy="565" rx="44" ry="11" fill="none" stroke="url(#brass)" stroke-width="3"/><ellipse cx="530" cy="565" rx="10" ry="3" fill="url(#brass)"/></g><path d="M530,551 L534,565 L530,579 L526,565 Z" fill="#e8c890" opacity=".7"/>`;
+  else if(!f.ringsDone) s+=`<g${BEVS}><ellipse cx="530" cy="565" rx="48" ry="13" fill="url(#brass)"/><ellipse cx="530" cy="565" rx="32" ry="9" fill="url(#ringG1)"/><ellipse cx="530" cy="565" rx="15" ry="4.5" fill="url(#brassR)"/></g>`;
   else { s+=`<path d="M453,582 L607,582 L590,549 L470,549 Z" fill="#140805"/>`; if(f.pipesDone && !f.gotHeart) s+=heartObj(530,538,14); }
-  s+=`<rect x="445" y="585" width="170" height="56" fill="url(#mahog)" stroke="#2a0e05" stroke-width="1.5"/>
-  <rect x="445" y="585" width="170" height="5" fill="url(#brassH)"/><rect x="445" y="636" width="170" height="5" fill="url(#brassH)"/>
-  ${gear(482,613,15,10,{solid:true})}${gear(506,618,10,8,{solid:true})}
-  <circle cx="575" cy="613" r="13" fill="url(#brass)"/><circle cx="575" cy="613" r="9" fill="url(#ivory)"/>
-  <path d="M445,585 l14,0 l0,6 l-8,0 l0,14 l-6,0 Z M615,585 l-14,0 l0,6 l8,0 l0,14 l6,0 Z" fill="url(#brass)"/>`;
-
+  s+=tex('rect','x="445" y="585" width="170" height="56"','#55200f','pMahogS','url(#shV)')+
+  `${brassBar(445,585,170,5)}${brassBar(445,636,170,5)}
+  <rect x="452" y="594" width="100" height="38" rx="3" fill="#120604"/>
+  ${gear(482,613,15,10,{solid:true})}${gear(506,618,10,8,{solid:true})}${gear(528,608,8,7,{solid:true})}
+  <rect x="452" y="594" width="100" height="38" rx="3" fill="url(#glassG)"/>
+  ${gauge(583,613,15,-40,{shadow:false})}
+  <g${BEVS}><path d="M445,585 l14,0 l0,6 l-8,0 l0,14 l-6,0 Z M615,585 l-14,0 l0,6 l8,0 l0,14 l6,0 Z M445,641 l14,0 l0,-6 l-8,0 l0,-14 l-6,0 Z M615,641 l-14,0 l0,-6 l8,0 l0,-14 l6,0 Z" fill="url(#brass)"/></g>`;
+  // lights
+  s+=`<path d="M100,190 L262,190 L520,1000 L60,1000 Z" fill="url(#moonBeam)" class="screen" filter="url(#soft)" pointer-events="none"/>
+  <circle cx="415" cy="590" r="430" fill="url(#warm)" class="flick screen" pointer-events="none"/>`;
   // glints & dust
   s+=glint(690,632,'letter')+glint(512,140,'painting')+glint(850,108,'clock')+glint(160,600,'shelf')+glint(530,560,'box')+glint(872,690,'hatch');
-  for(let i=0;i<16;i++){ const r=rng(i*31+5); s+=`<circle class="dust" style="animation-delay:${f1(-r()*9)}s" cx="${f1(340+r()*220)}" cy="${f1(500+r()*160)}" r="${f1(1+r()*1.6)}" fill="#ffe7b0" opacity=".7"/>`; }
+  for(let i=0;i<20;i++){ const r=rng(i*31+5); s+=`<circle class="dust" style="animation-delay:${f1(-r()*9)}s" cx="${f1(340+r()*220)}" cy="${f1(520+r()*160)}" r="${f1(1+r()*1.6)}" fill="#ffe7b0" opacity=".7"/>`; }
+  for(let i=0;i<10;i++){ const r=rng(i*13+77); s+=`<circle class="dust" style="animation-delay:${f1(-r()*9)}s;animation-duration:12s" cx="${f1(130+r()*200)}" cy="${f1(500+r()*350)}" r="${f1(.8+r()*1.2)}" fill="#cfe0ff" opacity=".6"/>`; }
   s+=vignette();
   // hotspots
   s+=hot(40,70,260,350,'say','data-say="window"')
-    +hot(375,100,270,255,'go','data-go="painting"')
-    +hot(760,90,180,390,'go','data-go="clock"')
+    +hot(375,96,270,262,'go','data-go="painting"')
+    +hot(760,60,180,435,'go','data-go="clock"')
     +hot(755,575,235,235,'go','data-go="hatch"')
-    +hot(24,436,286,500,'go','data-go="shelf"')
+    +hot(20,380,290,556,'go','data-go="shelf"')
     +hot(440,470,182,175,'go','data-go="box"')
     +hot(625,605,128,68,'go','data-go="letter"')
-    +hot(355,455,125,70,'say','data-say="lamp"')
-    +hot(745,550,45,95,'say','data-say="candle"')
+    +hot(350,500,132,60,'say','data-say="lamp"')
+    +hot(745,550,50,95,'say','data-say="candle"')
     +hot(300,205,85,90,'say','data-say="gauge"');
   return s;
 }
 
 /* ---------------- PAINTING ---------------- */
 function paintingScene(){
-  return wallBg()+`<circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".7"/>
-  <g filter="url(#sh)"><rect x="100" y="80" width="800" height="730" fill="url(#brass)" stroke="#3a2208" stroke-width="3"/></g>
-  <rect x="122" y="102" width="756" height="686" fill="none" stroke="#6a4416" stroke-width="6"/>
-  <rect x="140" y="120" width="720" height="650" fill="none" stroke="#f6dc9a" stroke-width="2" opacity=".6"/>
-  ${[[100,80],[900,80],[100,810],[900,810]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="26" fill="url(#brassR)" stroke="#3a2208" stroke-width="2"/><circle cx="${x}" cy="${y}" r="10" fill="url(#brass)"/>`).join('')}
-  <svg x="170" y="150" width="660" height="590" viewBox="0 0 660 590">${paintingArt()}</svg>
-  <rect x="166" y="146" width="668" height="598" fill="none" stroke="#2a1608" stroke-width="8"/>
-  <g filter="url(#sh)"><rect x="345" y="836" width="310" height="62" rx="4" fill="url(#brass)" stroke="#3a2208" stroke-width="2"/></g>
-  <rect x="353" y="844" width="294" height="46" rx="2" fill="none" stroke="#6a4416" stroke-width="1.5"/>
-  ${rivet(362,867,5)}${rivet(638,867,5)}
-  <text x="500" y="875" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="26" fill="#2a1606" letter-spacing="2">«Башня Хронос», 1887</text>
+  return wallBg()+`<circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".6" class="screen"/>
+  ${ornateFrame(96,92,808,728,58)}
+  <svg x="170" y="160" width="660" height="590" viewBox="0 0 660 590">${paintingArt()}</svg>
+  <path d="M170,160 L420,160 L170,430 Z" fill="#fff" opacity=".05"/>
+  <path d="M340,36 L660,36 L860,760 L140,760 Z" fill="url(#cone)" class="screen" opacity=".45" pointer-events="none"/>
+  <g filter="url(#sh)"><g${BEV}><rect x="492" y="-20" width="16" height="44" fill="url(#brassV)"/><path d="M330,22 L670,22 L650,44 L350,44 Z" fill="url(#brassH)"/><path d="M330,22 L670,22 L650,44 L350,44 Z" fill="url(#pBrush)" opacity=".4"/></g></g>
+  <rect x="356" y="42" width="288" height="5" rx="2" fill="#fff4c8" filter="url(#glow)"/>
+  <g filter="url(#sh)"><g${BEV}><rect x="340" y="846" width="320" height="62" rx="5" fill="url(#brass)"/><rect x="340" y="846" width="320" height="62" rx="5" fill="url(#pBrush)" opacity=".45"/></g></g>
+  <rect x="349" y="855" width="302" height="44" rx="3" fill="none" stroke="#5a3810" stroke-width="1.5"/>
+  ${bolt(360,877,6)}${bolt(640,877,6)}
+  <text x="500" y="886" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="26" fill="#2a1606" letter-spacing="2">«Башня Хронос», 1887</text>
   ${vignette()}
-  ${hot(170,150,660,590,'say','data-say="paint"')}
-  <circle class="hot" cx="590" cy="350" r="70" fill="transparent" data-act="say" data-say="tower"/>
-  ${hot(345,836,310,62,'say','data-say="plaque"')}`;
+  ${hot(170,160,660,590,'say','data-say="paint"')}
+  <circle class="hot" cx="590" cy="360" r="70" fill="transparent" data-act="say" data-say="tower"/>
+  ${hot(340,846,320,62,'say','data-say="plaque"')}`;
 }
 
 /* ---------------- CLOCK ---------------- */
 function clockScene(){
   const f=S.f, [hd,md]=handDeg(), cx=500, cy=360;
-  let s=wallBg()+`<circle cx="500" cy="380" r="520" fill="url(#warm)" opacity=".6"/>`;
+  let s=wallBg()+`<circle cx="500" cy="380" r="560" fill="url(#warm)" opacity=".55" class="screen"/>`;
   // pendulum case
-  s+=`<g filter="url(#sh)"><rect x="350" y="600" width="300" height="400" rx="10" fill="url(#woodV)" stroke="#120904" stroke-width="4"/></g>
-  <rect x="372" y="630" width="256" height="350" fill="#0b0603"/>
-  ${gear(cx,640,28,12,{solid:true})}
-  <g class="swing" style="transform-origin:500px 640px"><line x1="500" y1="640" x2="500" y2="860" stroke="url(#brassH)" stroke-width="8"/>
-    <circle cx="500" cy="862" r="44" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/>${glyph('sun',500,862,44,'#5a3a14',4)}</g>
-  <rect x="440" y="950" width="120" height="14" fill="url(#brass)"/>
+  s+=`<g filter="url(#sh)"><g${CARVE}>${woodRect(346,596,308,404,'pWoodV','url(#shCyl)','#3a2010',10)}</g></g>
+  <rect x="372" y="628" width="256" height="354" fill="#0a0503"/><rect x="372" y="628" width="256" height="354" fill="url(#pGrime)" opacity=".5"/>
+  ${gear(cx,640,30,12,{solid:true,bev:true})}
+  <g class="swing" style="transform-origin:500px 640px"><rect x="496" y="640" width="8" height="220" fill="url(#brassV)"/>
+    <g${BEV}>${disc(500,862,46,'url(#brassR)',.6)}</g>${glyph('sun',500,862,44,'#5a3a14',4)}</g>
+  ${brassBar(440,950,120,14)}
   <g id="cgear" ${f.clockDone && !f.gotGear ? '' : 'visibility="hidden"'} data-act="takeGear" class="hot">
-    <circle cx="500" cy="924" r="46" fill="url(#warm)" class="pulse"/>${gear(500,922,30,11,{})}
+    <circle cx="500" cy="924" r="50" fill="url(#warm)" class="pulse screen"/>${gear(500,922,30,11,{bev:true})}
   </g>
   <g id="door" class="door${f.clockDone?' open':''}" style="transform-origin:372px 0">
-    <rect x="372" y="630" width="256" height="350" fill="#9fb4c8" opacity=".14" stroke="url(#brass)" stroke-width="8"/>
-    <rect x="372" y="630" width="256" height="350" fill="url(#glassG)"/>
-    <path d="M372,800 L628,800" stroke="url(#brass)" stroke-width="4" opacity=".7"/>
-    <circle cx="612" cy="800" r="9" fill="url(#brassR)"/>
+    <rect x="372" y="628" width="256" height="354" fill="#9fb4c8" opacity=".12"/>
+    <rect x="372" y="628" width="256" height="354" fill="url(#glassG)"/>
+    <path d="M384,640 L470,640 L384,760 Z" fill="#fff" opacity=".06"/>
+    <g${BEVS}><rect x="372" y="628" width="256" height="354" fill="none" stroke="url(#brassH)" stroke-width="10"/><path d="M372,800 L628,800" stroke="url(#brassH)" stroke-width="5"/></g>
+    <g${BEVS}><circle cx="612" cy="800" r="10" fill="url(#brassR)"/></g>
   </g>`;
-  // wooden backplate
-  s+=`<circle cx="${cx}" cy="${cy}" r="300" fill="#2a170b" filter="url(#sh)"/><circle cx="${cx}" cy="${cy}" r="292" fill="url(#woodV)"/>
-  ${rivetRing(cx,cy,280,24,5)}
-  <circle cx="${cx}" cy="${cy}" r="264" fill="url(#brass)"/><circle cx="${cx}" cy="${cy}" r="250" fill="url(#brassR)"/>
-  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#ivory)"/>
-  <circle cx="${cx}" cy="${cy}" r="150" fill="none" stroke="#8a6a3a" stroke-width="1.5" opacity=".6"/>
+  // backplate
+  s+=`<circle cx="${cx}" cy="${cy}" r="304" fill="#000" opacity=".6" filter="url(#soft)"/>
+  <g${CARVE}><circle cx="${cx}" cy="${cy}" r="296" fill="#3a2010"/><circle cx="${cx}" cy="${cy}" r="296" fill="url(#pWood)"/><circle cx="${cx}" cy="${cy}" r="296" fill="url(#shAO)"/></g>
+  ${boltRing(cx,cy,282,24,5)}
+  <g filter="url(#shS)"><g${BEVL}>${annulus(cx,cy,268,238,'url(#brass)',.6)}</g></g>
+  ${knurl(cx,cy,262,220,8)}
+  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#ivory)"/><circle cx="${cx}" cy="${cy}" r="238" fill="url(#pParchS)" opacity=".35"/>
   <circle cx="${cx}" cy="${cy}" r="226" fill="none" stroke="#2a1a0c" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="212" fill="none" stroke="#2a1a0c" stroke-width="1"/>`;
   for(let i=0;i<60;i++){ const a=rad(i*6), r1=i%5?218:212; s+=`<line x1="${f1(cx+Math.sin(a)*r1)}" y1="${f1(cy-Math.cos(a)*r1)}" x2="${f1(cx+Math.sin(a)*226)}" y2="${f1(cy-Math.cos(a)*226)}" stroke="#2a1a0c" stroke-width="${i%5?1.5:4}"/>`; }
-  RN.forEach((n,i)=>{ const a=rad(i*30); s+=`<text x="${f1(cx+Math.sin(a)*180)}" y="${f1(cy-Math.cos(a)*180+15)}" font-family="Cormorant SC,serif" font-size="44" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`; });
-  // see-through window with moving gears
-  s+=`<circle cx="${cx}" cy="445" r="52" fill="#0e0804" stroke="url(#brass)" stroke-width="6"/>
-  <svg x="448" y="393" width="104" height="104" viewBox="448 393 104 104"><clipPath id="cw"><circle cx="500" cy="445" r="49"/></clipPath>
-  <g clip-path="url(#cw)">${gear(476,440,34,12,{spin:14})}${gear(530,468,26,10,{spin:11,rev:true})}${gear(530,410,18,8,{spin:8,rev:true})}</g></svg>
-  <text x="${cx}" y="300" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" letter-spacing="4" fill="#6a4a22">A · BRASS · LONDINI</text>`;
+  RN.forEach((n,i)=>{ const a=rad(i*30); s+=`<text x="${f1(cx+Math.sin(a)*182)}" y="${f1(cy-Math.cos(a)*182+15)}" font-family="Cormorant SC,serif" font-size="42" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`; });
+  // skeleton movement in the open centre
+  s+=`<circle cx="${cx}" cy="${cy}" r="146" fill="#0c0603"/>
+  <svg x="${cx-146}" y="${cy-146}" width="292" height="292" viewBox="${cx-146} ${cy-146} 292 292">
+    <clipPath id="skel"><circle cx="${cx}" cy="${cy}" r="143"/></clipPath>
+    <g clip-path="url(#skel)">
+      <rect x="${cx-146}" y="${cy-146}" width="292" height="292" fill="url(#pGrime)" opacity=".6"/>
+      <g${BEV}>
+        ${gear(cx-50,cy-30,74,18,{spin:26,holes:6,jewel:true})}
+        ${gear(cx+62,cy+44,56,14,{spin:20,rev:true,jewel:true})}
+        ${gear(cx+58,cy-74,40,11,{spin:15,rev:true,jewel:true})}
+        ${gear(cx-62,cy+88,34,10,{spin:13,rev:true,jewel:true})}
+        ${gear(cx+20,cy+112,24,9,{spin:9,jewel:true})}
+      </g>
+      ${[[cx-110,cy+28],[cx+110,cy-24],[cx+30,cy-110],[cx-14,cy+120]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="#c0142a" stroke="#4a0608"/><circle cx="${x-1.5}" cy="${y-1.5}" r="1.8" fill="#ff9aa0"/>`).join('')}
+    </g>
+  </svg>
+  <g${BEV}>${annulus(cx,cy,152,142,'url(#brass)',.6)}</g>`;
   // hands
   s+=`<g id="hourHand" class="hand" style="transform-origin:${cx}px ${cy}px;transform:rotate(${hd}deg)">
-    <path d="M${cx},${cy+28} L${cx-9},${cy} L${cx-5},${cy-90} L${cx-14},${cy-104} L${cx},${cy-140} L${cx+14},${cy-104} L${cx+5},${cy-90} L${cx+9},${cy} Z" fill="#1a1008"/>
-    <circle cx="${cx}" cy="${cy-104}" r="8" fill="#f2e2b8"/></g>
+    <path d="M${cx},${cy+30} L${cx-10},${cy} L${cx-5},${cy-90} L${cx-16},${cy-104} L${cx},${cy-142} L${cx+16},${cy-104} L${cx+5},${cy-90} L${cx+10},${cy} Z" fill="url(#brassH)" stroke="#120904" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy-104}" r="7" fill="#120904"/></g>
   <g id="minHand" class="hand" style="transform-origin:${cx}px ${cy}px;transform:rotate(${md}deg)">
-    <path d="M${cx},${cy+36} L${cx-7},${cy} L${cx-3},${cy-150} L${cx-10},${cy-162} L${cx},${cy-204} L${cx+10},${cy-162} L${cx+3},${cy-150} L${cx+7},${cy} Z" fill="#1a1008"/>
-    <circle cx="${cx}" cy="${cy-162}" r="5" fill="#f2e2b8"/></g>
-  <circle cx="${cx}" cy="${cy}" r="20" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="6" fill="#1a0f06"/>
-  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#glassG)" pointer-events="none"/>`;
+    <path d="M${cx},${cy+38} L${cx-8},${cy} L${cx-3},${cy-150} L${cx-11},${cy-163} L${cx},${cy-206} L${cx+11},${cy-163} L${cx+3},${cy-150} L${cx+8},${cy} Z" fill="url(#brassH)" stroke="#120904" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy-163}" r="4.5" fill="#120904"/></g>
+  <g${BEVS}>${disc(cx,cy,22,'url(#brassR)',.5)}</g><circle cx="${cx}" cy="${cy}" r="6" fill="#c0142a"/>
+  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#glassG)" pointer-events="none"/>
+  <path d="M${cx-200},${cy-110} A230,230 0 0 1 ${cx-60},${cy-226}" fill="none" stroke="#fff" stroke-width="10" opacity=".14" stroke-linecap="round" pointer-events="none"/>`;
   // knobs
   [['h',105,'ЧАСЫ',S.hs],['m',895,'МИНУТЫ',S.ms]].forEach(([k,x,label,cnt])=>{
-    s+=`<rect x="${k==='h'?165:770}" y="350" width="70" height="20" fill="url(#brassH)"/>
+    s+=brassBar(k==='h'?165:770,350,70,20)+`
     <g class="hot" data-act="knob" data-k="${k}">
-      <circle cx="${x}" cy="${cy}" r="88" fill="transparent"/>
-      <circle cx="${x}" cy="${cy}" r="76" fill="#1e1109" filter="url(#sh)"/>
-      <g class="kn" style="transform-origin:${x}px ${cy}px;transform:rotate(${cnt*40}deg)">
-        <path d="${gearPath(x,cy,66,58,28)}" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
-        <circle cx="${x}" cy="${cy}" r="44" fill="url(#brassR)"/><circle cx="${x}" cy="${cy}" r="30" fill="none" stroke="#5a3a14" stroke-width="2"/>
-        <path d="M${x},${cy-40} L${x+9},${cy-22} L${x-9},${cy-22} Z" fill="#7a1a10"/>
-      </g>
+      <circle cx="${x}" cy="${cy}" r="90" fill="transparent"/>
+      <circle cx="${x}" cy="${cy}" r="78" fill="#1a0e06" filter="url(#sh)"/>
+      <g${BEV}><g class="kn" style="transform-origin:${x}px ${cy}px;transform:rotate(${cnt*40}deg)">
+        <path d="${gearPath(x,cy,68,60,30)}" fill="url(#brass)" stroke="#2e1c08" stroke-width="1.5"/>
+        ${disc(x,cy,46,'url(#brassR)',.6)}
+        <circle cx="${x}" cy="${cy}" r="30" fill="none" stroke="#5a3a14" stroke-width="2"/>
+        <path d="M${x},${cy-42} L${x+9},${cy-24} L${x-9},${cy-24} Z" fill="#8a1a10"/>
+      </g></g>
       <path d="M${x-50},${cy+104} A60,60 0 0 0 ${x+50},${cy+104}" fill="none" stroke="#d6a64e" stroke-width="2" opacity=".6"/>
-      <text x="${x}" y="${cy+140}" text-anchor="middle" font-family="Cormorant SC,serif" font-size="28" font-weight="700" letter-spacing="3" fill="#e9c47a">${label}</text>
+      <text x="${x}" y="${cy+140}" text-anchor="middle" font-family="Cormorant SC,serif" font-size="28" font-weight="700" letter-spacing="3" fill="#e9c47a" stroke="#000" stroke-width=".6">${label}</text>
     </g>`;
   });
-  s+=vignette().replace('url(#vig)','url(#vig)" opacity=".7');
-  s+=hot(372,630,256,350,'say','data-say="pendulum"').replace('class="hot"', f.clockDone && !f.gotGear ? 'class="hot" pointer-events="none"' : 'class="hot"');
+  s+=vignette();
+  s+=hot(372,628,256,354,'say','data-say="pendulum"').replace('class="hot"', f.clockDone && !f.gotGear ? 'class="hot" pointer-events="none"' : 'class="hot"');
   s+=`<circle class="hot" cx="${cx}" cy="${cy}" r="230" fill="transparent" data-act="say" data-say="clockface"/>`;
   return s;
 }
@@ -627,81 +1008,88 @@ const BOOKS=[
 ];
 function bookSvg(i,x,base){
   const [,w,h,c,num]=BOOKS[i], y=base-h, pressed = num && num<=S.shelf;
+  const bands=[y+18,y+30,base-34,base-22].map(by=>`<rect ${R4(x,by,w,5,1)} fill="#000" opacity=".35"/><rect ${R4(x,by,w,3,1)} fill="${c}"/><rect ${R4(x,by,w,3,1)} fill="#fff" opacity=".18"/>`).join('');
   return `<g class="book${pressed?' in':''}" data-act="book" data-i="${i}">
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c}" stroke="#0e0704" stroke-width="2"/>
-    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#woodH)" opacity=".35"/>
-    <rect x="${x+2}" y="${y+16}" width="${w-4}" height="4" fill="#d6a64e" opacity=".8"/><rect x="${x+2}" y="${y+24}" width="${w-4}" height="2" fill="#d6a64e" opacity=".6"/>
-    <rect x="${x+2}" y="${base-30}" width="${w-4}" height="4" fill="#d6a64e" opacity=".8"/>
-    ${num ? `<text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${w>50?36:30}" fill="url(#goldText)" stroke="#3a2208" stroke-width=".8">${ROMAN[num]}</text>`
-          : `<rect x="${x+w/2-7}" y="${y+h/2-30}" width="14" height="60" rx="2" fill="none" stroke="#d6a64e" stroke-width="1.5" opacity=".5"/>`}
-    <rect class="shade" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#000"/>
+    <rect ${R4(x,y,w,h,3)} fill="${c}" stroke="#0a0503" stroke-width="2"/>
+    <rect ${R4(x,y,w,h,3)} fill="url(#pLeatherS)" opacity=".35"/>
+    <rect ${R4(x,y,w,h,3)} fill="url(#shCyl)"/>
+    ${bands}
+    <rect ${R4(x+3,y+10,w-6,2)} fill="#d6a64e" opacity=".9"/><rect ${R4(x+3,base-12,w-6,2)} fill="#d6a64e" opacity=".9"/>
+    ${num ? `<rect ${R4(x+5,y+h/2-26,w-10,46,2)} fill="#1a0e06" opacity=".55" stroke="#d6a64e" stroke-width="1.2"/>
+      <text x="${x+w/2}" y="${y+h/2+10}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${w>50?34:28}" fill="url(#goldText)">${ROMAN[num]}</text>`
+          : `<rect ${R4(x+w/2-8,y+h/2-34,16,68,2)} fill="#e9d4a3" opacity=".5"/><path d="M${x+w/2-4},${y+h/2-24} v48 M${x+w/2+3},${y+h/2-18} v36" stroke="#3a2210" stroke-width="1.5" opacity=".6"/>`}
+    <rect class="shade" ${R4(x,y,w,h,3)} fill="#000"/>
   </g>`;
+}
+function lensIcon(x,y,k=1){
+  return `<g transform="translate(${x},${y}) scale(${k})">
+    <line x1="34" y1="34" x2="82" y2="82" stroke="#2a1406" stroke-width="18" stroke-linecap="round"/>
+    <line x1="34" y1="34" x2="82" y2="82" stroke="url(#brassH)" stroke-width="11" stroke-linecap="round"/>
+    <path d="M60,60 l8,8 M70,70 l8,8" stroke="#3a240a" stroke-width="2"/>
+    <circle r="50" fill="#d01a1a" opacity=".5"/>
+    <g${BEVS}><circle r="50" fill="none" stroke="url(#brass)" stroke-width="12"/></g>
+    <path d="M-30,-18 A34,34 0 0 1 -6,-36" stroke="#fff" stroke-width="5" fill="none" opacity=".65" stroke-linecap="round"/></g>`;
 }
 function shelfScene(){
   const f=S.f;
-  let s=wallBg()+`<circle cx="500" cy="300" r="600" fill="url(#warm)" opacity=".55"/>
-  <g filter="url(#sh)"><rect x="100" y="70" width="800" height="880" fill="url(#woodV)" stroke="#120904" stroke-width="4"/></g>
-  <rect x="88" y="58" width="824" height="30" fill="#5a3418"/><rect x="88" y="58" width="824" height="4" fill="#b8864a" opacity=".55"/>
-  <rect x="128" y="110" width="744" height="610" fill="#140a05"/>
-  <g filter="url(#sh)"><rect x="330" y="96" width="340" height="50" rx="3" fill="url(#brass)"/></g>
-  ${rivet(344,121,5)}${rivet(656,121,5)}
+  let s=wallBg()+`<circle cx="500" cy="300" r="620" fill="url(#warm)" opacity=".5" class="screen"/>
+  <g filter="url(#sh)"><g${CARVE}>${woodRect(100,70,800,880,'pWoodV','url(#shCyl)')}</g></g>
+  ${molding(84,52,832,34)}
+  <rect x="128" y="110" width="744" height="612" fill="#0c0603"/><rect x="128" y="110" width="744" height="612" fill="url(#pGrime)" opacity=".7"/>
+  <rect x="128" y="110" width="744" height="310" fill="url(#shAO)"/><rect x="128" y="440" width="744" height="282" fill="url(#shAO)"/>
+  <g filter="url(#sh)"><g${BEV}><rect x="330" y="96" width="340" height="50" rx="4" fill="url(#brass)"/><rect x="330" y="96" width="340" height="50" rx="4" fill="url(#pBrush)" opacity=".4"/></g></g>
+  ${bolt(346,121,6)}${bolt(654,121,6)}
   <text x="500" y="129" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" letter-spacing="3" fill="#2a1606">SAPIENTIA · ORDINE</text>`;
   let x=150; BOOKS.forEach((b,i)=>{ if(b[0]===0){ s+=bookSvg(i,x,420); x+=b[1]+4; } });
-  // hourglass and telescope on top row
-  s+=`<g transform="translate(650,360)"><rect x="-34" y="-64" width="68" height="8" fill="url(#brass)"/><rect x="-34" y="56" width="68" height="8" fill="url(#brass)"/>
-    <path d="M-26,-56 L26,-56 L4,0 L26,56 L-26,56 L-4,0 Z" fill="#e9d4a3" opacity=".22" stroke="#e9d4a3" stroke-width="2" stroke-opacity=".5"/>
-    <path d="M-12,-30 L12,-30 L0,-4 Z M-20,54 L20,54 L0,26 Z" fill="#e6c27a"/>
-    <line x1="-30" y1="-56" x2="-30" y2="56" stroke="url(#brassH)" stroke-width="4"/><line x1="30" y1="-56" x2="30" y2="56" stroke="url(#brassH)" stroke-width="4"/></g>
-  <g transform="translate(790,380) rotate(-18)"><rect x="-70" y="-14" width="140" height="28" rx="6" fill="url(#brassH)"/><rect x="-90" y="-10" width="30" height="20" rx="4" fill="url(#brass)"/><rect x="60" y="-18" width="22" height="36" rx="4" fill="url(#brass)"/></g>`;
-  s+=`<rect x="110" y="420" width="780" height="22" fill="#4a2a14"/><rect x="110" y="420" width="780" height="3" fill="#a87745" opacity=".6"/>`;
-  // globe
-  s+=`<g transform="translate(205,630)"><path d="M-30,90 L30,90 L18,74 L-18,74 Z" fill="url(#brass)"/><rect x="-4" y="40" width="8" height="36" fill="url(#brassH)"/>
-    <circle r="62" fill="#22485a"/><path d="M-50,-20 C-30,-34 -10,-8 14,-26 C30,-38 46,-20 56,-10 M-56,14 C-30,4 -16,30 6,18 C24,8 40,30 50,24" stroke="#c9a062" stroke-width="3" fill="none" opacity=".7"/>
-    <path d="M-30,-48 C-10,-40 0,-56 26,-50 L18,-30 C0,-38 -16,-24 -34,-32 Z M-20,30 C0,22 10,44 30,36 L24,52 C6,58 -10,50 -22,46 Z" fill="#8a7a4a" opacity=".55"/>
-    <circle r="62" fill="url(#glassG)"/><path d="M-70,0 A70,70 0 0 1 70,0" fill="none" stroke="url(#brass)" stroke-width="6"/></g>`;
+  s+=`<g transform="translate(650,360)"><path d="M-26,-56 L26,-56 L4,0 L26,56 L-26,56 L-4,0 Z" fill="#e9d4a3" opacity=".18" stroke="#fff4d0" stroke-width="2" stroke-opacity=".5"/>
+    <path d="M-12,-30 L12,-30 L0,-4 Z M-20,54 L20,54 L0,26 Z" fill="#e6c27a"/><line x1="0" y1="-4" x2="0" y2="40" stroke="#e6c27a" stroke-width="1.5"/>
+    <g${BEVS}><rect x="-36" y="-66" width="72" height="10" rx="3" fill="url(#brassH)"/><rect x="-36" y="56" width="72" height="10" rx="3" fill="url(#brassH)"/>
+    <rect x="-32" y="-56" width="5" height="112" fill="url(#brassV)"/><rect x="27" y="-56" width="5" height="112" fill="url(#brassV)"/></g></g>
+  <g transform="translate(790,380) rotate(-18)" filter="url(#shS)"><g${BEVS}><rect x="-70" y="-14" width="140" height="28" rx="6" fill="url(#brassH)"/><rect x="-92" y="-10" width="30" height="20" rx="4" fill="url(#brass)"/><rect x="58" y="-19" width="24" height="38" rx="4" fill="url(#brass)"/><rect x="-20" y="-16" width="8" height="32" fill="url(#brassV)"/></g>
+    <ellipse cx="82" cy="0" rx="4" ry="16" fill="#6a9ac8" opacity=".6"/></g>`;
+  s+=`<g${CARVE}>${woodRect(110,420,780,22,'pWood','url(#shVr)')}</g><rect x="128" y="442" width="744" height="10" fill="#000" opacity=".5"/>`;
+  s+=`<g transform="translate(205,630)" filter="url(#shS)"><g${BEVS}><path d="M-34,90 L34,90 L20,72 L-20,72 Z" fill="url(#brassH)"/><rect x="-5" y="40" width="10" height="34" fill="url(#brassV)"/></g>
+    <circle r="62" fill="#1e4458"/><circle r="62" fill="url(#pParchS)" opacity=".18"/>
+    <path d="M-50,-20 C-30,-34 -10,-8 14,-26 C30,-38 46,-20 56,-10 M-56,14 C-30,4 -16,30 6,18 C24,8 40,30 50,24" stroke="#c9a062" stroke-width="2.5" fill="none" opacity=".7"/>
+    <path d="M-30,-48 C-10,-40 0,-56 26,-50 L18,-30 C0,-38 -16,-24 -34,-32 Z M-20,30 C0,22 10,44 30,36 L24,52 C6,58 -10,50 -22,46 Z" fill="#9a8a5a" opacity=".6"/>
+    <circle r="62" fill="url(#shAO)"/><ellipse cx="-22" cy="-24" rx="18" ry="10" fill="#fff" opacity=".2"/>
+    <g${BEVS}><path d="M-72,0 A72,72 0 0 1 72,0" fill="none" stroke="url(#brass)" stroke-width="7"/></g></g>`;
   x=300; BOOKS.forEach((b,i)=>{ if(b[0]===1){ s+=bookSvg(i,x,720); x+=b[1]+4; } });
-  s+=`<rect x="110" y="720" width="780" height="24" fill="#4a2a14"/><rect x="110" y="720" width="780" height="3" fill="#a87745" opacity=".6"/>`;
-  // drawer
+  s+=`<g${CARVE}>${woodRect(110,720,780,24,'pWood','url(#shVr)')}</g>`;
   if(f.shelfDone){
     s+=`<rect x="300" y="772" width="400" height="80" fill="#0b0503"/>
     <path d="M300,772 L700,772 L716,800 L284,800 Z" fill="url(#velvet)"/>
-    ${!f.gotLens ? `<g class="hot" data-act="takeLens"><circle cx="500" cy="786" r="70" fill="url(#warm)" class="pulse"/>${lensIcon(500,786,.9)}</g>` : ''}
-    <g filter="url(#sh)"><rect x="284" y="800" width="432" height="120" fill="url(#woodV)" stroke="#120904" stroke-width="3"/></g>
-    <rect x="452" y="852" width="96" height="16" rx="8" fill="url(#brass)"/>`;
+    ${!f.gotLens ? `<g class="hot" data-act="takeLens"><circle cx="500" cy="786" r="70" fill="url(#warm)" class="pulse screen"/>${lensIcon(500,786,.9)}</g>` : ''}
+    <g filter="url(#sh)">${carvedPanel(284,800,432,120,'pWood')}</g>
+    ${brassBar(452,852,96,16)}`;
   } else {
-    s+=`<rect x="300" y="770" width="400" height="120" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
-    <rect x="316" y="784" width="368" height="92" fill="none" stroke="#120904" stroke-width="2" opacity=".7"/>
-    <rect x="452" y="822" width="96" height="16" rx="8" fill="url(#brass)"/>
-    <rect x="484" y="796" width="32" height="18" rx="3" fill="url(#brass)"/><rect x="497" y="800" width="6" height="10" fill="#1a0f06"/>`;
+    s+=`${carvedPanel(300,770,400,120,'pWood')}
+    ${brassBar(452,822,96,16)}
+    <g${BEVS}><rect x="482" y="794" width="36" height="22" rx="3" fill="url(#brass)"/></g><path d="M500,800 m-3,0 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0 M498.5,802 h3 l1,8 h-5 Z" fill="#120904"/>`;
     s+=hot(300,770,400,120,'say','data-say="drawer"');
   }
   s+=vignette();
   s+=`<circle class="hot" cx="205" cy="630" r="70" fill="transparent" data-act="say" data-say="globe"/>${hot(610,290,80,140,'say','data-say="hourglass"')}`;
   return s;
 }
-function lensIcon(x,y,k=1){
-  return `<g transform="translate(${x},${y}) scale(${k})">
-    <line x1="34" y1="34" x2="82" y2="82" stroke="#3a1e0a" stroke-width="18" stroke-linecap="round"/>
-    <line x1="34" y1="34" x2="82" y2="82" stroke="url(#brassH)" stroke-width="11" stroke-linecap="round"/>
-    <circle r="50" fill="#d01a1a" opacity=".55"/><circle r="50" fill="none" stroke="url(#brass)" stroke-width="11"/>
-    <path d="M-30,-18 A34,34 0 0 1 -6,-36" stroke="#fff" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/></g>`;
-}
 
 /* ---------------- LETTER ---------------- */
 const LETTER=['Мой юный друг!','Если ты читаешь это, меня уже нет','в мастерской. Гильдия пришла за Сердцем,','но я спрятал его в шкатулке, которую','собирал двадцать лет.','Механизм проснётся, если вернуть ему','время — то, что показывает башня','на моей любимой картине.','Мудрость на полках читай по порядку,','а скрытое откроет лишь красный свет.','Сердце отворит тебе дверь.'];
 function letterScene(){
   const lensOn = S.sel==='lens';
+  const P='M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z';
   let s=deskBg()+`<g transform="rotate(-1.5 500 500)">
-    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="#000" opacity=".4" transform="translate(10,14)" filter="url(#soft)"/>
-    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="url(#parch)" stroke="#9a7442" stroke-width="2"/>
-    <rect x="130" y="55" width="740" height="900" filter="url(#paper)" opacity=".6"/>
-    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="url(#parchEdge)"/>
-    <line x1="140" y1="500" x2="860" y2="496" stroke="#8a6a3a" stroke-width="1.5" opacity=".25"/>
-    ${LETTER.map((t,i)=>`<text x="${i===0?200:190}" y="${158+i*52}" font-family="Caveat,cursive" font-size="${i===0?44:36}" font-weight="${i===0?700:500}" fill="#3a2210">${t}</text>`).join('')}
-    <text x="800" y="${158+11*52+12}" text-anchor="end" font-family="Caveat,cursive" font-size="40" font-weight="700" fill="#3a2210">Твой А. Б.</text>
-    <path d="M610,${158+11*52+26} C660,${158+11*52+16} 720,${158+11*52+34} 790,${158+11*52+20}" stroke="#3a2210" stroke-width="2.5" fill="none"/>
-    <g transform="translate(770,880)"><circle r="44" fill="#8a1410"/><circle r="44" fill="none" stroke="#5a0a08" stroke-width="5"/>
-      <circle r="30" fill="none" stroke="#c4302a" stroke-width="2"/>${glyph('sun',0,0,40,'#c4302a',4)}</g>
+    <path d="${P}" fill="#000" opacity=".5" transform="translate(12,16)" filter="url(#soft)"/>
+    <path d="${P}" fill="#ead6a6"/><path d="${P}" fill="url(#pParch)"/>
+    <path d="${P}" fill="url(#parchEdge)"/>
+    <path d="${P}" fill="none" stroke="#5a3410" stroke-width="2" opacity=".6"/>
+    <line x1="140" y1="500" x2="860" y2="496" stroke="#6a4a20" stroke-width="2" opacity=".25"/><line x1="140" y1="502" x2="860" y2="498" stroke="#fff" stroke-width="1.5" opacity=".2"/>
+    ${LETTER.map((t,i)=>`<text x="${i===0?200:190}" y="${158+i*52}" font-family="Caveat,cursive" font-size="${i===0?44:36}" font-weight="${i===0?700:500}" fill="#2e1a0a" opacity=".92">${t}</text>`).join('')}
+    <text x="800" y="${158+11*52+12}" text-anchor="end" font-family="Caveat,cursive" font-size="40" font-weight="700" fill="#2e1a0a">Твой А. Б.</text>
+    <path d="M610,${158+11*52+26} C660,${158+11*52+16} 720,${158+11*52+34} 790,${158+11*52+20}" stroke="#2e1a0a" stroke-width="2.5" fill="none"/>
+    <circle cx="232" cy="822" r="16" fill="#3a1a08" opacity=".12"/><circle cx="246" cy="836" r="5" fill="#3a1a08" opacity=".15"/>
+    <g transform="translate(770,880)"><g filter="url(#shS)"><g${BEV}><path d="M0,-48 C18,-50 30,-40 42,-34 C50,-18 46,0 48,14 C40,32 26,44 8,48 C-12,50 -28,42 -40,30 C-50,12 -46,-8 -42,-24 C-32,-40 -18,-48 0,-48 Z" fill="#8a1410"/></g></g>
+      <circle r="31" fill="none" stroke="#5a0806" stroke-width="3"/>${glyph('sun',0,0,40,'#5a0806',4)}</g>
   </g>`;
   if(lensOn){
     s+=`<g id="secret" clip-path="url(#lensClip)" pointer-events="none">
@@ -713,7 +1101,7 @@ function letterScene(){
         <text x="420" y="922" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#c4161c">II</text>
         <text x="540" y="922" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#c4161c">III</text>
       </g></g>
-    <g id="lens" style="cursor:grab">${lensIcon(0,0,2.1)}</g>`;
+    <g id="lens" style="cursor:grab" filter="url(#shS)">${lensIcon(0,0,2.1)}</g>`;
   }
   s+=vignette();
   if(!lensOn) s+=hot(130,55,740,900,'say','data-say="letter"');
@@ -740,77 +1128,77 @@ function mountLetter(){
 /* ---------------- BOX ---------------- */
 function boxScene(){
   const f=S.f; let s=deskBg();
-  s+=`<ellipse cx="500" cy="880" rx="400" ry="44" fill="#000" opacity=".55" filter="url(#soft)"/>`;
-  // lid (raised) behind
+  s+=`<ellipse cx="500" cy="880" rx="420" ry="50" fill="#000" opacity=".65" filter="url(#soft)"/>`;
   if(f.ringsDone){
-    s+=`<path d="M250,360 L750,360 L776,96 L224,96 Z" fill="url(#mahog)" stroke="#2a0e05" stroke-width="3"/>
+    s+=`${tex('path','d="M250,360 L750,360 L776,96 L224,96 Z"','#55200f','pMahog','url(#shVr)')}
     <path d="M268,352 L732,352 L754,112 L246,112 Z" fill="url(#velvet)"/>
-    <path d="M250,360 L750,360" stroke="url(#brassH)" stroke-width="8"/>
-    <path d="M224,96 L776,96" stroke="url(#brassH)" stroke-width="6"/>
-    <text x="500" y="240" text-anchor="middle" font-family="Cormorant SC,serif" font-size="30" letter-spacing="6" fill="#e9c47a" opacity=".55">COR · CHRONI</text>`;
+    ${[[330,170],[500,160],[670,170],[400,260],[600,260],[320,320],[680,320],[500,320]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="#3a0408"/><circle cx="${x-1.5}" cy="${y-1.5}" r="3" fill="#a02a34"/>`).join('')}
+    <path d="M330,170 L400,260 L500,160 L600,260 L670,170 M400,260 L320,320 M600,260 L680,320 M400,260 L500,320 L600,260" stroke="#2a0206" stroke-width="2" fill="none" opacity=".6"/>
+    ${brassBar(250,356,500,8)}${brassBar(224,92,552,8)}
+    <text x="500" y="226" text-anchor="middle" font-family="Cormorant SC,serif" font-size="30" letter-spacing="6" fill="#e9c47a" opacity=".6">COR · CHRONI</text>`;
   }
   // top face
-  s+=`<path d="M170,560 L830,560 L750,360 L250,360 Z" fill="url(#mahogTop)" stroke="#2a0e05" stroke-width="3"/>
-  <path d="M170,560 L830,560 L750,360 L250,360 Z" fill="none" stroke="url(#brass)" stroke-width="6" opacity=".7"/>`;
+  s+=tex('path','d="M170,560 L830,560 L750,360 L250,360 Z"','#5a2010','pMahog','url(#gloss)');
+  s+=`<path d="M200,548 L800,548 L732,372 L268,372 Z" fill="none" stroke="#d8a868" stroke-width="5" opacity=".55"/><path d="M212,542 L788,542 L724,378 L276,378 Z" fill="none" stroke="#2a0a04" stroke-width="3" opacity=".6"/>
+  <g${BEV}><path d="M170,560 L830,560 L750,360 L250,360 Z" fill="none" stroke="url(#brass)" stroke-width="7"/></g>`;
   if(!f.topOpen){
-    s+=`<path d="M232,545 L768,545 L706,377 L294,377 Z" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
-    <ellipse cx="500" cy="462" rx="190" ry="62" fill="none" stroke="#5a3a14" stroke-width="3"/>
-    <ellipse cx="500" cy="462" rx="140" ry="44" fill="none" stroke="#5a3a14" stroke-width="2"/>
-    ${Array.from({length:16},(_,i)=>{const a=rad(i*22.5);return `<line x1="${f1(500+Math.cos(a)*40)}" y1="${f1(462+Math.sin(a)*13)}" x2="${f1(500+Math.cos(a)*135)}" y2="${f1(462+Math.sin(a)*42)}" stroke="#5a3a14" stroke-width="2" opacity=".7"/>`}).join('')}
-    <ellipse cx="500" cy="462" rx="34" ry="11" fill="url(#brassR)" stroke="#3a240c"/>
-    <text x="500" y="535" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" letter-spacing="5" fill="#4a2a0c">TEMPUS · OMNIA · APERIT</text>`;
+    s+=`<g filter="url(#shS)"><g${BEV}><path d="M240,540 L760,540 L700,382 L300,382 Z" fill="url(#brass)"/><path d="M240,540 L760,540 L700,382 L300,382 Z" fill="url(#pBrush)" opacity=".5"/></g></g>
+    <ellipse cx="500" cy="462" rx="190" ry="62" fill="none" stroke="#4a2a0c" stroke-width="3"/>
+    <ellipse cx="500" cy="462" rx="140" ry="44" fill="none" stroke="#4a2a0c" stroke-width="2"/>
+    ${Array.from({length:16},(_,i)=>{const a=rad(i*22.5), l=i%2?100:135;return `<path d="M${f1(500+Math.cos(a+.08)*20)},${f1(462+Math.sin(a+.08)*7)} L${f1(500+Math.cos(a)*l)},${f1(462+Math.sin(a)*l*.31)} L${f1(500+Math.cos(a-.08)*20)},${f1(462+Math.sin(a-.08)*7)} Z" fill="${i%2?'#7a5020':'#5a3810'}" opacity=".8"/>`}).join('')}
+    <g${BEVS}><ellipse cx="500" cy="462" rx="34" ry="11" fill="url(#brassR)"/></g>
+    ${bolt(262,530,6)}${bolt(738,530,6)}${bolt(312,392,5)}${bolt(688,392,5)}
+    <text x="500" y="532" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" letter-spacing="5" fill="#3a2008">TEMPUS · OMNIA · APERIT</text>`;
   } else if(!f.ringsDone){
-    s+=`<path d="M232,545 L768,545 L706,377 L294,377 Z" fill="#160a05"/>
+    s+=`<path d="M232,545 L768,545 L706,377 L294,377 Z" fill="#120604"/>
     <g class="hot" data-act="go" data-go="rings">
-      <g transform="translate(500,462) scale(1,.36)">
-        <circle r="300" fill="url(#brassD)"/><circle r="252" fill="none" stroke="url(#ringG0)" stroke-width="80"/>
+      <g transform="translate(500,462) scale(1,.36)"${BEV}>
+        ${disc(0,0,300,'url(#brassD)',.5)}<circle r="252" fill="none" stroke="url(#ringG0)" stroke-width="80"/>
         <circle r="168" fill="none" stroke="url(#ringG1)" stroke-width="78"/><circle r="92" fill="none" stroke="url(#ringG0)" stroke-width="66"/>
-        <circle r="52" fill="url(#brassR)"/></g>
+        ${disc(0,0,52,'url(#brassR)',.5)}</g>
       <path d="M500,370 L490,352 L510,352 Z" fill="#c4161c"/>
     </g>
-    <path d="M770,545 L830,560 L750,360 L706,377 Z" fill="url(#brass)" opacity=".8"/>
+    <path d="M770,545 L830,560 L750,360 L706,377 Z" fill="url(#brass)"/>
     ${glint(500,462,'rings')}`;
   } else {
     s+=`<path d="M196,553 L804,553 L736,370 L264,370 Z" fill="#120604"/>
     <path d="M264,370 L736,370 L746,400 L254,400 Z" fill="#2a1008"/>`;
     if(!f.pipesDone){
       s+=`<g class="hot" data-act="go" data-go="pipes">
-        <path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#plate)" stroke="#6a4a26" stroke-width="2"/>
-        <path d="M262,500 L420,500 L420,440 L560,440 L560,520 L700,520 M330,420 L330,530 M640,415 L640,470" stroke="#9c5428" stroke-width="12" fill="none" stroke-linecap="round"/>
-        ${[[420,500],[420,440],[560,440],[560,520]].map(([x,y])=>rivet(x,y,7)).join('')}
+        <path d="M236,545 L764,545 L716,402 L284,402 Z" fill="#2a1c10"/><path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#pBrush)" opacity=".5"/>
+        <path d="M262,500 L420,500 L420,440 L560,440 L560,520 L700,520 M330,420 L330,530 M640,415 L640,470" stroke="#1f0f06" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path d="M262,500 L420,500 L420,440 L560,440 L560,520 L700,520 M330,420 L330,530 M640,415 L640,470" stroke="#a85c2c" stroke-width="10" fill="none" stroke-linecap="round"/>
+        ${[[420,500],[420,440],[560,440],[560,520]].map(([x,y])=>bolt(x,y,8)).join('')}
       </g>${glint(500,470,'pipes')}`;
     } else if(!f.gotHeart){
       s+=`<g class="bob" style="pointer-events:none">${Array.from({length:12},(_,i)=>{const a=rad(i*30);return `<line x1="500" y1="330" x2="${f1(500+Math.cos(a)*260)}" y2="${f1(330+Math.sin(a)*260)}" stroke="#ffd98a" stroke-width="6" opacity=".18"/>`}).join('')}</g>
       <g class="hot bob" data-act="takeHeart">${heartObj(500,330,78)}</g>`;
     } else {
-      s+=`<path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#velvet)"/><path d="${heartPath(500,470,40)}" fill="#1a0204" opacity=".7" transform="translate(0,0) scale(1,1)"/>`;
+      s+=`<path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#velvet)"/><path d="${heartPath(500,470,40)}" fill="#1a0204" opacity=".7"/>`;
     }
   }
   // front face
-  s+=`<rect x="170" y="560" width="660" height="300" fill="url(#mahog)" stroke="#2a0e05" stroke-width="3"/>
-  <rect x="170" y="560" width="660" height="300" filter="url(#grain)" opacity=".8"/>
-  <rect x="170" y="560" width="660" height="14" fill="url(#brassH)"/><rect x="170" y="846" width="660" height="14" fill="url(#brassH)"/>
-  ${[[170,560,1,1],[830,560,-1,1],[170,860,1,-1],[830,860,-1,-1]].map(([x,y,sx,sy])=>`<path d="M${x},${y} l${70*sx},0 l0,${16*sy} l${-54*sx},0 l0,${54*sy} l${-16*sx},0 Z" fill="url(#brass)" stroke="#3a240c" stroke-width="1.5"/>${rivet(x+10*sx,y+10*sy,5)}`).join('')}
-  <rect x="210" y="592" width="440" height="236" rx="6" fill="#1a0a05" opacity=".55"/>`;
-  // gear train
-  const run = f.topOpen ? '' : '';
-  s+=`<g class="train${run}" id="train">
+  s+=tex('rect','x="170" y="560" width="660" height="300"','#55200f','pMahog','url(#shV)');
+  s+=`<rect x="190" y="578" width="620" height="264" fill="none" stroke="#d8a868" stroke-width="3" opacity=".45"/>
+  ${brassBar(170,560,660,14)}${brassBar(170,846,660,14)}
+  ${[[170,560,1,1],[830,560,-1,1],[170,860,1,-1],[830,860,-1,-1]].map(([x,y,sx,sy])=>`<g filter="url(#shS)"><g${BEV}><path d="M${x},${y} l${70*sx},0 l0,${16*sy} l${-54*sx},0 l0,${54*sy} l${-16*sx},0 Z" fill="url(#brass)"/></g></g>${bolt(x+9*sx,y+9*sy,5)}${filigree(x+22*sx,y+22*sy,.8,sx>0?(sy>0?0:270):(sy>0?90:180))}`).join('')}
+  <rect x="210" y="592" width="440" height="236" rx="8" fill="#000" opacity=".6" filter="url(#blur4)"/>
+  <rect x="214" y="596" width="432" height="228" rx="6" fill="#0e0503"/><rect x="214" y="596" width="432" height="228" rx="6" fill="url(#pGrime)" opacity=".6"/>`;
+  s+=`<g${BEV}><g class="train" id="train">
     <g class="gA" id="g1" style="transform-origin:320px 710px">${gear(320,710,72,14,{})}
-      <rect x="314" y="610" width="12" height="100" rx="5" fill="url(#brassH)" stroke="#3a240c"/>
-      <circle cx="320" cy="606" r="20" fill="#3a1a0c" stroke="url(#brass)" stroke-width="5"/></g>
-    ${f.gearPlaced ? `<g class="gB" style="transform-origin:436px 710px">${gear(436,710,56,11,{})}</g>`
-      : `<g class="hot" data-act="socket"><circle cx="436" cy="710" r="58" fill="none" stroke="#f4d68f" stroke-width="3" stroke-dasharray="10 6" class="dashpulse" opacity=".75"/>
-         <circle cx="436" cy="710" r="12" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/><circle cx="436" cy="710" r="58" fill="transparent"/></g>`}
+      <rect x="314" y="610" width="12" height="100" rx="5" fill="url(#brassV)"/>
+      <circle cx="320" cy="606" r="20" fill="#3a1a0c" stroke="url(#brass)" stroke-width="6"/></g>
+    ${f.gearPlaced ? `<g class="gB" style="transform-origin:436px 710px">${gear(436,710,56,11,{})}</g>` : ''}
     <g class="gA" style="transform-origin:518px 662px">${gear(518,662,46,10,{})}</g>
     <g class="gB" style="transform-origin:582px 742px">${gear(582,742,38,9,{})}</g>
-  </g>
+  </g></g>
+  ${f.gearPlaced ? '' : `<g class="hot" data-act="socket"><circle cx="436" cy="710" r="58" fill="none" stroke="#f4d68f" stroke-width="3" stroke-dasharray="10 6" class="dashpulse" opacity=".75"/>
+    ${disc(436,710,12,'url(#brassR)',.4)}<circle cx="436" cy="710" r="58" fill="transparent"/></g>`}
+  <path d="M220,600 L420,600 L220,760 Z" fill="#fff" opacity=".05" pointer-events="none"/>
+  <rect x="214" y="596" width="432" height="228" rx="6" fill="none" stroke="url(#brassH)" stroke-width="6"/>
   <circle class="hot" cx="320" cy="680" r="95" fill="transparent" data-act="crank"/>`;
-  // gauge & plate
-  s+=`<g transform="translate(735,680)" filter="url(#sh)"><circle r="62" fill="url(#brass)"/><circle r="50" fill="url(#ivory)"/>
-    ${Array.from({length:9},(_,i)=>{const a=rad(-120+i*30);return `<line x1="${f1(Math.sin(a)*36)}" y1="${f1(-Math.cos(a)*36)}" x2="${f1(Math.sin(a)*45)}" y2="${f1(-Math.cos(a)*45)}" stroke="${i>6?'#b02a1a':'#3a2210'}" stroke-width="3"/>`}).join('')}
-    <g class="gauge-n" style="transform:rotate(${f.pipesDone?95:f.ringsDone?20:f.topOpen?-40:-110}deg)"><path d="M-3,6 L0,-40 L3,6 Z" fill="#1a0f06"/></g><circle r="6" fill="url(#brassR)"/>
-    <text y="28" text-anchor="middle" font-family="Cormorant SC,serif" font-size="13" font-weight="700" fill="#5a3a14">ATM</text></g>
-  <g filter="url(#sh)"><rect x="680" y="770" width="110" height="44" rx="3" fill="url(#brass)"/></g>
+  s+=gauge(735,680,62,f.pipesDone?95:f.ringsDone?20:f.topOpen?-40:-110,{cls:'gauge-n',label:'ATM'});
+  s+=`<g filter="url(#shS)"><g${BEV}><rect x="680" y="770" width="110" height="44" rx="4" fill="url(#brass)"/><rect x="680" y="770" width="110" height="44" rx="4" fill="url(#pBrush)" opacity=".4"/></g></g>
   <text x="735" y="799" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="18" fill="#2a1606">A·B 1867</text>`;
   if(!f.topOpen) s+=hot(170,360,660,200,'say','data-say="boxtop"');
   s+=vignette();
@@ -820,24 +1208,24 @@ function boxScene(){
 /* ---------------- RINGS ---------------- */
 const RING_GEO=[[345,88],[253,86],[163,84]];
 function ringsScene(){
-  let s=deskBg()+`<circle cx="500" cy="510" r="470" fill="#000" opacity=".5" filter="url(#soft)"/>
-  <circle cx="500" cy="500" r="458" fill="#2a1408"/><circle cx="500" cy="500" r="446" fill="url(#brassD)"/>
-  ${rivetRing(500,500,422,28,6)}
-  <circle cx="500" cy="500" r="400" fill="#1a0c05"/>`;
+  let s=deskBg()+`<circle cx="500" cy="516" r="470" fill="#000" opacity=".6" filter="url(#soft)"/>
+  <g${BEVL}>${disc(500,500,458,'url(#brassD)',.6)}</g>
+  ${boltRing(500,500,424,28,8)}
+  <circle cx="500" cy="500" r="402" fill="#120804"/><circle cx="500" cy="500" r="402" fill="url(#recess)"/>`;
   RING_GEO.forEach(([R,W],i)=>{
-    s+=`<g class="ring" id="ring${i}" data-act="ring" data-i="${i}" style="transform-origin:500px 500px;transform:rotate(${-S.rs[i]*60}deg)">
+    s+=`<g${BEV}><g class="ring" id="ring${i}" data-act="ring" data-i="${i}" style="transform-origin:500px 500px;transform:rotate(${-S.rs[i]*60}deg)">
       <circle cx="500" cy="500" r="${R}" fill="none" stroke="url(#ringG${i%2})" stroke-width="${W}"/>
+      <circle cx="500" cy="500" r="${R}" fill="none" stroke="url(#pSpun)" stroke-width="${W}" opacity=".5"/>
       <circle cx="500" cy="500" r="${R+W/2-2}" fill="none" stroke="#3a240c" stroke-width="3"/>
-      <circle cx="500" cy="500" r="${R-W/2+2}" fill="none" stroke="#3a240c" stroke-width="3"/>
-      <circle cx="500" cy="500" r="${R+W/2-8}" fill="none" stroke="#f8dc9c" stroke-width="1" opacity=".4"/>`;
+      <circle cx="500" cy="500" r="${R-W/2+2}" fill="none" stroke="#3a240c" stroke-width="3"/>`;
     RINGS[i].forEach((g,k)=>{ const a=rad(k*60), x=500+Math.sin(a)*R, y=500-Math.cos(a)*R;
       s+=`<g transform="rotate(${k*60} ${f1(x)} ${f1(y)})">${engraved(g,x,y,W*.62)}</g>`;
       const b=rad(k*60+30); s+=`<line x1="${f1(500+Math.sin(b)*(R-W/2+6))}" y1="${f1(500-Math.cos(b)*(R-W/2+6))}" x2="${f1(500+Math.sin(b)*(R+W/2-6))}" y2="${f1(500-Math.cos(b)*(R+W/2-6))}" stroke="#3a240c" stroke-width="3"/>`;
     });
-    s+=`</g>`;
+    s+=`</g></g>`;
   });
-  s+=`<g class="medal" id="medal" style="transform-origin:500px 500px">${gear(500,500,112,18,{holes:6})}
-    ${glyph('sun',500,500,90,'#4a2a0c',5)}</g>
+  s+=`<g${BEV}><g class="medal" id="medal" style="transform-origin:500px 500px">${gear(500,500,112,18,{holes:6})}
+    ${glyph('sun',500,500,90,'#4a2a0c',5)}</g></g>
   <rect x="448" y="100" width="104" height="330" rx="52" fill="#fff6d6" opacity=".08" stroke="#f4d68f" stroke-width="3" pointer-events="none"/>
   <path d="M500,96 L478,58 L522,58 Z" fill="#b0141a" stroke="#4a0606" stroke-width="2" filter="url(#glow)" pointer-events="none"/>
   ${vignette()}`;
@@ -849,39 +1237,36 @@ const PX0=180, PY0=232, PT=160;
 const conns=(t,r)=> (t==='s'?[0,2]:[0,1]).map(d=>(d+r)%4);
 function pipeShape(t){
   const d = t==='s' ? 'M0,-80 L0,80' : 'M0,-80 A80,80 0 0 0 80,0';
-  const fl = t==='s' ? `<rect x="-25" y="-80" width="50" height="11" fill="url(#brassH)"/><rect x="-25" y="69" width="50" height="11" fill="url(#brassH)"/>`
-                     : `<rect x="-25" y="-80" width="50" height="11" fill="url(#brassH)"/><rect x="69" y="-25" width="11" height="50" fill="url(#brassH)"/>`;
-  return `<path d="${d}" class="po" fill="none" stroke="#1f0f06" stroke-width="44"/>
+  const fl = t==='s' ? `${brassBar(-25,-80,50,11)}${brassBar(-25,69,50,11)}` : `${brassBar(-25,-80,50,11)}${brassBar(69,-25,11,50)}`;
+  return `<path d="${d}" class="po" fill="none" stroke="#1a0b04" stroke-width="44"/>
     <path d="${d}" class="pm" fill="none" stroke="#9c5428" stroke-width="32"/>
-    <path d="${d}" class="ph" fill="none" stroke="#efab7c" stroke-width="7" opacity=".55" transform="translate(-6,-4)"/>
+    <path d="${d}" fill="none" stroke="url(#pPatina)" stroke-width="32" opacity=".7"/>
+    <path d="${d}" class="ph" fill="none" stroke="#f4b88c" stroke-width="6" opacity=".6" transform="translate(-7,-5)"/>
     <path d="${d}" class="pg" fill="none" stroke="#ffd27a" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>${fl}`;
 }
 function pipesScene(){
-  let s=`<rect width="1000" height="1000" fill="#160d07"/><rect width="1000" height="1000" fill="url(#damask)" opacity=".6"/>
-  <g filter="url(#sh)"><rect x="150" y="200" width="700" height="704" rx="14" fill="url(#plate)" stroke="#6a4a26" stroke-width="3"/></g>
-  ${rivetRing(500,552,0,1)}
-  ${[[164,214],[836,214],[164,890],[836,890]].map(([x,y])=>rivet(x,y,8)).join('')}`;
-  // boiler
-  s+=`<g filter="url(#sh)"><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#copperV)" stroke="#3a1a08" stroke-width="3"/></g>
-  ${[360,420,480,540,590].map(y=>`<rect x="18" y="${y}" width="120" height="7" fill="url(#brassH)"/>`).join('')}
+  let s=`<rect width="1000" height="1000" fill="#150c06"/><rect width="1000" height="1000" fill="url(#pPaperL)" opacity=".7"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".7"/>
+  <g filter="url(#sh)"><g${BEVL}><rect x="150" y="200" width="700" height="704" rx="14" fill="#3a2a1a"/><rect x="150" y="200" width="700" height="704" rx="14" fill="url(#pBrush)"/></g></g>
+  <rect x="150" y="200" width="700" height="704" rx="14" fill="url(#pGrime)" opacity=".5"/>
+  ${[[166,216],[834,216],[166,888],[834,888]].map(([x,y])=>bolt(x,y,9)).join('')}`;
+  s+=`<g filter="url(#sh)"><g${BEV}><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#copperV)"/><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#pPatina)" opacity=".5"/></g></g>
+  ${[360,420,480,540,590].map(y=>brassBar(18,y,120,8)).join('')}
+  ${[0,1,2,3].map(i=>rivet(30+i*32,450,3.5)+rivet(30+i*32,510,3.5)).join('')}
+  <circle cx="78" cy="566" r="40" fill="#ff8a20" opacity=".35" filter="url(#soft)" class="flick screen"/>
   <circle cx="78" cy="560" r="26" fill="#1a0804" stroke="url(#brass)" stroke-width="6"/><circle cx="78" cy="566" r="18" fill="url(#fireG)" class="flick" filter="url(#glow)"/>
-  <g transform="translate(78,390)"><circle r="26" fill="url(#brass)"/><circle r="19" fill="url(#ivory)"/><line x1="0" y1="0" x2="12" y2="-10" stroke="#b02a1a" stroke-width="3"/></g>
-  <rect x="136" y="${PY0+PT*1.5-16}" width="48" height="32" fill="url(#copperH)"/><rect x="150" y="${PY0+PT*1.5-22}" width="12" height="44" fill="url(#brassH)"/>`;
-  // outlet + turbine
-  s+=`<rect x="816" y="${PY0+PT*2.5-16}" width="60" height="32" fill="url(#copperH)"/><rect x="852" y="${PY0+PT*2.5-22}" width="12" height="44" fill="url(#brassH)"/>
-  <circle cx="924" cy="${PY0+PT*2.5}" r="64" fill="#1a0c05" stroke="url(#brass)" stroke-width="6"/>
-  <g class="turbine${S.f.pipesDone?' on':''}" id="turb" style="transform-origin:924px ${PY0+PT*2.5}px">${gear(924,PY0+PT*2.5,52,12,{holes:6})}</g>`;
-  // gauge
-  s+=`<g transform="translate(500,104)" filter="url(#sh)"><circle r="78" fill="url(#brass)"/><circle r="64" fill="url(#ivory)"/>
-    ${Array.from({length:11},(_,i)=>{const a=rad(-125+i*25);return `<line x1="${f1(Math.sin(a)*46)}" y1="${f1(-Math.cos(a)*46)}" x2="${f1(Math.sin(a)*58)}" y2="${f1(-Math.cos(a)*58)}" stroke="${i>7?'#b02a1a':'#3a2210'}" stroke-width="${i%5?2:4}"/>`}).join('')}
-    <text y="34" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="16" fill="#5a3a14">ДАВЛЕНИЕ</text>
-    <g id="pneedle" class="gauge-n" style="transform:rotate(${S.f.pipesDone?100:-118}deg)"><path d="M-4,8 L0,-54 L4,8 Z" fill="#1a0f06"/></g><circle r="8" fill="url(#brassR)"/></g>`;
+  <path d="M60,560 h36 M60,568 h36" stroke="#1a0804" stroke-width="2"/>
+  ${gauge(78,390,28,40,{anim:true})}
+  <rect x="136" y="${PY0+PT*1.5-16}" width="48" height="32" fill="url(#copperH)"/>${brassBar(150,PY0+PT*1.5-22,12,44)}`;
+  s+=`<rect x="816" y="${PY0+PT*2.5-16}" width="60" height="32" fill="url(#copperH)"/>${brassBar(852,PY0+PT*2.5-22,12,44)}
+  <circle cx="924" cy="${PY0+PT*2.5}" r="66" fill="#140a04"/>
+  <g${BEV}>${annulus(924,PY0+PT*2.5,68,58,'url(#brass)',.5)}<g class="turbine${S.f.pipesDone?' on':''}" id="turb" style="transform-origin:924px ${PY0+PT*2.5}px">${gear(924,PY0+PT*2.5,52,12,{holes:6})}</g></g>`;
+  s+=gauge(500,104,78,S.f.pipesDone?100:-118,{id:'pneedle',cls:'gauge-n',label:'ДАВЛЕНИЕ'});
   PIPE_SOL.forEach(([t],i)=>{
     const r=Math.floor(i/4), c=i%4, cx=PX0+c*PT+PT/2, cy=PY0+r*PT+PT/2;
     s+=`<g class="tile" id="tile${i}" data-act="pipe" data-i="${i}" transform="translate(${cx},${cy})">
-      <rect x="-76" y="-76" width="152" height="152" rx="10" fill="#2a1c10" stroke="#120904" stroke-width="3"/>
-      <rect x="-70" y="-70" width="140" height="140" rx="8" fill="none" stroke="#6a4a26" stroke-width="1.5" opacity=".5"/>
-      ${rivet(-62,-62,4)}${rivet(62,-62,4)}${rivet(-62,62,4)}${rivet(62,62,4)}
+      <g${BEVS}><rect x="-76" y="-76" width="152" height="152" rx="10" fill="#2a1c10"/><rect x="-76" y="-76" width="152" height="152" rx="10" fill="url(#pBrush)" opacity=".6"/></g>
+      <rect x="-68" y="-68" width="136" height="136" rx="8" fill="#000" opacity=".35"/>
+      ${bolt(-62,-62,5)}${bolt(62,-62,5)}${bolt(-62,62,5)}${bolt(62,62,5)}
       <g class="prot" style="transform-origin:0 0;transform:rotate(${S.pr[i]*90}deg)">${pipeShape(t)}</g>
     </g>`;
   });
@@ -906,30 +1291,40 @@ function updatePipes(){
 /* ---------------- HATCH ---------------- */
 function hatchScene(){
   const f=S.f, cx=500, cy=470;
-  let s=wallBg()+`<circle cx="${cx}" cy="${cy}" r="560" fill="url(#warm)" opacity=".5"/>
-  <circle cx="${cx}" cy="${cy}" r="420" fill="#060302"/>
+  let s=wallBg()+`<circle cx="${cx}" cy="${cy}" r="560" fill="url(#warm)" opacity=".45" class="screen"/>`;
+  // side pipes + sconces
+  s+=`<rect x="0" y="150" width="70" height="30" fill="url(#copperH)"/><rect x="0" y="150" width="70" height="30" fill="url(#pPatina)" opacity=".5"/>
+  <rect x="930" y="640" width="70" height="30" fill="url(#copperH)"/><rect x="930" y="640" width="70" height="30" fill="url(#pPatina)" opacity=".5"/>
+  ${brassBar(60,144,14,42)}${brassBar(926,634,14,42)}
+  <g filter="url(#shS)">${brassBar(80,96,60,10)}${brassBar(860,96,60,10)}</g>
+  ${bulb(110,150,26)}${bulb(890,150,26)}
+  ${gauge(915,470,52,0,{anim:true,label:'ПАР'})}
+  <circle cx="60" cy="700" r="16" fill="#ddd2c0" class="puff"/><circle cx="60" cy="700" r="12" fill="#ddd2c0" class="puff" style="animation-delay:1.6s"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="430" fill="#030201"/><circle cx="${cx}" cy="${cy}" r="430" fill="url(#recess)"/>
   <circle cx="${cx}" cy="${cy}" r="330" fill="url(#lightR)" id="hlight" opacity="${f.heartIn?1:0}" style="transition:opacity 1.5s"/>
-  <g filter="url(#sh)"><circle cx="${cx}" cy="${cy}" r="410" fill="none" stroke="url(#brass)" stroke-width="56"/></g>
-  <circle cx="${cx}" cy="${cy}" r="436" fill="none" stroke="#3a240c" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="383" fill="none" stroke="#3a240c" stroke-width="3"/>
-  ${rivetRing(cx,cy,410,28,8)}
+  <g filter="url(#sh)"><g${BEVL}>${annulus(cx,cy,438,382,'url(#brass)',.6)}</g></g>
+  <circle cx="${cx}" cy="${cy}" r="410" fill="none" stroke="#3a240c" stroke-width="2" opacity=".6"/>
+  ${boltRing(cx,cy,410,28,11)}
   <g class="hdoor${f.doorOpen?' open':''}" id="hdoor" style="transform-origin:${cx-330}px ${cy}px">
-    ${Array.from({length:8},(_,i)=>{const a=rad(i*45+22.5);return `<rect x="-14" y="-386" width="28" height="70" rx="4" fill="url(#brassH)" stroke="#3a240c" transform="translate(${cx},${cy}) rotate(${i*45+22.5})"/>`}).join('')}
-    <circle cx="${cx}" cy="${cy}" r="340" fill="url(#brassD)" stroke="#2a1806" stroke-width="4"/>
-    <circle cx="${cx}" cy="${cy}" r="300" fill="none" stroke="#c99a4a" stroke-width="2" opacity=".4"/>
-    <circle cx="${cx}" cy="${cy}" r="292" fill="none" stroke="#1a0f06" stroke-width="3"/>
-    ${rivetRing(cx,cy,320,24,5)}
-    <circle cx="${cx}" cy="${cy}" r="250" fill="url(#brassR)" opacity=".35"/>
-    <rect x="${cx-372}" y="${cy-150}" width="60" height="70" rx="6" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
-    <rect x="${cx-372}" y="${cy+80}" width="60" height="70" rx="6" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
-    <g class="wheel" id="wheel" style="transform-origin:${cx}px ${cy}px">
-      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="#2a1806" stroke-width="34"/>
-      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="url(#brass)" stroke-width="24"/>
-      ${Array.from({length:6},(_,i)=>{const a=rad(i*60);const x2=cx+Math.cos(a)*215,y2=cy+Math.sin(a)*215;return `<line x1="${cx}" y1="${cy}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#2a1806" stroke-width="28"/><line x1="${cx}" y1="${cy}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="url(#brassH)" stroke-width="18"/><circle cx="${f1(cx+Math.cos(a)*250)}" cy="${f1(cy+Math.sin(a)*250)}" r="24" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/>`}).join('')}
-      <circle cx="${cx}" cy="${cy}" r="100" fill="url(#brass)" stroke="#3a240c" stroke-width="3"/>
-    </g>
-    <circle cx="${cx}" cy="${cy}" r="78" fill="#100804" stroke="#3a240c" stroke-width="3"/>
+    ${Array.from({length:8},(_,i)=>`<g transform="translate(${cx},${cy}) rotate(${i*45+22.5})"${BEVS}><rect x="-15" y="-388" width="30" height="72" rx="4" fill="url(#steel)"/><rect x="-15" y="-388" width="30" height="72" rx="4" fill="url(#pBrush)" opacity=".5"/></g>`).join('')}
+    <g filter="url(#sh)"><g${BEVL}>${disc(cx,cy,342,'url(#brassD)',.65)}</g></g>
+    <circle cx="${cx}" cy="${cy}" r="300" fill="none" stroke="#e0b070" stroke-width="2" opacity=".35"/>
+    <circle cx="${cx}" cy="${cy}" r="294" fill="none" stroke="#120904" stroke-width="3"/>
+    ${boltRing(cx,cy,320,24,6)}
+    <g${BEV}><rect x="${cx-376}" y="${cy-150}" width="62" height="72" rx="6" fill="url(#brass)"/><rect x="${cx-376}" y="${cy+78}" width="62" height="72" rx="6" fill="url(#brass)"/></g>
+    ${bolt(cx-356,cy-130,6)}${bolt(cx-334,cy-98,6)}${bolt(cx-356,cy+98,6)}${bolt(cx-334,cy+130,6)}
+    <g${BEVL}><g class="wheel" id="wheel" style="transform-origin:${cx}px ${cy}px">
+      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="url(#brass)" stroke-width="26"/>
+      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="url(#pSpun)" stroke-width="26" opacity=".5"/>
+      ${Array.from({length:6},(_,i)=>{const a=rad(i*60);const x2=cx+Math.cos(a)*215,y2=cy+Math.sin(a)*215;return `<line x1="${cx}" y1="${cy}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="url(#brassH)" stroke-width="20"/><circle cx="${f1(cx+Math.cos(a)*252)}" cy="${f1(cy+Math.sin(a)*252)}" r="25" fill="url(#brassR)"/>`}).join('')}
+      ${disc(cx,cy,102,'url(#brass)',.6)}
+    </g></g>
+    <circle cx="${cx}" cy="${cy}" r="80" fill="#0c0603"/><circle cx="${cx}" cy="${cy}" r="80" fill="url(#recess)"/>
     ${f.heartIn ? heartObj(cx,cy+4,48) : `<path d="${heartPath(cx,cy+4,48)}" fill="#1e0d06" stroke="#ffb35c" stroke-width="3" stroke-dasharray="9 6" class="dashpulse" opacity=".8"/>`}
   </g>
+  <g filter="url(#sh)"><g${BEV}><rect x="400" y="905" width="200" height="50" rx="4" fill="url(#brass)"/><rect x="400" y="905" width="200" height="50" rx="4" fill="url(#pBrush)" opacity=".45"/></g></g>
+  ${bolt(414,930,5)}${bolt(586,930,5)}
+  <text x="500" y="940" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="26" letter-spacing="5" fill="#2a1606">ВЫХОДЪ</text>
   ${vignette()}
   <circle class="hot" cx="${cx}" cy="${cy}" r="90" fill="transparent" data-act="hsocket"/>
   <circle class="hot" cx="${cx}" cy="${cy}" r="280" fill="transparent" data-act="wheel" style="pointer-events:stroke" stroke="transparent" stroke-width="180"/>`;
@@ -937,27 +1332,30 @@ function hatchScene(){
 }
 
 /* ---------------- TITLE & END ---------------- */
+let texProgress=0;
 function titleScene(){
   const cont = S.started && typeof resumeScene!=='undefined' && !['end','title'].includes(resumeScene);
-  return `<rect width="1000" height="1000" fill="#120b07"/>
-  <circle cx="500" cy="420" r="520" fill="url(#warm)" opacity=".8"/>
-  ${gear(110,140,190,20,{spin:70,op:.32})}${gear(330,40,90,12,{spin:34,rev:true,op:.25})}
-  ${gear(900,900,230,24,{spin:90,rev:true,op:.3})}${gear(880,140,110,14,{spin:40,op:.25})}${gear(120,900,120,14,{spin:46,rev:true,op:.25})}
+  return `<rect width="1000" height="1000" fill="#1a1a12"/><rect width="1000" height="1000" fill="url(#pPaperL)"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".7"/>
+  <circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".9" class="screen"/>
+  ${gear(110,140,190,20,{spin:70,op:.55})}${gear(330,40,90,12,{spin:34,rev:true,op:.45})}
+  ${gear(900,900,230,24,{spin:90,rev:true,op:.5})}${gear(880,140,110,14,{spin:40,op:.45})}${gear(120,900,120,14,{spin:46,rev:true,op:.45})}
+  <rect x="-500" y="-500" width="2000" height="2000" fill="#000" opacity=".35"/>
   <g class="bob">${heartObj(500,262,70)}</g>
-  <text x="500" y="470" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)" stroke="#2a1606" stroke-width="2">СЕРДЦЕ</text>
-  <text x="500" y="580" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)" stroke="#2a1606" stroke-width="2">ХРОНОСА</text>
+  <g${BEV}><text x="500" y="470" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)">СЕРДЦЕ</text>
+  <text x="500" y="580" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)">ХРОНОСА</text></g>
   <path d="M250,618 L750,618" stroke="#d6a64e" stroke-width="2" opacity=".6"/><circle cx="500" cy="618" r="6" fill="#d6a64e"/>
   <text x="500" y="662" text-anchor="middle" font-family="Cormorant Garamond,serif" font-style="italic" font-size="32" fill="#ead7ac">Мастерская профессора Брасса · 1887</text>
-  ${cta(500,cont?750:770,cont?'Продолжить':'Войти в мастерскую',cont?'cont':'start')}
-  ${cont?cta(500,860,'Новая игра','start',true):''}
+  ${TEX_READY ? cta(500,cont?750:770,cont?'Продолжить':'Войти в мастерскую',cont?'cont':'start') + (cont?cta(500,860,'Новая игра','start',true):'')
+    : `<text x="500" y="760" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="4" fill="#c9a062">Мастерская оживает…</text>
+       <rect x="330" y="785" width="340" height="10" rx="5" fill="#1a0e06" stroke="#8a6428"/><rect id="texBar" x="332" y="787" width="${f1(336*texProgress)}" height="6" rx="3" fill="url(#brassH)"/>`}
   <text x="500" y="965" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#9a7a4a">со звуком — атмосфернее</text>
   ${vignette()}`;
 }
 function cta(x,y,label,act,ghost){
   const w=ghost?300:420, h=ghost?66:84;
   return `<g class="cta hot" data-act="${act}" role="button" tabindex="0">
-    <rect class="face" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="${ghost?'#1e140c':'url(#brass)'}" stroke="${ghost?'#d6a64e':'#3a2208'}" stroke-width="2" filter="url(#sh)"/>
-    ${ghost?'':`<rect x="${x-w/2+8}" y="${y-h/2+8}" width="${w-16}" height="${h-16}" rx="5" fill="none" stroke="#6a4416" stroke-width="1.5"/>${rivet(x-w/2+20,y,5)}${rivet(x+w/2-20,y,5)}`}
+    <g filter="url(#sh)"><g class="face"${ghost?'':BEV}><rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="${ghost?'#1e140c':'url(#brass)'}" stroke="${ghost?'#d6a64e':'none'}" stroke-width="2"/>${ghost?'':`<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="url(#pBrush)" opacity=".45"/>`}</g></g>
+    ${ghost?'':`<rect x="${x-w/2+8}" y="${y-h/2+8}" width="${w-16}" height="${h-16}" rx="5" fill="none" stroke="#5a3810" stroke-width="1.5"/>${bolt(x-w/2+22,y,6)}${bolt(x+w/2-22,y,6)}`}
     <text x="${x}" y="${y+11}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${ghost?28:34}" letter-spacing="2" fill="${ghost?'#e9c47a':'#2a1606'}">${label}</text>
   </g>`;
 }
@@ -965,11 +1363,11 @@ function endScene(){
   const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
   const lines=['Колесо провернулось, и мастерскую залил тёплый свет.','За люком — винтовая лестница к часовой башне.','На первой ступени лежала записка:'];
   const note=['«Теперь Сердце Хроноса хранишь ты.','Пока оно бьётся, Гильдия не остановит время.','Поднимайся наверх. Я жду. — А. Б.»'];
-  return `<rect width="1000" height="1000" fill="#1a0f07"/>
-  <circle cx="500" cy="300" r="620" fill="url(#lightR)" opacity=".55"/>
+  return `<rect width="1000" height="1000" fill="#1a0f07"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".6"/>
+  <circle cx="500" cy="300" r="640" fill="url(#lightR)" opacity=".6"/>
   <g class="spin" style="transform-origin:500px 300px;animation-duration:120s">${Array.from({length:18},(_,i)=>{const a=rad(i*20);return `<path d="M500,300 L${f1(500+Math.cos(a-0.06)*900)},${f1(300+Math.sin(a-0.06)*900)} L${f1(500+Math.cos(a+0.06)*900)},${f1(300+Math.sin(a+0.06)*900)} Z" fill="#ffe2a0" opacity=".07"/>`}).join('')}</g>
   <g class="bob">${heartObj(500,190,62)}</g>
-  <text x="500" y="370" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="74" letter-spacing="6" fill="url(#goldText)" stroke="#2a1606" stroke-width="1.5">Механизм ожил</text>
+  <g${BEV}><text x="500" y="370" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="74" letter-spacing="6" fill="url(#goldText)">Механизм ожил</text></g>
   ${lines.map((t,i)=>`<text x="500" y="${440+i*42}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="30" fill="#f2e2be">${t}</text>`).join('')}
   ${note.map((t,i)=>`<text x="500" y="${600+i*44}" text-anchor="middle" font-family="Caveat,cursive" font-size="38" fill="#ffd98a">${t}</text>`).join('')}
   <text x="500" y="780" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="3" fill="#c9a062">Время в мастерской: ${mm}:${ss}</text>
@@ -978,21 +1376,22 @@ function endScene(){
 }
 
 /* ---------------- scene registry ---------------- */
+const WALL_BLEED=['#22281d','#2a170b',760,'pPaperL','pWood'], DESK_BLEED=['#3a2010','#3a2010',500,'pWood','pWood'];
 const SC={
-  title:{title:'Сердце Хроноса',bleed:['#120b07','#120b07',500],draw:titleScene},
-  room:{title:'Мастерская',bleed:['#25261b','#24140a',770],draw:roomScene,hint:1},
-  painting:{title:'Картина',bleed:['#262519','#2a170b',760],draw:paintingScene,back:'room',hint:1},
-  clock:{title:'Настенные часы',bleed:['#262519','#2a170b',760],draw:clockScene,back:'room',hint:1},
-  shelf:{title:'Книжный шкаф',bleed:['#262519','#2a170b',760],draw:shelfScene,back:'room',hint:1},
-  letter:{title:'Письмо',bleed:['#3e2212','#6e4224',500],draw:letterScene,mount:mountLetter,back:'room',hint:1},
-  box:{title:'Шкатулка',bleed:['#3e2212','#6e4224',500],draw:boxScene,back:'room',hint:1},
-  rings:{title:'Кольца шкатулки',bleed:['#3e2212','#6e4224',500],draw:ringsScene,back:'box',hint:1},
-  pipes:{title:'Паровой контур',bleed:['#160d07','#160d07',500],draw:pipesScene,mount:updatePipes,back:'box',hint:1},
-  hatch:{title:'Круглый люк',bleed:['#262519','#2a170b',760],draw:hatchScene,back:'room',hint:1},
+  title:{title:'Сердце Хроноса',bleed:['#1a1a12','#1a1a12',500,'pPaperL'],draw:titleScene},
+  room:{title:'Мастерская',bleed:['#22281d','#2a170b',770,'pPaperS','pFloor'],draw:roomScene,hint:1},
+  painting:{title:'Картина',bleed:WALL_BLEED,draw:paintingScene,back:'room',hint:1},
+  clock:{title:'Настенные часы',bleed:WALL_BLEED,draw:clockScene,back:'room',hint:1},
+  shelf:{title:'Книжный шкаф',bleed:WALL_BLEED,draw:shelfScene,back:'room',hint:1},
+  letter:{title:'Письмо',bleed:DESK_BLEED,draw:letterScene,mount:mountLetter,back:'room',hint:1},
+  box:{title:'Шкатулка',bleed:DESK_BLEED,draw:boxScene,back:'room',hint:1},
+  rings:{title:'Кольца шкатулки',bleed:DESK_BLEED,draw:ringsScene,back:'box',hint:1},
+  pipes:{title:'Паровой контур',bleed:['#150c06','#150c06',500,'pPaperL'],draw:pipesScene,mount:updatePipes,back:'box',hint:1},
+  hatch:{title:'Круглый люк',bleed:WALL_BLEED,draw:hatchScene,back:'room',hint:1},
   end:{title:'Финал',bleed:['#1a0f07','#1a0f07',500],draw:endScene}
 };
 const SAY={
-  window:'За окном ночной дождь над Новым Лондоном. Рамы заклёпаны намертво: профессор не любил сквозняков.',
+  window:'За окном ночной дождь над Новым Лондоном. Вдали плывёт огонёк дирижабля. Рамы заклёпаны намертво.',
   lamp:'Лампа с зелёным абажуром. Свет чуть дрожит в такт какому-то далёкому механизму.',
   candle:'Свеча почти догорела. Профессор ушёл совсем недавно.',
   gauge:'Манометр котельной. Стрелка нервно дёргается: давление есть, но пару некуда идти.',
@@ -1000,15 +1399,15 @@ const SAY={
   tower:'Башенные часы на картине показывают двадцать минут восьмого. Художник выписал стрелки с ювелирной точностью.',
   plaque:'«Башня Хронос», 1887. Подарок Гильдии часовщиков, ещё до ссоры.',
   pendulum:'Маятник мерно качается за стеклом. Под ним, кажется, есть пустая полочка.',
-  clockface:'Стрелки не двигаются сами. Их выставляют латунными рукоятками по бокам.',
-  drawer:'Нижний ящик заперт. Скважины нет: его открывает какой-то механизм внутри шкафа.',
+  clockface:'Сквозь циферблат видно, как работает механизм на рубиновых камнях. Стрелки выставляют латунными рукоятками по бокам.',
+  drawer:'Нижний ящик заперт. Скважина фальшивая: его открывает какой-то механизм внутри шкафа.',
   globe:'Старый глобус. На месте Нового Лондона — крошечная гравировка в виде шестерни.',
   hourglass:'Песочные часы. Песок застыл посередине и не сыплется.',
   letter:'Письмо профессора. Перечитай внимательно: здесь все подсказки.',
   boxtop:'Крышка украшена латунной розой ветров и девизом «Время открывает всё». Она не поддаётся.'
 };
 const ITEMS={
-  gear:{name:'Латунная шестерня',desc:'Латунная шестерня на одиннадцать зубьев. Где-то ей найдётся место.',icon:()=>gear(50,50,40,11,{})},
+  gear:{name:'Латунная шестерня',desc:'Латунная шестерня на одиннадцать зубьев. Где-то ей найдётся место.',icon:()=>gear(50,50,40,11,{bev:true})},
   lens:{name:'Красная линза',desc:'Красная линза в латунной оправе. Выбрана — теперь проведи ею над тем, что хочешь рассмотреть.',icon:()=>lensIcon(40,40,.62)},
   heart:{name:'Сердце Хроноса',desc:'Сердце Хроноса. Оно тёплое и тихо тикает, как живое.',icon:()=>heartObj(50,52,30,false)}
 };
@@ -1183,6 +1582,7 @@ updSnd();
 let resumeScene = S.scene;
 S.scene = 'title';
 render();
+buildTextures(p=>{ texProgress=p; const b=$('#texBar'); if(b) b.setAttribute('width',f1(336*p)); }).then(()=>{ if(S.scene==='title') render(); });
 </script>
 </body>
 </html>
