@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Сердце Хроноса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Caveat:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen game. Top bar, square SVG stage, inventory tray. Single dark look by design. */
+:root{
+  --soot:#120b07; --char:#1d130c; --brass:#d6a64e; --brass-hi:#f4d68f; --parch:#ead7ac; --ember:#e8752a;
+  --line:rgba(214,166,78,.32);
+  --display:'Cormorant SC','Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --body:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --hand:'Caveat','Segoe Script','Comic Sans MS',cursive;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--soot);color:var(--parch);overflow:hidden;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#app{height:100%;display:flex;flex-direction:column;
+  background:radial-gradient(ellipse at 50% 42%,#2b1b10 0%,#120b07 70%)}
+#top{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;
+  background:linear-gradient(#24170e,#170f09);border-bottom:1px solid var(--line)}
+#loc{flex:1;min-width:0;text-align:center;font:600 21px/1.1 var(--display);letter-spacing:.09em;color:var(--brass-hi);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:1px solid var(--brass);
+  background:radial-gradient(circle at 35% 30%,#5b3d1b,#24170c 75%);color:var(--brass-hi);
+  font:700 20px/1 var(--display);display:grid;place-items:center;cursor:pointer;padding:0}
+.btn:focus-visible,.slot:focus-visible,.cta:focus-visible{outline:2px solid var(--brass-hi);outline-offset:2px}
+.btn svg{width:22px;height:22px}
+.btn.off{opacity:.45}
+.spacer{width:42px;flex:0 0 auto}
+#stage{flex:1 1 auto;position:relative;min-height:0}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#msg{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(calc(100% - 32px),640px);box-sizing:border-box;
+  padding:14px 18px 12px;background:rgba(18,11,6,.9);border:1px solid rgba(214,166,78,.55);border-radius:3px;
+  box-shadow:0 10px 30px rgba(0,0,0,.6),inset 0 0 0 4px rgba(214,166,78,.07);cursor:pointer;animation:msgIn .35s ease}
+#msg p{margin:0;font:500 19px/1.38 var(--body);color:var(--parch);text-wrap:pretty}
+#msg .more{display:block;margin-top:6px;text-align:right;font:500 13px/1 var(--display);letter-spacing:.14em;color:var(--brass)}
+@keyframes msgIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+#inv{flex:0 0 auto;display:flex;justify-content:center;gap:10px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(#170f09,#0d0805);border-top:1px solid var(--line)}
+.slot{width:64px;height:64px;border-radius:8px;border:1px solid rgba(214,166,78,.35);padding:4px;box-sizing:border-box;
+  background:radial-gradient(circle at 50% 40%,#2e1f13,#120b07 80%);cursor:pointer;transition:box-shadow .2s,transform .2s}
+.slot svg{width:100%;height:100%;display:block}
+.slot.sel{box-shadow:0 0 0 2px var(--brass-hi),0 0 22px rgba(244,214,143,.55);transform:translateY(-3px)}
+.slot.new{animation:newItem 1s ease}
+@keyframes newItem{0%{transform:scale(.6)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+
+/* SVG animation helpers */
+#scene.fade{animation:fadein .45s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 40s linear infinite}
+.spin.rev{animation-direction:reverse}
+@keyframes swing{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+.swing{animation:swing 2s ease-in-out infinite}
+@keyframes flick{0%,100%{opacity:.9}20%{opacity:.78}45%{opacity:.95}60%{opacity:.82}80%{opacity:1}}
+.flick{animation:flick 3.2s ease-in-out infinite}
+@keyframes flame{0%,100%{transform:scale(1,1)}30%{transform:scale(.9,1.08)}60%{transform:scale(1.06,.94)}}
+.flame{transform-box:fill-box;transform-origin:50% 100%;animation:flame .9s ease-in-out infinite}
+@keyframes rain{from{transform:translate(0,-80px)}to{transform:translate(-26px,380px)}}
+.rain{animation:rain .9s linear infinite}
+@keyframes puff{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:.55}100%{opacity:0;transform:translate(-14px,-80px) scale(2.4)}}
+.puff{transform-box:fill-box;transform-origin:center;animation:puff 3.4s ease-out infinite}
+@keyframes dust{0%{transform:translate(0,0);opacity:0}25%{opacity:.8}100%{transform:translate(30px,-120px);opacity:0}}
+.dust{animation:dust 9s linear infinite}
+@keyframes glint{0%,70%,100%{opacity:0;transform:scale(.2) rotate(0)}82%{opacity:1;transform:scale(1) rotate(45deg)}}
+.glint{transform-box:fill-box;transform-origin:center;animation:glint 3.6s ease-in-out infinite;pointer-events:none}
+@keyframes needle{0%,100%{transform:rotate(-30deg)}40%{transform:rotate(-12deg)}70%{transform:rotate(-24deg)}}
+.needle{animation:needle 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pulse 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.bob{animation:bob 3s ease-in-out infinite}
+@keyframes dash{to{stroke-dashoffset:-32}}
+.dashpulse{animation:dash 1.2s linear infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.shake{animation:shake .45s ease}
+.train.run .gA{animation:spin 1.8s linear infinite}
+.train.run .gB{animation:spin 1.8s linear infinite reverse}
+.hand{transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.kn{transition:transform .3s ease}
+.door{transition:transform 1.1s cubic-bezier(.55,0,.2,1)}
+.door.open{transform:scaleX(.06)}
+.ring{transition:transform .45s cubic-bezier(.3,1.3,.5,1);cursor:pointer}
+.prot{transition:transform .25s ease}
+.tile{cursor:pointer}
+.tile .pg{opacity:0;stroke-dasharray:14 18}
+.tile.on .pm{stroke:#cf6f2e}
+.tile.on .pg{opacity:.9;animation:dash .7s linear infinite}
+.book{transition:transform .25s ease;cursor:pointer}
+.book .shade{opacity:0;transition:opacity .25s}
+.book.in{transform:translateY(6px)}
+.book.in .shade{opacity:.5}
+.hdoor{transition:transform 1.6s cubic-bezier(.6,0,.2,1),opacity 1.6s}
+.hdoor.open{transform:scaleX(.04);opacity:.2}
+.wheel.turn{animation:spin 2.2s cubic-bezier(.5,0,.3,1) 1}
+.medal.turn{animation:spin 1.4s ease-in-out 1}
+.turbine.on{animation:spin 1.2s linear infinite}
+.gauge-n{transition:transform 2s cubic-bezier(.3,1.4,.5,1)}
+.hot{cursor:pointer}
+.cta{cursor:pointer}
+.cta:hover rect.face{filter:brightness(1.12)}
+@media (prefers-reduced-motion:reduce){
+  .spin,.swing,.rain,.puff,.dust,.glint,.needle,.pulse,.bob,.flick,.flame,.dashpulse{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <button class="btn" id="back" aria-label="Назад" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span class="spacer" id="backSpacer"></span>
+    <div id="loc">Сердце Хроноса</div>
+    <button class="btn" id="snd" aria-label="Звук"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    <button class="btn" id="hint" aria-label="Подсказка" hidden>?</button>
+  </header>
+  <main id="stage">
+    <svg id="view" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7dc9a"/><stop offset=".28" stop-color="#d4a24a"/><stop offset=".55" stop-color="#8c5a1f"/><stop offset=".78" stop-color="#d09a43"/><stop offset="1" stop-color="#6a4314"/></linearGradient>
+        <linearGradient id="brassH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2d18a"/><stop offset=".45" stop-color="#b8862f"/><stop offset="1" stop-color="#5e3b10"/></linearGradient>
+        <radialGradient id="brassR" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#fff0c2"/><stop offset=".22" stop-color="#e4b65c"/><stop offset=".65" stop-color="#9b6a28"/><stop offset="1" stop-color="#4a2e0e"/></radialGradient>
+        <radialGradient id="brassD" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#b58a4a"/><stop offset=".5" stop-color="#6e4a22"/><stop offset="1" stop-color="#2e1c0a"/></radialGradient>
+        <radialGradient id="rivet" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff3cf"/><stop offset=".4" stop-color="#c99a4a"/><stop offset="1" stop-color="#3e260c"/></radialGradient>
+        <linearGradient id="copperH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b285"/><stop offset=".35" stop-color="#c06a34"/><stop offset=".72" stop-color="#6e3416"/><stop offset="1" stop-color="#3a1a08"/></linearGradient>
+        <linearGradient id="copperV" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a1a08"/><stop offset=".3" stop-color="#c06a34"/><stop offset=".5" stop-color="#f2b285"/><stop offset="1" stop-color="#4a220c"/></linearGradient>
+        <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22261c"/><stop offset=".55" stop-color="#2f2c1e"/><stop offset="1" stop-color="#1a1610"/></linearGradient>
+        <pattern id="damask" width="90" height="120" patternUnits="userSpaceOnUse">
+          <path d="M45,8 C62,28 72,44 45,60 C18,44 28,28 45,8 Z M45,60 C58,76 62,92 45,112 C28,92 32,76 45,60 Z" fill="#d9b070" opacity=".07"/>
+          <circle cx="0" cy="60" r="5" fill="#d9b070" opacity=".06"/><circle cx="90" cy="60" r="5" fill="#d9b070" opacity=".06"/>
+        </pattern>
+        <linearGradient id="woodV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f2e18"/><stop offset="1" stop-color="#2a170b"/></linearGradient>
+        <linearGradient id="woodH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a170b"/><stop offset=".5" stop-color="#55331b"/><stop offset="1" stop-color="#2a170b"/></linearGradient>
+        <linearGradient id="woodTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e2212"/><stop offset="1" stop-color="#6e4224"/></linearGradient>
+        <linearGradient id="floorG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0f07"/><stop offset=".4" stop-color="#3a2213"/><stop offset="1" stop-color="#160c05"/></linearGradient>
+        <linearGradient id="mahog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a321a"/><stop offset=".5" stop-color="#55200f"/><stop offset="1" stop-color="#2e1108"/></linearGradient>
+        <linearGradient id="mahogTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e170b"/><stop offset="1" stop-color="#83391d"/></linearGradient>
+        <radialGradient id="ivory" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#fffaf0"/><stop offset=".7" stop-color="#efe0bd"/><stop offset="1" stop-color="#c9ad78"/></radialGradient>
+        <linearGradient id="parch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4e6c2"/><stop offset=".5" stop-color="#e9d4a3"/><stop offset="1" stop-color="#d2b47a"/></linearGradient>
+        <radialGradient id="parchEdge" r=".72"><stop offset=".62" stop-color="#6b3d14" stop-opacity="0"/><stop offset="1" stop-color="#6b3d14" stop-opacity=".55"/></radialGradient>
+        <radialGradient id="warm"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".55"/><stop offset=".45" stop-color="#ff9a3a" stop-opacity=".16"/><stop offset="1" stop-color="#ff9a3a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="vig" r=".5"><stop offset=".38" stop-color="#000" stop-opacity="0"/><stop offset=".68" stop-color="#000" stop-opacity=".62"/><stop offset=".9" stop-color="#000" stop-opacity=".95"/><stop offset="1" stop-color="#000"/></radialGradient>
+        <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050a18"/><stop offset=".6" stop-color="#142640"/><stop offset="1" stop-color="#2d3d52"/></linearGradient>
+        <linearGradient id="sunset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1638"/><stop offset=".35" stop-color="#6a2c4a"/><stop offset=".62" stop-color="#d0603a"/><stop offset=".8" stop-color="#f4b25a"/><stop offset="1" stop-color="#f7d38a"/></linearGradient>
+        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a4a3a"/><stop offset="1" stop-color="#1e1028"/></linearGradient>
+        <radialGradient id="varnish" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#fff2c8" stop-opacity=".1"/><stop offset="1" stop-color="#3a1a00" stop-opacity=".5"/></radialGradient>
+        <linearGradient id="glassG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity=".02"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ringG0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efca7c"/><stop offset=".5" stop-color="#a87634"/><stop offset="1" stop-color="#e1b45e"/></linearGradient>
+        <linearGradient id="ringG1" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cf9d50"/><stop offset=".5" stop-color="#7a4f1e"/><stop offset="1" stop-color="#c08a3e"/></linearGradient>
+        <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5e452a"/><stop offset="1" stop-color="#2a1b0e"/></linearGradient>
+        <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c8"/><stop offset=".5" stop-color="#e2b257"/><stop offset="1" stop-color="#8a5a1a"/></linearGradient>
+        <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a1420"/><stop offset="1" stop-color="#2a0408"/></linearGradient>
+        <radialGradient id="heartG" cx=".42" cy=".38" r=".72"><stop offset="0" stop-color="#fff4c4"/><stop offset=".25" stop-color="#ffb070"/><stop offset=".62" stop-color="#e3401c"/><stop offset="1" stop-color="#5e0a05"/></radialGradient>
+        <radialGradient id="lightR"><stop offset="0" stop-color="#fffbe8"/><stop offset=".35" stop-color="#ffd98a" stop-opacity=".9"/><stop offset="1" stop-color="#ffb040" stop-opacity="0"/></radialGradient>
+        <radialGradient id="fireG" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff0a0"/><stop offset=".4" stop-color="#ff8a20"/><stop offset="1" stop-color="#5a1000"/></radialGradient>
+        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+        <filter id="sh" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity=".6"/></filter>
+        <filter id="grain" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="3" seed="7"/><feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.05  0 0 0 0 0.02  1.8 0 0 0 -0.72"/></filter>
+        <filter id="paper" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.1  1.2 0 0 0 -0.52"/></filter>
+        <clipPath id="lensClip"><circle id="lensC" cx="-500" cy="-500" r="100"/></clipPath>
+        <clipPath id="winClip"><path d="M72,398 L72,182 A98,98 0 0 1 268,182 L268,398 Z"/></clipPath>
+      </defs>
+      <g id="scene"></g>
+    </svg>
+    <div id="msg" hidden role="status"><p id="msgText"></p><span class="more" id="msgMore">дальше ›</span></div>
+  </main>
+  <footer id="inv"></footer>
+</div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const svgEl = $('#view'), sceneG = $('#scene');
+const msgEl = $('#msg'), msgText = $('#msgText'), msgMore = $('#msgMore');
+const f1 = n => Math.round(n * 10) / 10;
+const rad = d => d * Math.PI / 180;
+const RN = ['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+const SAVE_KEY = 'chronos-heart-v1';
+
+/* ---------------- state ---------------- */
+function freshState(){
+  return { inv:[], sel:null, f:{}, hs:0, ms:0, rs:[0,0,0], pr:PIPE_SOL.map((t,i)=>t[1]+PIPE_SCR[i]),
+    shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false };
+}
+const PIPE_SOL = [['c',1],['s',0],['c',2],['s',1], ['s',1],['c',2],['c',1],['c',2], ['c',3],['c',0],['c',3],['c',0], ['s',0],['c',1],['s',1],['c',3]];
+const PIPE_SCR = [1,1,3,2, 1,2,1,3, 0,1,2,3, 1,3,2,1];
+const RINGS = [['sun','moon','star','tri','wave','earth'],['wave','earth','sun','star','moon','tri'],['moon','tri','earth','wave','sun','star']];
+const CODE = ['moon','star','tri'];
+let S = freshState();
+let soundOn = true;
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) { const d = JSON.parse(raw); if (d && d.f) S = Object.assign(freshState(), d); } } catch(e) {}
+try { soundOn = localStorage.getItem(SAVE_KEY + '-snd') !== '0'; } catch(e) {}
+function save(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch(e) {} }
+
+/* ---------------- audio (synthesised) ---------------- */
+const AU = {
+  ctx:null, master:null, rain:null,
+  init(){
+    try{
+      if(!this.ctx){ const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+        this.ctx = new C(); this.master = this.ctx.createGain(); this.master.gain.value = .7; this.master.connect(this.ctx.destination); }
+      if(this.ctx.state === 'suspended') this.ctx.resume();
+      this.ambient();
+    }catch(e){}
+  },
+  ok(){ return soundOn && this.ctx; },
+  tone(f,d,type='sine',v=.12,dl=0,f2){
+    if(!this.ok()) return; const c=this.ctx, t=c.currentTime+dl, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(v,t+.008); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t+d+.05);
+  },
+  noiseBuf(sec){ const c=this.ctx, len=Math.floor(c.sampleRate*sec), b=c.createBuffer(1,len,c.sampleRate), a=b.getChannelData(0);
+    for(let i=0;i<len;i++) a[i]=Math.random()*2-1; return b; },
+  noise(d,v=.2,freq=1000,type='bandpass',dl=0){
+    if(!this.ok()) return; const c=this.ctx, t=c.currentTime+dl, s=c.createBufferSource(), fl=c.createBiquadFilter(), g=c.createGain();
+    s.buffer=this.noiseBuf(d); fl.type=type; fl.frequency.value=freq;
+    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t);
+  },
+  ambient(){
+    if(!this.ctx) return;
+    if(!this.rain){
+      const c=this.ctx, s=c.createBufferSource(), fl=c.createBiquadFilter(), g=c.createGain();
+      s.buffer=this.noiseBuf(4); s.loop=true; fl.type='lowpass'; fl.frequency.value=900; g.gain.value=0;
+      s.connect(fl); fl.connect(g); g.connect(this.master); s.start(); this.rain=g;
+    }
+    this.rain.gain.setTargetAtTime(soundOn ? .045 : 0, this.ctx.currentTime, .4);
+  },
+  click(){ this.tone(2600,.025,'square',.025); this.tone(620,.07,'triangle',.09); },
+  tick(soft){ this.tone(soft?1300:1700,.03,'square',soft?.01:.028); this.tone(soft?300:380,.05,'triangle',soft?.02:.05); },
+  clank(){ this.noise(.28,.35,480); this.tone(120,.35,'sawtooth',.06,0,55); },
+  chime(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>{ this.tone(f,1.6,'sine',.09,i*.13); this.tone(f*2.01,.7,'sine',.02,i*.13); }); },
+  pick(){ this.tone(880,.25,'sine',.08); this.tone(1320,.35,'sine',.06,.08); },
+  bell(n){ for(let i=0;i<n;i++){ this.tone(196,1.8,'sine',.12,i*.55); this.tone(392.5,1.4,'sine',.05,i*.55); this.tone(589,.9,'sine',.025,i*.55); } },
+  hiss(){ this.noise(2,.14,3800,'highpass'); },
+  whirr(){ for(let i=0;i<14;i++) this.tone(900+i*30,.03,'square',.02,i*.09); this.noise(1.3,.08,300,'lowpass'); }
+};
+setInterval(()=>{
+  if(!AU.ok()) return; const sc=S.scene;
+  if(sc==='room') AU.tick(true); else if(sc==='clock' && !S.f.clockDone) AU.tick(false);
+}, 1000);
+
+/* ---------------- drawing helpers ---------------- */
+function rng(seed){ let s=seed; return ()=> (s = (s*16807) % 2147483647) / 2147483647; }
+function gearPath(cx,cy,ro,ri,n){
+  let d=''; const st=Math.PI*2/n;
+  for(let i=0;i<n;i++){ const a=i*st-Math.PI/2;
+    [[a,ri],[a+st*.16,ro],[a+st*.46,ro],[a+st*.62,ri]].forEach(([an,r],j)=>{
+      d+=(i===0&&j===0?'M':'L')+f1(cx+Math.cos(an)*r)+','+f1(cy+Math.sin(an)*r); });
+  }
+  return d+'Z';
+}
+function gear(cx,cy,r,n,o={}){
+  const ri=r*.84, cls=[o.cls||'', o.spin?'spin':'', o.rev?'rev':''].join(' ').trim();
+  const st=`transform-origin:${cx}px ${cy}px;${o.spin?`animation-duration:${o.spin}s;`:''}`;
+  let holes='';
+  if(r>26 && !o.solid){ const k=o.holes||5; for(let i=0;i<k;i++){ const a=i*Math.PI*2/k; holes+=`<circle cx="${f1(cx+Math.cos(a)*r*.48)}" cy="${f1(cy+Math.sin(a)*r*.48)}" r="${f1(r*.15)}" fill="${o.hole||'#140b05'}"/>`; } }
+  return `<g class="${cls}" style="${st}"${o.id?` id="${o.id}"`:''}${o.op?` opacity="${o.op}"`:''}>
+    <path d="${gearPath(cx,cy,r,ri,n)}" fill="${o.fill||'url(#brass)'}" stroke="#3a240c" stroke-width="${o.sw||2}"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(ri*.8)}" fill="none" stroke="#4a2e0e" stroke-width="${f1(Math.max(1.5,r*.05))}" opacity=".55"/>
+    ${holes}
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.2)}" fill="url(#brassR)" stroke="#3a240c" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="${cy}" r="${f1(r*.06)}" fill="#1a0f06"/>${o.extra||''}
+  </g>`;
+}
+const rivet = (x,y,r=6) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="${r}" fill="url(#rivet)" stroke="#2a1806" stroke-width="1"/>`;
+function rivetRing(cx,cy,R,n,r=6,off=0){ let s=''; for(let i=0;i<n;i++){ const a=i*Math.PI*2/n+off; s+=rivet(cx+Math.cos(a)*R, cy+Math.sin(a)*R, r); } return s; }
+function heartPath(cx,cy,s){
+  return `M${f1(cx)},${f1(cy+s*.92)} C${f1(cx-s*1.45)},${f1(cy+s*.08)} ${f1(cx-s*.95)},${f1(cy-s*.95)} ${f1(cx)},${f1(cy-s*.36)} C${f1(cx+s*.95)},${f1(cy-s*.95)} ${f1(cx+s*1.45)},${f1(cy+s*.08)} ${f1(cx)},${f1(cy+s*.92)} Z`;
+}
+function heartObj(cx,cy,s,glow=true){
+  return `<g>
+    ${glow?`<circle cx="${cx}" cy="${cy}" r="${f1(s*2.3)}" fill="url(#warm)" class="pulse"/>`:''}
+    <path d="${heartPath(cx,cy,s)}" fill="url(#heartG)" stroke="#4a0a03" stroke-width="${f1(s*.05)}"${glow?' filter="url(#glow)"':''}/>
+    <path d="M${cx},${f1(cy-s*.36)} L${f1(cx-s*.35)},${f1(cy+s*.1)} L${cx},${f1(cy+s*.9)} M${cx},${f1(cy-s*.36)} L${f1(cx+s*.4)},${f1(cy+s*.05)} L${cx},${f1(cy+s*.9)} M${f1(cx-s*.35)},${f1(cy+s*.1)} L${f1(cx+s*.4)},${f1(cy+s*.05)}" stroke="#fff2c8" stroke-width="${f1(s*.025)}" fill="none" opacity=".45"/>
+    <path d="${heartPath(cx,cy,s*1.1)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.07)}"/>
+    <ellipse cx="${cx}" cy="${f1(cy+s*.05)}" rx="${f1(s*1.02)}" ry="${f1(s*.22)}" fill="none" stroke="url(#brass)" stroke-width="${f1(s*.05)}"/>
+    ${gear(cx, cy-s*.6, s*.24, 8, {solid:true})}
+  </g>`;
+}
+function glyph(n,x,y,s,col,sw=5){
+  const h=s/2, g=`<g transform="translate(${f1(x)},${f1(y)})" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">`;
+  switch(n){
+    case 'sun': return g+`<circle r="${f1(h*.62)}"/><circle r="${f1(h*.13)}" fill="${col}"/></g>`;
+    case 'moon': return g+`<path d="M${f1(h*.15)},${f1(-h*.7)} A${f1(h*.7)},${f1(h*.7)} 0 1 0 ${f1(h*.15)},${f1(h*.7)} A${f1(h*.55)},${f1(h*.75)} 0 0 1 ${f1(h*.15)},${f1(-h*.7)} Z" fill="${col}" stroke="none"/></g>`;
+    case 'star': return g+`<path d="M0,${f1(-h*.78)} L${f1(h*.67)},${f1(h*.39)} L${f1(-h*.67)},${f1(h*.39)} Z M0,${f1(h*.78)} L${f1(h*.67)},${f1(-h*.39)} L${f1(-h*.67)},${f1(-h*.39)} Z"/></g>`;
+    case 'tri': return g+`<path d="M0,${f1(-h*.72)} L${f1(h*.68)},${f1(h*.5)} L${f1(-h*.68)},${f1(h*.5)} Z"/><circle cy="${f1(h*.12)}" r="${f1(h*.1)}" fill="${col}"/></g>`;
+    case 'wave': return g+`<path d="M${f1(-h*.7)},${f1(-h*.18)} q${f1(h*.175)},${f1(-h*.32)} ${f1(h*.35)},0 t${f1(h*.35)},0 t${f1(h*.35)},0 t${f1(h*.35)},0 M${f1(-h*.7)},${f1(h*.26)} q${f1(h*.175)},${f1(-h*.32)} ${f1(h*.35)},0 t${f1(h*.35)},0 t${f1(h*.35)},0 t${f1(h*.35)},0"/></g>`;
+    case 'earth': return g+`<circle r="${f1(h*.62)}"/><path d="M0,${f1(-h*.62)} V${f1(h*.62)} M${f1(-h*.62)},0 H${f1(h*.62)}"/></g>`;
+  }
+  return '';
+}
+const engraved = (n,x,y,s) => glyph(n,x+1.6,y+1.6,s,'#f8dc9c',5).replace('<g ','<g opacity=".45" ') + glyph(n,x,y,s,'#2a1608',5);
+const glint = (x,y,key) => S.f['v_'+key] ? '' :
+  `<path class="glint" style="animation-delay:${(x%7)/3}s" d="M${x},${y-16} L${x+3.5},${y-3.5} L${x+16},${y} L${x+3.5},${y+3.5} L${x},${y+16} L${x-3.5},${y+3.5} L${x-16},${y} L${x-3.5},${y-3.5} Z" fill="#fff6d6"/>`;
+const hot = (x,y,w,h,act,extra='') => `<rect class="hot" x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent" data-act="${act}" ${extra}/>`;
+const vignette = () => `<rect x="-500" y="-500" width="2000" height="2000" fill="url(#vig)" pointer-events="none"/>`;
+/* Extends a scene beyond its square so tall or wide screens show room, not empty bars */
+const bleed = ([top,bot,y]) => `<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="${top}"/>${y>=760?`<rect x="-1500" y="-1500" width="4000" height="${y+1500}" fill="url(#damask)"/>`:''}<rect x="-1500" y="${y}" width="4000" height="3000" fill="${bot}"/>`;
+function handDeg(){ return [S.hs*30 + S.ms*2.5, S.ms*30]; }
+const curH = () => ((S.hs % 12) + 12) % 12, curM = () => (S.ms % 12) * 5;
+
+/* Shared backgrounds */
+function wallBg(){
+  let s=`<rect width="1000" height="1000" fill="url(#wallG)"/><rect width="1000" height="1000" fill="url(#damask)"/>
+  <rect y="760" width="1000" height="240" fill="url(#woodV)"/><rect y="752" width="1000" height="14" fill="#5c3a1e"/><rect y="752" width="1000" height="3" fill="#b8864a" opacity=".55"/>`;
+  for(let x=24;x<1000;x+=190) s+=`<rect x="${x}" y="786" width="160" height="190" fill="none" stroke="#120904" stroke-width="4" opacity=".7"/><rect x="${x+4}" y="790" width="160" height="190" fill="none" stroke="#8a5e36" stroke-width="1.5" opacity=".3"/>`;
+  return s;
+}
+function deskBg(){
+  return `<rect width="1000" height="1000" fill="url(#woodTop)"/>
+  <rect width="1000" height="1000" filter="url(#grain)" opacity=".9"/>
+  ${[120,260,430,610,800,930].map(y=>`<line x1="0" y1="${y}" x2="1000" y2="${y+6}" stroke="#1a0b04" stroke-width="3" opacity=".5"/>`).join('')}
+  <circle cx="160" cy="120" r="700" fill="url(#warm)" class="flick"/>`;
+}
+
+/* ---------------- painting art (reused small in the room) ---------------- */
+function paintingArt(){
+  let s=`<rect width="660" height="590" fill="url(#sunset)"/>
+  <circle cx="170" cy="420" r="150" fill="#ffd98a" opacity=".25" filter="url(#soft)"/>
+  <circle cx="170" cy="425" r="62" fill="#ffe2a0"/>
+  <ellipse cx="480" cy="150" rx="170" ry="22" fill="#f2a46a" opacity=".45"/><ellipse cx="560" cy="120" rx="110" ry="16" fill="#ffd0a0" opacity=".3"/>
+  <ellipse cx="120" cy="250" rx="150" ry="20" fill="#7a3d5a" opacity=".55"/><ellipse cx="250" cy="300" rx="190" ry="14" fill="#f29a6a" opacity=".4"/>
+  <rect y="470" width="660" height="120" fill="url(#seaG)"/>
+  ${[485,505,528,552].map((y,i)=>`<rect x="${130+i*6}" y="${y}" width="${90-i*16}" height="4" fill="#ffd98a" opacity="${.7-i*.13}"/>`).join('')}
+  <path d="M0,470 L0,420 L40,420 L40,395 L70,395 L70,430 L110,430 L110,380 L125,365 L140,380 L140,440 L200,440 L200,410 L240,410 L240,450 L300,450 L300,400 L330,400 L330,370 L350,370 L350,470 Z" fill="#2a1530"/>
+  <path d="M480,470 L480,410 L520,410 L520,380 L560,380 L560,420 L600,420 L600,395 L630,395 L630,430 L660,430 L660,470 Z" fill="#2a1530"/>`;
+  [[50,430],[85,440],[118,400],[210,425],[255,430],[312,415],[495,425],[540,395],[575,435],[612,410]].forEach(([x,y])=> s+=`<rect x="${x}" y="${y}" width="6" height="8" fill="#ffc35a" opacity=".85"/>`);
+  // tower
+  s+=`<rect x="385" y="250" width="70" height="225" fill="#2d1830"/>
+  <rect x="368" y="140" width="104" height="120" fill="#341c38"/><rect x="368" y="140" width="104" height="8" fill="#4a2a4a"/>
+  <path d="M362,142 L478,142 L420,30 Z" fill="#2d1830"/><line x1="420" y1="30" x2="420" y2="6" stroke="#2d1830" stroke-width="4"/>
+  <path d="M420,8 L446,15 L420,22 Z" fill="#a8323a"/>
+  <circle cx="420" cy="200" r="44" fill="#f6e7c0" stroke="#c9a050" stroke-width="5"/>`;
+  for(let i=0;i<12;i++){ const a=rad(i*30); s+=`<line x1="${f1(420+Math.sin(a)*34)}" y1="${f1(200-Math.cos(a)*34)}" x2="${f1(420+Math.sin(a)*40)}" y2="${f1(200-Math.cos(a)*40)}" stroke="#3a2210" stroke-width="${i%3?2:4}"/>`; }
+  s+=`<line x1="420" y1="200" x2="${f1(420+Math.sin(rad(220))*22)}" y2="${f1(200-Math.cos(rad(220))*22)}" stroke="#1a0f06" stroke-width="5" stroke-linecap="round"/>
+  <line x1="420" y1="200" x2="${f1(420+Math.sin(rad(120))*34)}" y2="${f1(200-Math.cos(rad(120))*34)}" stroke="#1a0f06" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="420" cy="200" r="4" fill="#1a0f06"/>
+  <rect x="400" y="300" width="14" height="22" rx="7" fill="#ffc35a" opacity=".8"/><rect x="426" y="300" width="14" height="22" rx="7" fill="#ffc35a" opacity=".8"/>
+  <rect x="412" y="370" width="16" height="26" rx="8" fill="#ffc35a" opacity=".6"/>`;
+  // airship
+  s+=`<g transform="translate(170,165) rotate(-4)">
+    <path d="M-120,0 C-120,-40 100,-44 130,0 C100,44 -120,40 -120,0 Z" fill="#8a4e30"/>
+    <path d="M-120,0 C-120,-40 100,-44 130,0" fill="none" stroke="#f0b27a" stroke-width="3" opacity=".6"/>
+    ${[-70,-30,10,50,90].map(x=>`<path d="M${x},-36 C${x+8},-12 ${x+8},12 ${x},36" fill="none" stroke="#4a2414" stroke-width="2.5" opacity=".7"/>`).join('')}
+    <path d="M-110,-6 L-150,-34 L-140,0 L-150,34 L-110,6 Z" fill="#6a3420"/>
+    <line x1="-30" y1="34" x2="-20" y2="56" stroke="#2a1408" stroke-width="2"/><line x1="40" y1="34" x2="30" y2="56" stroke="#2a1408" stroke-width="2"/>
+    <rect x="-28" y="54" width="62" height="18" rx="4" fill="#3a1e10"/>
+    ${[-20,-6,8,22].map(x=>`<rect x="${x}" y="58" width="7" height="7" fill="#ffc35a"/>`).join('')}
+    <ellipse cx="44" cy="63" rx="3" ry="14" fill="#2a1408"/>
+  </g>
+  <path d="M520,250 q8,-8 16,0 q8,-8 16,0 M560,270 q6,-6 12,0 q6,-6 12,0 M500,285 q5,-5 10,0 q5,-5 10,0" fill="none" stroke="#2a1530" stroke-width="3"/>
+  <rect width="660" height="590" fill="url(#varnish)"/>
+  <rect width="660" height="590" filter="url(#paper)" opacity=".35"/>`;
+  return s;
+}
+
+/* ---------------- ROOM ---------------- */
+function roomScene(){
+  const f=S.f; let s='';
+  s+=`<rect width="1000" height="1000" fill="url(#wallG)"/><rect width="1000" height="600" fill="url(#damask)"/>
+  <rect width="1000" height="22" fill="#120a05"/><rect y="22" width="1000" height="8" fill="url(#brassH)" opacity=".5"/>
+  <rect y="590" width="1000" height="180" fill="url(#woodV)"/>
+  <rect y="584" width="1000" height="12" fill="#5c3a1e"/><rect y="584" width="1000" height="3" fill="#b8864a" opacity=".6"/>`;
+  for(let x=20;x<1000;x+=140) s+=`<rect x="${x}" y="612" width="116" height="140" fill="none" stroke="#120904" stroke-width="3" opacity=".7"/><rect x="${x+3}" y="615" width="116" height="140" fill="none" stroke="#8a5e36" stroke-width="1.5" opacity=".3"/>`;
+  s+=`<rect y="770" width="1000" height="230" fill="url(#floorG)"/>`;
+  for(let i=-8;i<=20;i++){ const xb=i*70, xt=500+(xb-500)*.42; s+=`<line x1="${f1(xt)}" y1="770" x2="${xb}" y2="1000" stroke="#0e0703" stroke-width="2" opacity=".6"/>`; }
+  [800,838,886,948].forEach(y=> s+=`<line x1="0" y1="${y}" x2="1000" y2="${y}" stroke="#0e0703" stroke-width="1.5" opacity=".35"/>`);
+  s+=`<ellipse cx="560" cy="905" rx="350" ry="72" fill="#4a1216" opacity=".9"/>
+  <ellipse cx="560" cy="905" rx="320" ry="60" fill="none" stroke="#c9a062" stroke-width="3" stroke-dasharray="14 8" opacity=".55"/>
+  <ellipse cx="560" cy="905" rx="250" ry="42" fill="none" stroke="#8a2a28" stroke-width="10" opacity=".7"/>`;
+
+  // pipes
+  s+=`<rect x="0" y="36" width="1000" height="26" fill="url(#copperH)"/>
+  ${[150,300,480,660,820].map(x=>`<rect x="${x}" y="30" width="16" height="38" rx="2" fill="url(#brassH)"/>`).join('')}
+  <rect x="331" y="60" width="22" height="530" fill="url(#copperV)"/>
+  <rect x="325" y="110" width="34" height="14" rx="2" fill="url(#brass)"/><rect x="325" y="520" width="34" height="14" rx="2" fill="url(#brass)"/>
+  <rect x="699" y="60" width="20" height="530" fill="url(#copperV)"/>
+  <rect x="693" y="140" width="32" height="12" rx="2" fill="url(#brass)"/>
+  <g transform="translate(709,420)"><circle r="22" fill="none" stroke="#9c2a1e" stroke-width="6"/>
+    ${[0,60,120].map(a=>`<line x1="${f1(Math.cos(rad(a))*-20)}" y1="${f1(Math.sin(rad(a))*-20)}" x2="${f1(Math.cos(rad(a))*20)}" y2="${f1(Math.sin(rad(a))*20)}" stroke="#7a2016" stroke-width="4"/>`).join('')}<circle r="6" fill="url(#brassR)"/></g>
+  <g transform="translate(940,49)"><circle r="20" fill="none" stroke="url(#brass)" stroke-width="5"/><circle r="5" fill="url(#brassR)"/></g>
+  <circle cx="972" cy="40" r="12" fill="#ddd2c0" class="puff"/><circle cx="972" cy="40" r="10" fill="#ddd2c0" class="puff" style="animation-delay:1.1s"/><circle cx="972" cy="40" r="14" fill="#ddd2c0" class="puff" style="animation-delay:2.2s"/>`;
+
+  // window with drapes
+  s+=`<path d="M60,410 L60,182 A110,110 0 0 1 280,182 L280,410 Z" fill="#2a170b"/>
+  <g clip-path="url(#winClip)">
+    <rect x="60" y="60" width="230" height="360" fill="url(#night)"/>
+    <circle cx="210" cy="150" r="60" fill="#d9e4ff" opacity=".18" filter="url(#soft)"/>
+    <circle cx="210" cy="150" r="24" fill="#f1ead2"/><circle cx="218" cy="145" r="20" fill="#d8d0b4" opacity=".35"/>
+    ${[[100,120],[140,95],[250,220],[90,200],[180,240],[120,170]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.6" fill="#fff" opacity=".8"/>`).join('')}
+    <path d="M60,410 L60,330 L90,330 L90,300 L115,300 L115,340 L140,340 L140,280 L150,262 L160,280 L160,330 L190,330 L190,310 L215,310 L215,345 L240,345 L240,300 L265,300 L265,410 Z" fill="#0b1220"/>
+    ${[[72,340],[98,312],[124,350],[146,292],[196,320],[222,355],[248,312]].map(([x,y])=>`<rect x="${x}" y="${y}" width="5" height="7" fill="#f5c062" opacity=".85"/>`).join('')}
+    ${Array.from({length:22},(_,i)=>{const r=rng(i+11);const x=60+r()*240,y=40+r()*340;return `<line class="rain" style="animation-delay:${f1(-r()*.9)}s" x1="${f1(x)}" y1="${f1(y-150)}" x2="${f1(x-6)}" y2="${f1(y-128)}" stroke="#a9c3e8" stroke-width="1.4" opacity=".45"/>`}).join('')}
+    <rect x="60" y="60" width="230" height="360" fill="url(#glassG)"/>
+  </g>
+  <path d="M72,398 L72,182 A98,98 0 0 1 268,182 L268,398 Z" fill="none" stroke="#3a2010" stroke-width="10"/>
+  <path d="M60,410 L60,182 A110,110 0 0 1 280,182 L280,410" fill="none" stroke="url(#brass)" stroke-width="3" opacity=".6"/>
+  <line x1="170" y1="74" x2="170" y2="398" stroke="#3a2010" stroke-width="7"/><line x1="72" y1="260" x2="268" y2="260" stroke="#3a2010" stroke-width="7"/>
+  <rect x="44" y="404" width="252" height="16" rx="3" fill="#5a3418"/><rect x="44" y="404" width="252" height="3" fill="#a87745" opacity=".6"/>
+  <path d="M22,40 C40,40 70,44 82,60 C70,160 92,300 80,430 L22,430 Z" fill="#5a1418"/>
+  <path d="M34,48 C44,160 30,300 40,430 M58,52 C66,160 56,300 64,430" stroke="#2a0608" stroke-width="5" fill="none" opacity=".6"/>
+  <path d="M318,40 C300,40 270,44 258,60 C270,160 248,300 260,430 L318,430 Z" fill="#5a1418"/>
+  <path d="M306,48 C296,160 310,300 300,430 M282,52 C274,160 284,300 276,430" stroke="#2a0608" stroke-width="5" fill="none" opacity=".6"/>
+  <rect x="14" y="30" width="316" height="12" rx="6" fill="url(#brassH)"/><circle cx="14" cy="36" r="9" fill="url(#brassR)"/><circle cx="330" cy="36" r="9" fill="url(#brassR)"/>`;
+
+  s+=`<g transform="translate(342,250)" filter="url(#sh)"><circle r="40" fill="url(#brass)"/><circle r="32" fill="url(#ivory)"/>
+    ${Array.from({length:9},(_,i)=>{const a=rad(-120+i*30);return `<line x1="${f1(Math.sin(a)*24)}" y1="${f1(-Math.cos(a)*24)}" x2="${f1(Math.sin(a)*29)}" y2="${f1(-Math.cos(a)*29)}" stroke="${i>6?'#b02a1a':'#3a2210'}" stroke-width="2"/>`}).join('')}
+    <g class="needle"><line x1="0" y1="4" x2="0" y2="-24" stroke="#1a0f06" stroke-width="3" stroke-linecap="round"/></g><circle r="4" fill="url(#brassR)"/></g>`;
+  // painting
+  s+=`<g filter="url(#sh)"><rect x="380" y="104" width="260" height="222" fill="url(#brass)" stroke="#3a2208" stroke-width="2"/></g>
+  <rect x="392" y="116" width="236" height="198" fill="none" stroke="#6a4416" stroke-width="3"/>
+  <svg x="402" y="126" width="216" height="178" viewBox="0 0 660 590" preserveAspectRatio="none">${paintingArt()}</svg>
+  ${[[380,104],[640,104],[380,326],[640,326]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="url(#brassR)"/>`).join('')}
+  <rect x="470" y="334" width="80" height="16" rx="2" fill="url(#brass)"/>`;
+
+  // wall clock
+  const [hd,md]=handDeg();
+  s+=`<rect x="812" y="262" width="76" height="210" rx="6" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
+  <rect x="826" y="280" width="48" height="172" rx="24" fill="#0c0704" stroke="url(#brass)" stroke-width="4"/>
+  <g class="swing" style="transform-origin:850px 282px"><line x1="850" y1="282" x2="850" y2="418" stroke="url(#brassH)" stroke-width="4"/><circle cx="850" cy="424" r="16" fill="url(#brassR)"/></g>
+  <rect x="826" y="280" width="48" height="172" rx="24" fill="url(#glassG)"/>
+  <g filter="url(#sh)"><circle cx="850" cy="190" r="88" fill="url(#brass)"/></g>
+  <circle cx="850" cy="190" r="78" fill="url(#brassR)"/><circle cx="850" cy="190" r="69" fill="url(#ivory)"/>
+  ${RN.map((n,i)=>{const a=rad(i*30);return `<text x="${f1(850+Math.sin(a)*55)}" y="${f1(190-Math.cos(a)*55+5)}" font-family="Cormorant SC,serif" font-size="14" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`}).join('')}
+  <g transform="rotate(${hd} 850 190)"><path d="M847,196 L850,152 L853,196 Z" fill="#1a0f06"/></g>
+  <g transform="rotate(${md} 850 190)"><path d="M848.5,198 L850,132 L851.5,198 Z" fill="#1a0f06"/></g>
+  <circle cx="850" cy="190" r="6" fill="url(#brassR)"/>
+  ${gear(850,94,18,10,{solid:true})}`;
+
+  // hatch
+  s+=`<circle cx="872" cy="692" r="116" fill="#0e0704"/>
+  <g filter="url(#sh)"><circle cx="872" cy="690" r="108" fill="url(#brass)"/></g>
+  <circle cx="872" cy="690" r="94" fill="url(#brassD)"/>${rivetRing(872,690,101,18,4)}
+  <circle cx="872" cy="690" r="78" fill="url(#brassR)" opacity=".85"/><circle cx="872" cy="690" r="72" fill="none" stroke="#3a240c" stroke-width="2"/>
+  <circle cx="872" cy="690" r="50" fill="none" stroke="url(#brass)" stroke-width="9"/>
+  ${[0,60,120].map(a=>`<line x1="${f1(872+Math.cos(rad(a))*50)}" y1="${f1(690+Math.sin(rad(a))*50)}" x2="${f1(872-Math.cos(rad(a))*50)}" y2="${f1(690-Math.sin(rad(a))*50)}" stroke="url(#brassH)" stroke-width="7"/>`).join('')}
+  <circle cx="872" cy="690" r="18" fill="#120a05"/><path d="${heartPath(872,690,10)}" fill="${f.heartIn?'url(#heartG)':'none'}" stroke="#ffb35c" stroke-width="1.5" opacity=".8"/>`;
+
+  // bookshelf
+  s+=`<rect x="30" y="444" width="274" height="490" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
+  <rect x="24" y="436" width="286" height="16" fill="#5a3418"/><rect x="24" y="436" width="286" height="3" fill="#a87745" opacity=".6"/>
+  <rect x="46" y="456" width="242" height="458" fill="#160c06"/>`;
+  [[560,1],[680,2],[800,3]].forEach(([b,seed])=>{
+    let x=50; const r=rng(seed*97+3), cols=['#6b1d1d','#1f4a33','#1d2f52','#5a3a1c','#8a6420','#3d1a2c','#241a14','#4d1426'];
+    while(x<276){ const w=10+r()*13; if(x+w>284) break; const h=62+r()*34, c=cols[Math.floor(r()*cols.length)];
+      s+=`<rect x="${f1(x)}" y="${f1(b-h)}" width="${f1(w)}" height="${f1(h)}" fill="${c}"/><rect x="${f1(x)}" y="${f1(b-h+9)}" width="${f1(w)}" height="3" fill="#d6a64e" opacity=".55"/><rect x="${f1(x)}" y="${f1(b-14)}" width="${f1(w)}" height="2" fill="#d6a64e" opacity=".45"/>`;
+      x+=w+1.5; if(r()<.1) x+=12; }
+    s+=`<rect x="40" y="${b}" width="254" height="12" fill="#4a2a14"/><rect x="40" y="${b}" width="254" height="2" fill="#9a6a3a" opacity=".6"/>`;
+  });
+  s+=`<rect x="52" y="824" width="230" height="96" fill="#3a2010" stroke="#120904" stroke-width="2"/>
+  <rect x="130" y="864" width="74" height="10" rx="5" fill="url(#brass)"/>
+  <g><circle cx="92" cy="410" r="24" fill="#2a4a5a"/><path d="M72,400 C84,396 92,410 108,402 M70,418 C86,414 96,424 112,416" stroke="#c9a062" stroke-width="2" fill="none" opacity=".7"/>
+  <path d="M64,410 A28,28 0 0 1 120,410" fill="none" stroke="url(#brass)" stroke-width="3"/><rect x="88" y="434" width="8" height="6" fill="url(#brass)"/></g>
+  <g transform="translate(250,412)"><path d="M-14,-24 L14,-24 L2,0 L14,24 L-14,24 L-2,0 Z" fill="#e9d4a3" opacity=".25" stroke="url(#brass)" stroke-width="2"/><path d="M-6,-12 L6,-12 L0,-2 Z M-10,22 L10,22 L0,12 Z" fill="#e6c27a"/><rect x="-18" y="-28" width="36" height="5" fill="url(#brass)"/><rect x="-18" y="23" width="36" height="5" fill="url(#brass)"/></g>`;
+
+  // desk
+  s+=`<ellipse cx="540" cy="935" rx="290" ry="18" fill="#000" opacity=".45"/>
+  <path d="M298,762 L328,762 L322,930 L304,930 Z M752,762 L782,762 L776,930 L758,930 Z" fill="#3a2010"/>
+  <path d="M300,800 L326,800 M754,800 L780,800" stroke="url(#brass)" stroke-width="4"/>
+  <rect x="290" y="686" width="500" height="80" fill="url(#woodV)" stroke="#120904" stroke-width="2"/>
+  <rect x="304" y="698" width="220" height="56" fill="none" stroke="#120904" stroke-width="2"/><rect x="556" y="698" width="220" height="56" fill="none" stroke="#120904" stroke-width="2"/>
+  <rect x="390" y="720" width="48" height="10" rx="5" fill="url(#brass)"/><rect x="642" y="720" width="48" height="10" rx="5" fill="url(#brass)"/>
+  <path d="M300,640 L780,640 L800,672 L280,672 Z" fill="url(#woodTop)"/>
+  <rect x="278" y="672" width="524" height="16" fill="#3a2010"/><rect x="278" y="672" width="524" height="3" fill="#a87745" opacity=".55"/>`;
+  // lamp
+  s+=`<circle cx="415" cy="560" r="400" fill="url(#warm)" class="flick" style="mix-blend-mode:screen"/>
+  <ellipse cx="345" cy="642" rx="36" ry="9" fill="url(#brass)"/><path d="M345,640 L356,520 L414,480" stroke="url(#brassH)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="356" cy="520" r="7" fill="url(#brassR)"/>
+  <ellipse cx="418" cy="508" rx="34" ry="10" fill="#fff4c8" opacity=".9" filter="url(#glow)"/>
+  <path d="M378,470 L456,462 L474,506 L362,516 Z" fill="#1d4a34"/><path d="M378,470 L456,462" stroke="url(#brass)" stroke-width="5"/><path d="M362,516 L474,506" stroke="url(#brass)" stroke-width="4"/>
+  <path d="M392,474 L384,510" stroke="#6ab08a" stroke-width="4" opacity=".4"/>`;
+  // candle
+  s+=`<ellipse cx="768" cy="638" rx="20" ry="6" fill="url(#brass)"/><rect x="760" y="590" width="16" height="48" fill="#efe2c0"/><rect x="760" y="590" width="5" height="48" fill="#fff" opacity=".4"/>
+  <circle cx="768" cy="572" r="26" fill="#ffd36a" opacity=".35" filter="url(#soft)"/>
+  <path class="flame" d="M768,560 C774,572 776,580 768,588 C760,580 762,572 768,560 Z" fill="#ffd36a" filter="url(#glow)"/>`;
+  // letter
+  s+=`<path d="M640,628 L736,620 L746,650 L648,658 Z" fill="url(#parch)" stroke="#9a7442" stroke-width="1.5"/>
+  ${[632,638,644].map((y,i)=>`<line x1="${652+i}" y1="${y+i*1.5}" x2="${720+i*2}" y2="${y-5+i*1.5}" stroke="#5a3a1a" stroke-width="1.4" opacity=".55"/>`).join('')}
+  <circle cx="726" cy="645" r="6" fill="#9a1a16"/>
+  ${gear(630,664,9,8,{solid:true})}${gear(645,668,6,7,{solid:true})}`;
+  // puzzle box on desk
+  if(f.ringsDone) s+=`<path d="M465,545 L595,545 L606,476 L454,476 Z" fill="url(#mahog)" stroke="#2a0e05" stroke-width="1.5"/><path d="M470,541 L590,541 L598,484 L462,484 Z" fill="url(#velvet)"/>`;
+  s+=`<path d="M445,585 L615,585 L595,545 L465,545 Z" fill="url(#mahogTop)" stroke="#2a0e05" stroke-width="1.5"/>`;
+  if(!f.topOpen) s+=`<ellipse cx="530" cy="565" rx="44" ry="11" fill="none" stroke="url(#brass)" stroke-width="3"/><ellipse cx="530" cy="565" rx="10" ry="3" fill="url(#brass)"/>`;
+  else if(!f.ringsDone) s+=`<ellipse cx="530" cy="565" rx="48" ry="13" fill="url(#brass)" stroke="#3a240c"/><ellipse cx="530" cy="565" rx="32" ry="9" fill="url(#ringG1)" stroke="#3a240c"/><ellipse cx="530" cy="565" rx="15" ry="4.5" fill="url(#brassR)"/>`;
+  else { s+=`<path d="M453,582 L607,582 L590,549 L470,549 Z" fill="#140805"/>`; if(f.pipesDone && !f.gotHeart) s+=heartObj(530,538,14); }
+  s+=`<rect x="445" y="585" width="170" height="56" fill="url(#mahog)" stroke="#2a0e05" stroke-width="1.5"/>
+  <rect x="445" y="585" width="170" height="5" fill="url(#brassH)"/><rect x="445" y="636" width="170" height="5" fill="url(#brassH)"/>
+  ${gear(482,613,15,10,{solid:true})}${gear(506,618,10,8,{solid:true})}
+  <circle cx="575" cy="613" r="13" fill="url(#brass)"/><circle cx="575" cy="613" r="9" fill="url(#ivory)"/>
+  <path d="M445,585 l14,0 l0,6 l-8,0 l0,14 l-6,0 Z M615,585 l-14,0 l0,6 l8,0 l0,14 l6,0 Z" fill="url(#brass)"/>`;
+
+  // glints & dust
+  s+=glint(690,632,'letter')+glint(512,140,'painting')+glint(850,108,'clock')+glint(160,600,'shelf')+glint(530,560,'box')+glint(872,690,'hatch');
+  for(let i=0;i<16;i++){ const r=rng(i*31+5); s+=`<circle class="dust" style="animation-delay:${f1(-r()*9)}s" cx="${f1(340+r()*220)}" cy="${f1(500+r()*160)}" r="${f1(1+r()*1.6)}" fill="#ffe7b0" opacity=".7"/>`; }
+  s+=vignette();
+  // hotspots
+  s+=hot(40,70,260,350,'say','data-say="window"')
+    +hot(375,100,270,255,'go','data-go="painting"')
+    +hot(760,90,180,390,'go','data-go="clock"')
+    +hot(755,575,235,235,'go','data-go="hatch"')
+    +hot(24,436,286,500,'go','data-go="shelf"')
+    +hot(440,470,182,175,'go','data-go="box"')
+    +hot(625,605,128,68,'go','data-go="letter"')
+    +hot(355,455,125,70,'say','data-say="lamp"')
+    +hot(745,550,45,95,'say','data-say="candle"')
+    +hot(300,205,85,90,'say','data-say="gauge"');
+  return s;
+}
+
+/* ---------------- PAINTING ---------------- */
+function paintingScene(){
+  return wallBg()+`<circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".7"/>
+  <g filter="url(#sh)"><rect x="100" y="80" width="800" height="730" fill="url(#brass)" stroke="#3a2208" stroke-width="3"/></g>
+  <rect x="122" y="102" width="756" height="686" fill="none" stroke="#6a4416" stroke-width="6"/>
+  <rect x="140" y="120" width="720" height="650" fill="none" stroke="#f6dc9a" stroke-width="2" opacity=".6"/>
+  ${[[100,80],[900,80],[100,810],[900,810]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="26" fill="url(#brassR)" stroke="#3a2208" stroke-width="2"/><circle cx="${x}" cy="${y}" r="10" fill="url(#brass)"/>`).join('')}
+  <svg x="170" y="150" width="660" height="590" viewBox="0 0 660 590">${paintingArt()}</svg>
+  <rect x="166" y="146" width="668" height="598" fill="none" stroke="#2a1608" stroke-width="8"/>
+  <g filter="url(#sh)"><rect x="345" y="836" width="310" height="62" rx="4" fill="url(#brass)" stroke="#3a2208" stroke-width="2"/></g>
+  <rect x="353" y="844" width="294" height="46" rx="2" fill="none" stroke="#6a4416" stroke-width="1.5"/>
+  ${rivet(362,867,5)}${rivet(638,867,5)}
+  <text x="500" y="875" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="26" fill="#2a1606" letter-spacing="2">«Башня Хронос», 1887</text>
+  ${vignette()}
+  ${hot(170,150,660,590,'say','data-say="paint"')}
+  <circle class="hot" cx="590" cy="350" r="70" fill="transparent" data-act="say" data-say="tower"/>
+  ${hot(345,836,310,62,'say','data-say="plaque"')}`;
+}
+
+/* ---------------- CLOCK ---------------- */
+function clockScene(){
+  const f=S.f, [hd,md]=handDeg(), cx=500, cy=360;
+  let s=wallBg()+`<circle cx="500" cy="380" r="520" fill="url(#warm)" opacity=".6"/>`;
+  // pendulum case
+  s+=`<g filter="url(#sh)"><rect x="350" y="600" width="300" height="400" rx="10" fill="url(#woodV)" stroke="#120904" stroke-width="4"/></g>
+  <rect x="372" y="630" width="256" height="350" fill="#0b0603"/>
+  ${gear(cx,640,28,12,{solid:true})}
+  <g class="swing" style="transform-origin:500px 640px"><line x1="500" y1="640" x2="500" y2="860" stroke="url(#brassH)" stroke-width="8"/>
+    <circle cx="500" cy="862" r="44" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/>${glyph('sun',500,862,44,'#5a3a14',4)}</g>
+  <rect x="440" y="950" width="120" height="14" fill="url(#brass)"/>
+  <g id="cgear" ${f.clockDone && !f.gotGear ? '' : 'visibility="hidden"'} data-act="takeGear" class="hot">
+    <circle cx="500" cy="924" r="46" fill="url(#warm)" class="pulse"/>${gear(500,922,30,11,{})}
+  </g>
+  <g id="door" class="door${f.clockDone?' open':''}" style="transform-origin:372px 0">
+    <rect x="372" y="630" width="256" height="350" fill="#9fb4c8" opacity=".14" stroke="url(#brass)" stroke-width="8"/>
+    <rect x="372" y="630" width="256" height="350" fill="url(#glassG)"/>
+    <path d="M372,800 L628,800" stroke="url(#brass)" stroke-width="4" opacity=".7"/>
+    <circle cx="612" cy="800" r="9" fill="url(#brassR)"/>
+  </g>`;
+  // wooden backplate
+  s+=`<circle cx="${cx}" cy="${cy}" r="300" fill="#2a170b" filter="url(#sh)"/><circle cx="${cx}" cy="${cy}" r="292" fill="url(#woodV)"/>
+  ${rivetRing(cx,cy,280,24,5)}
+  <circle cx="${cx}" cy="${cy}" r="264" fill="url(#brass)"/><circle cx="${cx}" cy="${cy}" r="250" fill="url(#brassR)"/>
+  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#ivory)"/>
+  <circle cx="${cx}" cy="${cy}" r="150" fill="none" stroke="#8a6a3a" stroke-width="1.5" opacity=".6"/>
+  <circle cx="${cx}" cy="${cy}" r="226" fill="none" stroke="#2a1a0c" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="212" fill="none" stroke="#2a1a0c" stroke-width="1"/>`;
+  for(let i=0;i<60;i++){ const a=rad(i*6), r1=i%5?218:212; s+=`<line x1="${f1(cx+Math.sin(a)*r1)}" y1="${f1(cy-Math.cos(a)*r1)}" x2="${f1(cx+Math.sin(a)*226)}" y2="${f1(cy-Math.cos(a)*226)}" stroke="#2a1a0c" stroke-width="${i%5?1.5:4}"/>`; }
+  RN.forEach((n,i)=>{ const a=rad(i*30); s+=`<text x="${f1(cx+Math.sin(a)*180)}" y="${f1(cy-Math.cos(a)*180+15)}" font-family="Cormorant SC,serif" font-size="44" font-weight="700" text-anchor="middle" fill="#2a1a0c">${n}</text>`; });
+  // see-through window with moving gears
+  s+=`<circle cx="${cx}" cy="445" r="52" fill="#0e0804" stroke="url(#brass)" stroke-width="6"/>
+  <svg x="448" y="393" width="104" height="104" viewBox="448 393 104 104"><clipPath id="cw"><circle cx="500" cy="445" r="49"/></clipPath>
+  <g clip-path="url(#cw)">${gear(476,440,34,12,{spin:14})}${gear(530,468,26,10,{spin:11,rev:true})}${gear(530,410,18,8,{spin:8,rev:true})}</g></svg>
+  <text x="${cx}" y="300" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" letter-spacing="4" fill="#6a4a22">A · BRASS · LONDINI</text>`;
+  // hands
+  s+=`<g id="hourHand" class="hand" style="transform-origin:${cx}px ${cy}px;transform:rotate(${hd}deg)">
+    <path d="M${cx},${cy+28} L${cx-9},${cy} L${cx-5},${cy-90} L${cx-14},${cy-104} L${cx},${cy-140} L${cx+14},${cy-104} L${cx+5},${cy-90} L${cx+9},${cy} Z" fill="#1a1008"/>
+    <circle cx="${cx}" cy="${cy-104}" r="8" fill="#f2e2b8"/></g>
+  <g id="minHand" class="hand" style="transform-origin:${cx}px ${cy}px;transform:rotate(${md}deg)">
+    <path d="M${cx},${cy+36} L${cx-7},${cy} L${cx-3},${cy-150} L${cx-10},${cy-162} L${cx},${cy-204} L${cx+10},${cy-162} L${cx+3},${cy-150} L${cx+7},${cy} Z" fill="#1a1008"/>
+    <circle cx="${cx}" cy="${cy-162}" r="5" fill="#f2e2b8"/></g>
+  <circle cx="${cx}" cy="${cy}" r="20" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="6" fill="#1a0f06"/>
+  <circle cx="${cx}" cy="${cy}" r="238" fill="url(#glassG)" pointer-events="none"/>`;
+  // knobs
+  [['h',105,'ЧАСЫ',S.hs],['m',895,'МИНУТЫ',S.ms]].forEach(([k,x,label,cnt])=>{
+    s+=`<rect x="${k==='h'?165:770}" y="350" width="70" height="20" fill="url(#brassH)"/>
+    <g class="hot" data-act="knob" data-k="${k}">
+      <circle cx="${x}" cy="${cy}" r="88" fill="transparent"/>
+      <circle cx="${x}" cy="${cy}" r="76" fill="#1e1109" filter="url(#sh)"/>
+      <g class="kn" style="transform-origin:${x}px ${cy}px;transform:rotate(${cnt*40}deg)">
+        <path d="${gearPath(x,cy,66,58,28)}" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
+        <circle cx="${x}" cy="${cy}" r="44" fill="url(#brassR)"/><circle cx="${x}" cy="${cy}" r="30" fill="none" stroke="#5a3a14" stroke-width="2"/>
+        <path d="M${x},${cy-40} L${x+9},${cy-22} L${x-9},${cy-22} Z" fill="#7a1a10"/>
+      </g>
+      <path d="M${x-50},${cy+104} A60,60 0 0 0 ${x+50},${cy+104}" fill="none" stroke="#d6a64e" stroke-width="2" opacity=".6"/>
+      <text x="${x}" y="${cy+140}" text-anchor="middle" font-family="Cormorant SC,serif" font-size="28" font-weight="700" letter-spacing="3" fill="#e9c47a">${label}</text>
+    </g>`;
+  });
+  s+=vignette().replace('url(#vig)','url(#vig)" opacity=".7');
+  s+=hot(372,630,256,350,'say','data-say="pendulum"').replace('class="hot"', f.clockDone && !f.gotGear ? 'class="hot" pointer-events="none"' : 'class="hot"');
+  s+=`<circle class="hot" cx="${cx}" cy="${cy}" r="230" fill="transparent" data-act="say" data-say="clockface"/>`;
+  return s;
+}
+function setHands(){
+  const [hd,md]=handDeg(), h=$('#hourHand'), m=$('#minHand');
+  if(h) h.style.transform=`rotate(${hd}deg)`; if(m) m.style.transform=`rotate(${md}deg)`;
+}
+
+/* ---------------- SHELF ---------------- */
+const BOOKS=[
+  [0,52,232,'#6b1d1d',0,'«Начала механики». Корешок потёрт пальцами профессора.'],
+  [0,40,252,'#1f4a33',0,'«О природе пара». Половина страниц в пометках на полях.'],
+  [0,58,214,'#1d2f52',3,''],
+  [0,36,242,'#5a3a1c',0,'«Альманах приливов, 1879». Скучно, но аккуратно.'],
+  [0,64,206,'#3d1a2c',0,'«Сонеты часовщика». Неожиданно романтично.'],
+  [0,46,252,'#8a6420',0,'«Небесная механика». Между страниц засушен клевер.'],
+  [0,50,232,'#241a14',1,''],
+  [0,42,222,'#4d1426',0,'«Записки воздухоплавателя». С автографом капитана.'],
+  [1,48,236,'#1f3a4a',0,'«Трактат о шестернях». Тяжёлый, как наковальня.'],
+  [1,56,252,'#6b1d1d',5,''],
+  [1,38,212,'#3a4a1f',0,'«Тайны алхимии». Страницы пахнут серой.'],
+  [1,60,228,'#5a3a1c',0,'«Атлас звёздного неба». Созвездия обведены красным.'],
+  [1,44,246,'#1d2f52',2,''],
+  [1,52,218,'#241a14',0,'«Гильдия часовщиков: устав». Кто-то вырвал последнюю главу.'],
+  [1,40,240,'#8a6420',0,'«Оптика и линзы». Закладка — на главе о цветных стёклах.'],
+  [1,58,226,'#4d1426',4,'']
+];
+function bookSvg(i,x,base){
+  const [,w,h,c,num]=BOOKS[i], y=base-h, pressed = num && num<=S.shelf;
+  return `<g class="book${pressed?' in':''}" data-act="book" data-i="${i}">
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c}" stroke="#0e0704" stroke-width="2"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#woodH)" opacity=".35"/>
+    <rect x="${x+2}" y="${y+16}" width="${w-4}" height="4" fill="#d6a64e" opacity=".8"/><rect x="${x+2}" y="${y+24}" width="${w-4}" height="2" fill="#d6a64e" opacity=".6"/>
+    <rect x="${x+2}" y="${base-30}" width="${w-4}" height="4" fill="#d6a64e" opacity=".8"/>
+    ${num ? `<text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${w>50?36:30}" fill="url(#goldText)" stroke="#3a2208" stroke-width=".8">${ROMAN[num]}</text>`
+          : `<rect x="${x+w/2-7}" y="${y+h/2-30}" width="14" height="60" rx="2" fill="none" stroke="#d6a64e" stroke-width="1.5" opacity=".5"/>`}
+    <rect class="shade" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#000"/>
+  </g>`;
+}
+function shelfScene(){
+  const f=S.f;
+  let s=wallBg()+`<circle cx="500" cy="300" r="600" fill="url(#warm)" opacity=".55"/>
+  <g filter="url(#sh)"><rect x="100" y="70" width="800" height="880" fill="url(#woodV)" stroke="#120904" stroke-width="4"/></g>
+  <rect x="88" y="58" width="824" height="30" fill="#5a3418"/><rect x="88" y="58" width="824" height="4" fill="#b8864a" opacity=".55"/>
+  <rect x="128" y="110" width="744" height="610" fill="#140a05"/>
+  <g filter="url(#sh)"><rect x="330" y="96" width="340" height="50" rx="3" fill="url(#brass)"/></g>
+  ${rivet(344,121,5)}${rivet(656,121,5)}
+  <text x="500" y="129" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="24" letter-spacing="3" fill="#2a1606">SAPIENTIA · ORDINE</text>`;
+  let x=150; BOOKS.forEach((b,i)=>{ if(b[0]===0){ s+=bookSvg(i,x,420); x+=b[1]+4; } });
+  // hourglass and telescope on top row
+  s+=`<g transform="translate(650,360)"><rect x="-34" y="-64" width="68" height="8" fill="url(#brass)"/><rect x="-34" y="56" width="68" height="8" fill="url(#brass)"/>
+    <path d="M-26,-56 L26,-56 L4,0 L26,56 L-26,56 L-4,0 Z" fill="#e9d4a3" opacity=".22" stroke="#e9d4a3" stroke-width="2" stroke-opacity=".5"/>
+    <path d="M-12,-30 L12,-30 L0,-4 Z M-20,54 L20,54 L0,26 Z" fill="#e6c27a"/>
+    <line x1="-30" y1="-56" x2="-30" y2="56" stroke="url(#brassH)" stroke-width="4"/><line x1="30" y1="-56" x2="30" y2="56" stroke="url(#brassH)" stroke-width="4"/></g>
+  <g transform="translate(790,380) rotate(-18)"><rect x="-70" y="-14" width="140" height="28" rx="6" fill="url(#brassH)"/><rect x="-90" y="-10" width="30" height="20" rx="4" fill="url(#brass)"/><rect x="60" y="-18" width="22" height="36" rx="4" fill="url(#brass)"/></g>`;
+  s+=`<rect x="110" y="420" width="780" height="22" fill="#4a2a14"/><rect x="110" y="420" width="780" height="3" fill="#a87745" opacity=".6"/>`;
+  // globe
+  s+=`<g transform="translate(205,630)"><path d="M-30,90 L30,90 L18,74 L-18,74 Z" fill="url(#brass)"/><rect x="-4" y="40" width="8" height="36" fill="url(#brassH)"/>
+    <circle r="62" fill="#22485a"/><path d="M-50,-20 C-30,-34 -10,-8 14,-26 C30,-38 46,-20 56,-10 M-56,14 C-30,4 -16,30 6,18 C24,8 40,30 50,24" stroke="#c9a062" stroke-width="3" fill="none" opacity=".7"/>
+    <path d="M-30,-48 C-10,-40 0,-56 26,-50 L18,-30 C0,-38 -16,-24 -34,-32 Z M-20,30 C0,22 10,44 30,36 L24,52 C6,58 -10,50 -22,46 Z" fill="#8a7a4a" opacity=".55"/>
+    <circle r="62" fill="url(#glassG)"/><path d="M-70,0 A70,70 0 0 1 70,0" fill="none" stroke="url(#brass)" stroke-width="6"/></g>`;
+  x=300; BOOKS.forEach((b,i)=>{ if(b[0]===1){ s+=bookSvg(i,x,720); x+=b[1]+4; } });
+  s+=`<rect x="110" y="720" width="780" height="24" fill="#4a2a14"/><rect x="110" y="720" width="780" height="3" fill="#a87745" opacity=".6"/>`;
+  // drawer
+  if(f.shelfDone){
+    s+=`<rect x="300" y="772" width="400" height="80" fill="#0b0503"/>
+    <path d="M300,772 L700,772 L716,800 L284,800 Z" fill="url(#velvet)"/>
+    ${!f.gotLens ? `<g class="hot" data-act="takeLens"><circle cx="500" cy="786" r="70" fill="url(#warm)" class="pulse"/>${lensIcon(500,786,.9)}</g>` : ''}
+    <g filter="url(#sh)"><rect x="284" y="800" width="432" height="120" fill="url(#woodV)" stroke="#120904" stroke-width="3"/></g>
+    <rect x="452" y="852" width="96" height="16" rx="8" fill="url(#brass)"/>`;
+  } else {
+    s+=`<rect x="300" y="770" width="400" height="120" fill="url(#woodV)" stroke="#120904" stroke-width="3"/>
+    <rect x="316" y="784" width="368" height="92" fill="none" stroke="#120904" stroke-width="2" opacity=".7"/>
+    <rect x="452" y="822" width="96" height="16" rx="8" fill="url(#brass)"/>
+    <rect x="484" y="796" width="32" height="18" rx="3" fill="url(#brass)"/><rect x="497" y="800" width="6" height="10" fill="#1a0f06"/>`;
+    s+=hot(300,770,400,120,'say','data-say="drawer"');
+  }
+  s+=vignette();
+  s+=`<circle class="hot" cx="205" cy="630" r="70" fill="transparent" data-act="say" data-say="globe"/>${hot(610,290,80,140,'say','data-say="hourglass"')}`;
+  return s;
+}
+function lensIcon(x,y,k=1){
+  return `<g transform="translate(${x},${y}) scale(${k})">
+    <line x1="34" y1="34" x2="82" y2="82" stroke="#3a1e0a" stroke-width="18" stroke-linecap="round"/>
+    <line x1="34" y1="34" x2="82" y2="82" stroke="url(#brassH)" stroke-width="11" stroke-linecap="round"/>
+    <circle r="50" fill="#d01a1a" opacity=".55"/><circle r="50" fill="none" stroke="url(#brass)" stroke-width="11"/>
+    <path d="M-30,-18 A34,34 0 0 1 -6,-36" stroke="#fff" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/></g>`;
+}
+
+/* ---------------- LETTER ---------------- */
+const LETTER=['Мой юный друг!','Если ты читаешь это, меня уже нет','в мастерской. Гильдия пришла за Сердцем,','но я спрятал его в шкатулке, которую','собирал двадцать лет.','Механизм проснётся, если вернуть ему','время — то, что показывает башня','на моей любимой картине.','Мудрость на полках читай по порядку,','а скрытое откроет лишь красный свет.','Сердце отворит тебе дверь.'];
+function letterScene(){
+  const lensOn = S.sel==='lens';
+  let s=deskBg()+`<g transform="rotate(-1.5 500 500)">
+    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="#000" opacity=".4" transform="translate(10,14)" filter="url(#soft)"/>
+    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="url(#parch)" stroke="#9a7442" stroke-width="2"/>
+    <rect x="130" y="55" width="740" height="900" filter="url(#paper)" opacity=".6"/>
+    <path d="M150,62 L420,70 L700,58 L862,74 L852,360 L866,640 L850,944 L560,934 L300,948 L138,936 L148,620 L134,330 Z" fill="url(#parchEdge)"/>
+    <line x1="140" y1="500" x2="860" y2="496" stroke="#8a6a3a" stroke-width="1.5" opacity=".25"/>
+    ${LETTER.map((t,i)=>`<text x="${i===0?200:190}" y="${158+i*52}" font-family="Caveat,cursive" font-size="${i===0?44:36}" font-weight="${i===0?700:500}" fill="#3a2210">${t}</text>`).join('')}
+    <text x="800" y="${158+11*52+12}" text-anchor="end" font-family="Caveat,cursive" font-size="40" font-weight="700" fill="#3a2210">Твой А. Б.</text>
+    <path d="M610,${158+11*52+26} C660,${158+11*52+16} 720,${158+11*52+34} 790,${158+11*52+20}" stroke="#3a2210" stroke-width="2.5" fill="none"/>
+    <g transform="translate(770,880)"><circle r="44" fill="#8a1410"/><circle r="44" fill="none" stroke="#5a0a08" stroke-width="5"/>
+      <circle r="30" fill="none" stroke="#c4302a" stroke-width="2"/>${glyph('sun',0,0,40,'#c4302a',4)}</g>
+  </g>`;
+  if(lensOn){
+    s+=`<g id="secret" clip-path="url(#lensClip)" pointer-events="none">
+      <rect width="1000" height="1000" fill="#ff6a5a" opacity=".12"/>
+      <g transform="rotate(-1.5 500 500)">
+        <text x="420" y="800" text-anchor="middle" font-family="Caveat,cursive" font-size="34" font-weight="700" fill="#c4161c">Кольца, снаружи внутрь:</text>
+        ${glyph('moon',300,866,62,'#c4161c',6)}${glyph('star',420,866,62,'#c4161c',6)}${glyph('tri',540,866,62,'#c4161c',6)}
+        <text x="300" y="922" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#c4161c">I</text>
+        <text x="420" y="922" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#c4161c">II</text>
+        <text x="540" y="922" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#c4161c">III</text>
+      </g></g>
+    <g id="lens" style="cursor:grab">${lensIcon(0,0,2.1)}</g>`;
+  }
+  s+=vignette();
+  if(!lensOn) s+=hot(130,55,740,900,'say','data-say="letter"');
+  return s;
+}
+function placeLens(){
+  const [x,y]=S.lens, l=$('#lens'), c=$('#lensC');
+  if(l) l.setAttribute('transform',`translate(${x},${y})`);
+  if(c){ c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',100); }
+  if(Math.hypot(x-420,y-860)<95 && !S.f.sawCode){ S.f.sawCode=true; save(); AU.chime(); say('Под красным стеклом проступили знаки, написанные невидимыми чернилами!'); }
+}
+function toSvg(e){ const p=svgEl.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(svgEl.getScreenCTM().inverse()); }
+function mountLetter(){
+  const c=$('#lensC'); if(c) c.setAttribute('cx',-500);
+  if(S.sel!=='lens') return;
+  placeLens();
+  let drag=false;
+  const move=e=>{ const p=toSvg(e); S.lens=[Math.max(90,Math.min(910,p.x-60)), Math.max(90,Math.min(930,p.y-60))]; placeLens(); };
+  svgEl.onpointerdown=e=>{ if(S.scene!=='letter'||S.sel!=='lens') return; drag=true; try{svgEl.setPointerCapture(e.pointerId);}catch(_){} move(e); };
+  svgEl.onpointermove=e=>{ if(drag) move(e); };
+  svgEl.onpointerup=svgEl.onpointercancel=()=>{ if(drag){ drag=false; save(); } };
+}
+
+/* ---------------- BOX ---------------- */
+function boxScene(){
+  const f=S.f; let s=deskBg();
+  s+=`<ellipse cx="500" cy="880" rx="400" ry="44" fill="#000" opacity=".55" filter="url(#soft)"/>`;
+  // lid (raised) behind
+  if(f.ringsDone){
+    s+=`<path d="M250,360 L750,360 L776,96 L224,96 Z" fill="url(#mahog)" stroke="#2a0e05" stroke-width="3"/>
+    <path d="M268,352 L732,352 L754,112 L246,112 Z" fill="url(#velvet)"/>
+    <path d="M250,360 L750,360" stroke="url(#brassH)" stroke-width="8"/>
+    <path d="M224,96 L776,96" stroke="url(#brassH)" stroke-width="6"/>
+    <text x="500" y="240" text-anchor="middle" font-family="Cormorant SC,serif" font-size="30" letter-spacing="6" fill="#e9c47a" opacity=".55">COR · CHRONI</text>`;
+  }
+  // top face
+  s+=`<path d="M170,560 L830,560 L750,360 L250,360 Z" fill="url(#mahogTop)" stroke="#2a0e05" stroke-width="3"/>
+  <path d="M170,560 L830,560 L750,360 L250,360 Z" fill="none" stroke="url(#brass)" stroke-width="6" opacity=".7"/>`;
+  if(!f.topOpen){
+    s+=`<path d="M232,545 L768,545 L706,377 L294,377 Z" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
+    <ellipse cx="500" cy="462" rx="190" ry="62" fill="none" stroke="#5a3a14" stroke-width="3"/>
+    <ellipse cx="500" cy="462" rx="140" ry="44" fill="none" stroke="#5a3a14" stroke-width="2"/>
+    ${Array.from({length:16},(_,i)=>{const a=rad(i*22.5);return `<line x1="${f1(500+Math.cos(a)*40)}" y1="${f1(462+Math.sin(a)*13)}" x2="${f1(500+Math.cos(a)*135)}" y2="${f1(462+Math.sin(a)*42)}" stroke="#5a3a14" stroke-width="2" opacity=".7"/>`}).join('')}
+    <ellipse cx="500" cy="462" rx="34" ry="11" fill="url(#brassR)" stroke="#3a240c"/>
+    <text x="500" y="535" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" letter-spacing="5" fill="#4a2a0c">TEMPUS · OMNIA · APERIT</text>`;
+  } else if(!f.ringsDone){
+    s+=`<path d="M232,545 L768,545 L706,377 L294,377 Z" fill="#160a05"/>
+    <g class="hot" data-act="go" data-go="rings">
+      <g transform="translate(500,462) scale(1,.36)">
+        <circle r="300" fill="url(#brassD)"/><circle r="252" fill="none" stroke="url(#ringG0)" stroke-width="80"/>
+        <circle r="168" fill="none" stroke="url(#ringG1)" stroke-width="78"/><circle r="92" fill="none" stroke="url(#ringG0)" stroke-width="66"/>
+        <circle r="52" fill="url(#brassR)"/></g>
+      <path d="M500,370 L490,352 L510,352 Z" fill="#c4161c"/>
+    </g>
+    <path d="M770,545 L830,560 L750,360 L706,377 Z" fill="url(#brass)" opacity=".8"/>
+    ${glint(500,462,'rings')}`;
+  } else {
+    s+=`<path d="M196,553 L804,553 L736,370 L264,370 Z" fill="#120604"/>
+    <path d="M264,370 L736,370 L746,400 L254,400 Z" fill="#2a1008"/>`;
+    if(!f.pipesDone){
+      s+=`<g class="hot" data-act="go" data-go="pipes">
+        <path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#plate)" stroke="#6a4a26" stroke-width="2"/>
+        <path d="M262,500 L420,500 L420,440 L560,440 L560,520 L700,520 M330,420 L330,530 M640,415 L640,470" stroke="#9c5428" stroke-width="12" fill="none" stroke-linecap="round"/>
+        ${[[420,500],[420,440],[560,440],[560,520]].map(([x,y])=>rivet(x,y,7)).join('')}
+      </g>${glint(500,470,'pipes')}`;
+    } else if(!f.gotHeart){
+      s+=`<g class="bob" style="pointer-events:none">${Array.from({length:12},(_,i)=>{const a=rad(i*30);return `<line x1="500" y1="330" x2="${f1(500+Math.cos(a)*260)}" y2="${f1(330+Math.sin(a)*260)}" stroke="#ffd98a" stroke-width="6" opacity=".18"/>`}).join('')}</g>
+      <g class="hot bob" data-act="takeHeart">${heartObj(500,330,78)}</g>`;
+    } else {
+      s+=`<path d="M236,545 L764,545 L716,402 L284,402 Z" fill="url(#velvet)"/><path d="${heartPath(500,470,40)}" fill="#1a0204" opacity=".7" transform="translate(0,0) scale(1,1)"/>`;
+    }
+  }
+  // front face
+  s+=`<rect x="170" y="560" width="660" height="300" fill="url(#mahog)" stroke="#2a0e05" stroke-width="3"/>
+  <rect x="170" y="560" width="660" height="300" filter="url(#grain)" opacity=".8"/>
+  <rect x="170" y="560" width="660" height="14" fill="url(#brassH)"/><rect x="170" y="846" width="660" height="14" fill="url(#brassH)"/>
+  ${[[170,560,1,1],[830,560,-1,1],[170,860,1,-1],[830,860,-1,-1]].map(([x,y,sx,sy])=>`<path d="M${x},${y} l${70*sx},0 l0,${16*sy} l${-54*sx},0 l0,${54*sy} l${-16*sx},0 Z" fill="url(#brass)" stroke="#3a240c" stroke-width="1.5"/>${rivet(x+10*sx,y+10*sy,5)}`).join('')}
+  <rect x="210" y="592" width="440" height="236" rx="6" fill="#1a0a05" opacity=".55"/>`;
+  // gear train
+  const run = f.topOpen ? '' : '';
+  s+=`<g class="train${run}" id="train">
+    <g class="gA" id="g1" style="transform-origin:320px 710px">${gear(320,710,72,14,{})}
+      <rect x="314" y="610" width="12" height="100" rx="5" fill="url(#brassH)" stroke="#3a240c"/>
+      <circle cx="320" cy="606" r="20" fill="#3a1a0c" stroke="url(#brass)" stroke-width="5"/></g>
+    ${f.gearPlaced ? `<g class="gB" style="transform-origin:436px 710px">${gear(436,710,56,11,{})}</g>`
+      : `<g class="hot" data-act="socket"><circle cx="436" cy="710" r="58" fill="none" stroke="#f4d68f" stroke-width="3" stroke-dasharray="10 6" class="dashpulse" opacity=".75"/>
+         <circle cx="436" cy="710" r="12" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/><circle cx="436" cy="710" r="58" fill="transparent"/></g>`}
+    <g class="gA" style="transform-origin:518px 662px">${gear(518,662,46,10,{})}</g>
+    <g class="gB" style="transform-origin:582px 742px">${gear(582,742,38,9,{})}</g>
+  </g>
+  <circle class="hot" cx="320" cy="680" r="95" fill="transparent" data-act="crank"/>`;
+  // gauge & plate
+  s+=`<g transform="translate(735,680)" filter="url(#sh)"><circle r="62" fill="url(#brass)"/><circle r="50" fill="url(#ivory)"/>
+    ${Array.from({length:9},(_,i)=>{const a=rad(-120+i*30);return `<line x1="${f1(Math.sin(a)*36)}" y1="${f1(-Math.cos(a)*36)}" x2="${f1(Math.sin(a)*45)}" y2="${f1(-Math.cos(a)*45)}" stroke="${i>6?'#b02a1a':'#3a2210'}" stroke-width="3"/>`}).join('')}
+    <g class="gauge-n" style="transform:rotate(${f.pipesDone?95:f.ringsDone?20:f.topOpen?-40:-110}deg)"><path d="M-3,6 L0,-40 L3,6 Z" fill="#1a0f06"/></g><circle r="6" fill="url(#brassR)"/>
+    <text y="28" text-anchor="middle" font-family="Cormorant SC,serif" font-size="13" font-weight="700" fill="#5a3a14">ATM</text></g>
+  <g filter="url(#sh)"><rect x="680" y="770" width="110" height="44" rx="3" fill="url(#brass)"/></g>
+  <text x="735" y="799" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="18" fill="#2a1606">A·B 1867</text>`;
+  if(!f.topOpen) s+=hot(170,360,660,200,'say','data-say="boxtop"');
+  s+=vignette();
+  return s;
+}
+
+/* ---------------- RINGS ---------------- */
+const RING_GEO=[[345,88],[253,86],[163,84]];
+function ringsScene(){
+  let s=deskBg()+`<circle cx="500" cy="510" r="470" fill="#000" opacity=".5" filter="url(#soft)"/>
+  <circle cx="500" cy="500" r="458" fill="#2a1408"/><circle cx="500" cy="500" r="446" fill="url(#brassD)"/>
+  ${rivetRing(500,500,422,28,6)}
+  <circle cx="500" cy="500" r="400" fill="#1a0c05"/>`;
+  RING_GEO.forEach(([R,W],i)=>{
+    s+=`<g class="ring" id="ring${i}" data-act="ring" data-i="${i}" style="transform-origin:500px 500px;transform:rotate(${-S.rs[i]*60}deg)">
+      <circle cx="500" cy="500" r="${R}" fill="none" stroke="url(#ringG${i%2})" stroke-width="${W}"/>
+      <circle cx="500" cy="500" r="${R+W/2-2}" fill="none" stroke="#3a240c" stroke-width="3"/>
+      <circle cx="500" cy="500" r="${R-W/2+2}" fill="none" stroke="#3a240c" stroke-width="3"/>
+      <circle cx="500" cy="500" r="${R+W/2-8}" fill="none" stroke="#f8dc9c" stroke-width="1" opacity=".4"/>`;
+    RINGS[i].forEach((g,k)=>{ const a=rad(k*60), x=500+Math.sin(a)*R, y=500-Math.cos(a)*R;
+      s+=`<g transform="rotate(${k*60} ${f1(x)} ${f1(y)})">${engraved(g,x,y,W*.62)}</g>`;
+      const b=rad(k*60+30); s+=`<line x1="${f1(500+Math.sin(b)*(R-W/2+6))}" y1="${f1(500-Math.cos(b)*(R-W/2+6))}" x2="${f1(500+Math.sin(b)*(R+W/2-6))}" y2="${f1(500-Math.cos(b)*(R+W/2-6))}" stroke="#3a240c" stroke-width="3"/>`;
+    });
+    s+=`</g>`;
+  });
+  s+=`<g class="medal" id="medal" style="transform-origin:500px 500px">${gear(500,500,112,18,{holes:6})}
+    ${glyph('sun',500,500,90,'#4a2a0c',5)}</g>
+  <rect x="448" y="100" width="104" height="330" rx="52" fill="#fff6d6" opacity=".08" stroke="#f4d68f" stroke-width="3" pointer-events="none"/>
+  <path d="M500,96 L478,58 L522,58 Z" fill="#b0141a" stroke="#4a0606" stroke-width="2" filter="url(#glow)" pointer-events="none"/>
+  ${vignette()}`;
+  return s;
+}
+
+/* ---------------- PIPES ---------------- */
+const PX0=180, PY0=232, PT=160;
+const conns=(t,r)=> (t==='s'?[0,2]:[0,1]).map(d=>(d+r)%4);
+function pipeShape(t){
+  const d = t==='s' ? 'M0,-80 L0,80' : 'M0,-80 A80,80 0 0 0 80,0';
+  const fl = t==='s' ? `<rect x="-25" y="-80" width="50" height="11" fill="url(#brassH)"/><rect x="-25" y="69" width="50" height="11" fill="url(#brassH)"/>`
+                     : `<rect x="-25" y="-80" width="50" height="11" fill="url(#brassH)"/><rect x="69" y="-25" width="11" height="50" fill="url(#brassH)"/>`;
+  return `<path d="${d}" class="po" fill="none" stroke="#1f0f06" stroke-width="44"/>
+    <path d="${d}" class="pm" fill="none" stroke="#9c5428" stroke-width="32"/>
+    <path d="${d}" class="ph" fill="none" stroke="#efab7c" stroke-width="7" opacity=".55" transform="translate(-6,-4)"/>
+    <path d="${d}" class="pg" fill="none" stroke="#ffd27a" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>${fl}`;
+}
+function pipesScene(){
+  let s=`<rect width="1000" height="1000" fill="#160d07"/><rect width="1000" height="1000" fill="url(#damask)" opacity=".6"/>
+  <g filter="url(#sh)"><rect x="150" y="200" width="700" height="704" rx="14" fill="url(#plate)" stroke="#6a4a26" stroke-width="3"/></g>
+  ${rivetRing(500,552,0,1)}
+  ${[[164,214],[836,214],[164,890],[836,890]].map(([x,y])=>rivet(x,y,8)).join('')}`;
+  // boiler
+  s+=`<g filter="url(#sh)"><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#copperV)" stroke="#3a1a08" stroke-width="3"/></g>
+  ${[360,420,480,540,590].map(y=>`<rect x="18" y="${y}" width="120" height="7" fill="url(#brassH)"/>`).join('')}
+  <circle cx="78" cy="560" r="26" fill="#1a0804" stroke="url(#brass)" stroke-width="6"/><circle cx="78" cy="566" r="18" fill="url(#fireG)" class="flick" filter="url(#glow)"/>
+  <g transform="translate(78,390)"><circle r="26" fill="url(#brass)"/><circle r="19" fill="url(#ivory)"/><line x1="0" y1="0" x2="12" y2="-10" stroke="#b02a1a" stroke-width="3"/></g>
+  <rect x="136" y="${PY0+PT*1.5-16}" width="48" height="32" fill="url(#copperH)"/><rect x="150" y="${PY0+PT*1.5-22}" width="12" height="44" fill="url(#brassH)"/>`;
+  // outlet + turbine
+  s+=`<rect x="816" y="${PY0+PT*2.5-16}" width="60" height="32" fill="url(#copperH)"/><rect x="852" y="${PY0+PT*2.5-22}" width="12" height="44" fill="url(#brassH)"/>
+  <circle cx="924" cy="${PY0+PT*2.5}" r="64" fill="#1a0c05" stroke="url(#brass)" stroke-width="6"/>
+  <g class="turbine${S.f.pipesDone?' on':''}" id="turb" style="transform-origin:924px ${PY0+PT*2.5}px">${gear(924,PY0+PT*2.5,52,12,{holes:6})}</g>`;
+  // gauge
+  s+=`<g transform="translate(500,104)" filter="url(#sh)"><circle r="78" fill="url(#brass)"/><circle r="64" fill="url(#ivory)"/>
+    ${Array.from({length:11},(_,i)=>{const a=rad(-125+i*25);return `<line x1="${f1(Math.sin(a)*46)}" y1="${f1(-Math.cos(a)*46)}" x2="${f1(Math.sin(a)*58)}" y2="${f1(-Math.cos(a)*58)}" stroke="${i>7?'#b02a1a':'#3a2210'}" stroke-width="${i%5?2:4}"/>`}).join('')}
+    <text y="34" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="16" fill="#5a3a14">ДАВЛЕНИЕ</text>
+    <g id="pneedle" class="gauge-n" style="transform:rotate(${S.f.pipesDone?100:-118}deg)"><path d="M-4,8 L0,-54 L4,8 Z" fill="#1a0f06"/></g><circle r="8" fill="url(#brassR)"/></g>`;
+  PIPE_SOL.forEach(([t],i)=>{
+    const r=Math.floor(i/4), c=i%4, cx=PX0+c*PT+PT/2, cy=PY0+r*PT+PT/2;
+    s+=`<g class="tile" id="tile${i}" data-act="pipe" data-i="${i}" transform="translate(${cx},${cy})">
+      <rect x="-76" y="-76" width="152" height="152" rx="10" fill="#2a1c10" stroke="#120904" stroke-width="3"/>
+      <rect x="-70" y="-70" width="140" height="140" rx="8" fill="none" stroke="#6a4a26" stroke-width="1.5" opacity=".5"/>
+      ${rivet(-62,-62,4)}${rivet(62,-62,4)}${rivet(-62,62,4)}${rivet(62,62,4)}
+      <g class="prot" style="transform-origin:0 0;transform:rotate(${S.pr[i]*90}deg)">${pipeShape(t)}</g>
+    </g>`;
+  });
+  s+=vignette();
+  return s;
+}
+function pipeFlow(){
+  const on=new Set(), q=[];
+  const rot=i=>S.pr[i]%4, has=(i,d)=>conns(PIPE_SOL[i][0],rot(i)).includes(d);
+  if(has(4,3)){ on.add(4); q.push(4); }
+  while(q.length){ const i=q.shift(), r=Math.floor(i/4), c=i%4;
+    conns(PIPE_SOL[i][0],rot(i)).forEach(d=>{ const nr=r+[-1,0,1,0][d], nc=c+[0,1,0,-1][d]; if(nr<0||nr>3||nc<0||nc>3) return;
+      const j=nr*4+nc; if(!on.has(j) && has(j,(d+2)%4)){ on.add(j); q.push(j); } }); }
+  return { on, win: on.has(11) && has(11,1) };
+}
+function updatePipes(){
+  const {on,win}=pipeFlow();
+  PIPE_SOL.forEach((_,i)=>{ const el=$('#tile'+i); if(el) el.classList.toggle('on',on.has(i)); });
+  return win;
+}
+
+/* ---------------- HATCH ---------------- */
+function hatchScene(){
+  const f=S.f, cx=500, cy=470;
+  let s=wallBg()+`<circle cx="${cx}" cy="${cy}" r="560" fill="url(#warm)" opacity=".5"/>
+  <circle cx="${cx}" cy="${cy}" r="420" fill="#060302"/>
+  <circle cx="${cx}" cy="${cy}" r="330" fill="url(#lightR)" id="hlight" opacity="${f.heartIn?1:0}" style="transition:opacity 1.5s"/>
+  <g filter="url(#sh)"><circle cx="${cx}" cy="${cy}" r="410" fill="none" stroke="url(#brass)" stroke-width="56"/></g>
+  <circle cx="${cx}" cy="${cy}" r="436" fill="none" stroke="#3a240c" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="383" fill="none" stroke="#3a240c" stroke-width="3"/>
+  ${rivetRing(cx,cy,410,28,8)}
+  <g class="hdoor${f.doorOpen?' open':''}" id="hdoor" style="transform-origin:${cx-330}px ${cy}px">
+    ${Array.from({length:8},(_,i)=>{const a=rad(i*45+22.5);return `<rect x="-14" y="-386" width="28" height="70" rx="4" fill="url(#brassH)" stroke="#3a240c" transform="translate(${cx},${cy}) rotate(${i*45+22.5})"/>`}).join('')}
+    <circle cx="${cx}" cy="${cy}" r="340" fill="url(#brassD)" stroke="#2a1806" stroke-width="4"/>
+    <circle cx="${cx}" cy="${cy}" r="300" fill="none" stroke="#c99a4a" stroke-width="2" opacity=".4"/>
+    <circle cx="${cx}" cy="${cy}" r="292" fill="none" stroke="#1a0f06" stroke-width="3"/>
+    ${rivetRing(cx,cy,320,24,5)}
+    <circle cx="${cx}" cy="${cy}" r="250" fill="url(#brassR)" opacity=".35"/>
+    <rect x="${cx-372}" y="${cy-150}" width="60" height="70" rx="6" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
+    <rect x="${cx-372}" y="${cy+80}" width="60" height="70" rx="6" fill="url(#brass)" stroke="#3a240c" stroke-width="2"/>
+    <g class="wheel" id="wheel" style="transform-origin:${cx}px ${cy}px">
+      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="#2a1806" stroke-width="34"/>
+      <circle cx="${cx}" cy="${cy}" r="215" fill="none" stroke="url(#brass)" stroke-width="24"/>
+      ${Array.from({length:6},(_,i)=>{const a=rad(i*60);const x2=cx+Math.cos(a)*215,y2=cy+Math.sin(a)*215;return `<line x1="${cx}" y1="${cy}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#2a1806" stroke-width="28"/><line x1="${cx}" y1="${cy}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="url(#brassH)" stroke-width="18"/><circle cx="${f1(cx+Math.cos(a)*250)}" cy="${f1(cy+Math.sin(a)*250)}" r="24" fill="url(#brassR)" stroke="#3a240c" stroke-width="2"/>`}).join('')}
+      <circle cx="${cx}" cy="${cy}" r="100" fill="url(#brass)" stroke="#3a240c" stroke-width="3"/>
+    </g>
+    <circle cx="${cx}" cy="${cy}" r="78" fill="#100804" stroke="#3a240c" stroke-width="3"/>
+    ${f.heartIn ? heartObj(cx,cy+4,48) : `<path d="${heartPath(cx,cy+4,48)}" fill="#1e0d06" stroke="#ffb35c" stroke-width="3" stroke-dasharray="9 6" class="dashpulse" opacity=".8"/>`}
+  </g>
+  ${vignette()}
+  <circle class="hot" cx="${cx}" cy="${cy}" r="90" fill="transparent" data-act="hsocket"/>
+  <circle class="hot" cx="${cx}" cy="${cy}" r="280" fill="transparent" data-act="wheel" style="pointer-events:stroke" stroke="transparent" stroke-width="180"/>`;
+  return s;
+}
+
+/* ---------------- TITLE & END ---------------- */
+function titleScene(){
+  const cont = S.started && typeof resumeScene!=='undefined' && !['end','title'].includes(resumeScene);
+  return `<rect width="1000" height="1000" fill="#120b07"/>
+  <circle cx="500" cy="420" r="520" fill="url(#warm)" opacity=".8"/>
+  ${gear(110,140,190,20,{spin:70,op:.32})}${gear(330,40,90,12,{spin:34,rev:true,op:.25})}
+  ${gear(900,900,230,24,{spin:90,rev:true,op:.3})}${gear(880,140,110,14,{spin:40,op:.25})}${gear(120,900,120,14,{spin:46,rev:true,op:.25})}
+  <g class="bob">${heartObj(500,262,70)}</g>
+  <text x="500" y="470" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)" stroke="#2a1606" stroke-width="2">СЕРДЦЕ</text>
+  <text x="500" y="580" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="118" letter-spacing="10" fill="url(#goldText)" stroke="#2a1606" stroke-width="2">ХРОНОСА</text>
+  <path d="M250,618 L750,618" stroke="#d6a64e" stroke-width="2" opacity=".6"/><circle cx="500" cy="618" r="6" fill="#d6a64e"/>
+  <text x="500" y="662" text-anchor="middle" font-family="Cormorant Garamond,serif" font-style="italic" font-size="32" fill="#ead7ac">Мастерская профессора Брасса · 1887</text>
+  ${cta(500,cont?750:770,cont?'Продолжить':'Войти в мастерскую',cont?'cont':'start')}
+  ${cont?cta(500,860,'Новая игра','start',true):''}
+  <text x="500" y="965" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#9a7a4a">со звуком — атмосфернее</text>
+  ${vignette()}`;
+}
+function cta(x,y,label,act,ghost){
+  const w=ghost?300:420, h=ghost?66:84;
+  return `<g class="cta hot" data-act="${act}" role="button" tabindex="0">
+    <rect class="face" x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="${ghost?'#1e140c':'url(#brass)'}" stroke="${ghost?'#d6a64e':'#3a2208'}" stroke-width="2" filter="url(#sh)"/>
+    ${ghost?'':`<rect x="${x-w/2+8}" y="${y-h/2+8}" width="${w-16}" height="${h-16}" rx="5" fill="none" stroke="#6a4416" stroke-width="1.5"/>${rivet(x-w/2+20,y,5)}${rivet(x+w/2-20,y,5)}`}
+    <text x="${x}" y="${y+11}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${ghost?28:34}" letter-spacing="2" fill="${ghost?'#e9c47a':'#2a1606'}">${label}</text>
+  </g>`;
+}
+function endScene(){
+  const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
+  const lines=['Колесо провернулось, и мастерскую залил тёплый свет.','За люком — винтовая лестница к часовой башне.','На первой ступени лежала записка:'];
+  const note=['«Теперь Сердце Хроноса хранишь ты.','Пока оно бьётся, Гильдия не остановит время.','Поднимайся наверх. Я жду. — А. Б.»'];
+  return `<rect width="1000" height="1000" fill="#1a0f07"/>
+  <circle cx="500" cy="300" r="620" fill="url(#lightR)" opacity=".55"/>
+  <g class="spin" style="transform-origin:500px 300px;animation-duration:120s">${Array.from({length:18},(_,i)=>{const a=rad(i*20);return `<path d="M500,300 L${f1(500+Math.cos(a-0.06)*900)},${f1(300+Math.sin(a-0.06)*900)} L${f1(500+Math.cos(a+0.06)*900)},${f1(300+Math.sin(a+0.06)*900)} Z" fill="#ffe2a0" opacity=".07"/>`}).join('')}</g>
+  <g class="bob">${heartObj(500,190,62)}</g>
+  <text x="500" y="370" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="74" letter-spacing="6" fill="url(#goldText)" stroke="#2a1606" stroke-width="1.5">Механизм ожил</text>
+  ${lines.map((t,i)=>`<text x="500" y="${440+i*42}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="30" fill="#f2e2be">${t}</text>`).join('')}
+  ${note.map((t,i)=>`<text x="500" y="${600+i*44}" text-anchor="middle" font-family="Caveat,cursive" font-size="38" fill="#ffd98a">${t}</text>`).join('')}
+  <text x="500" y="780" text-anchor="middle" font-family="Cormorant SC,serif" font-size="26" letter-spacing="3" fill="#c9a062">Время в мастерской: ${mm}:${ss}</text>
+  ${cta(500,870,'Сыграть снова','start')}
+  ${vignette()}`;
+}
+
+/* ---------------- scene registry ---------------- */
+const SC={
+  title:{title:'Сердце Хроноса',bleed:['#120b07','#120b07',500],draw:titleScene},
+  room:{title:'Мастерская',bleed:['#25261b','#24140a',770],draw:roomScene,hint:1},
+  painting:{title:'Картина',bleed:['#262519','#2a170b',760],draw:paintingScene,back:'room',hint:1},
+  clock:{title:'Настенные часы',bleed:['#262519','#2a170b',760],draw:clockScene,back:'room',hint:1},
+  shelf:{title:'Книжный шкаф',bleed:['#262519','#2a170b',760],draw:shelfScene,back:'room',hint:1},
+  letter:{title:'Письмо',bleed:['#3e2212','#6e4224',500],draw:letterScene,mount:mountLetter,back:'room',hint:1},
+  box:{title:'Шкатулка',bleed:['#3e2212','#6e4224',500],draw:boxScene,back:'room',hint:1},
+  rings:{title:'Кольца шкатулки',bleed:['#3e2212','#6e4224',500],draw:ringsScene,back:'box',hint:1},
+  pipes:{title:'Паровой контур',bleed:['#160d07','#160d07',500],draw:pipesScene,mount:updatePipes,back:'box',hint:1},
+  hatch:{title:'Круглый люк',bleed:['#262519','#2a170b',760],draw:hatchScene,back:'room',hint:1},
+  end:{title:'Финал',bleed:['#1a0f07','#1a0f07',500],draw:endScene}
+};
+const SAY={
+  window:'За окном ночной дождь над Новым Лондоном. Рамы заклёпаны намертво: профессор не любил сквозняков.',
+  lamp:'Лампа с зелёным абажуром. Свет чуть дрожит в такт какому-то далёкому механизму.',
+  candle:'Свеча почти догорела. Профессор ушёл совсем недавно.',
+  gauge:'Манометр котельной. Стрелка нервно дёргается: давление есть, но пару некуда идти.',
+  paint:'Закат над гаванью, дирижабль и башня Хронос. Профессор называл эту картину своей любимой.',
+  tower:'Башенные часы на картине показывают двадцать минут восьмого. Художник выписал стрелки с ювелирной точностью.',
+  plaque:'«Башня Хронос», 1887. Подарок Гильдии часовщиков, ещё до ссоры.',
+  pendulum:'Маятник мерно качается за стеклом. Под ним, кажется, есть пустая полочка.',
+  clockface:'Стрелки не двигаются сами. Их выставляют латунными рукоятками по бокам.',
+  drawer:'Нижний ящик заперт. Скважины нет: его открывает какой-то механизм внутри шкафа.',
+  globe:'Старый глобус. На месте Нового Лондона — крошечная гравировка в виде шестерни.',
+  hourglass:'Песочные часы. Песок застыл посередине и не сыплется.',
+  letter:'Письмо профессора. Перечитай внимательно: здесь все подсказки.',
+  boxtop:'Крышка украшена латунной розой ветров и девизом «Время открывает всё». Она не поддаётся.'
+};
+const ITEMS={
+  gear:{name:'Латунная шестерня',desc:'Латунная шестерня на одиннадцать зубьев. Где-то ей найдётся место.',icon:()=>gear(50,50,40,11,{})},
+  lens:{name:'Красная линза',desc:'Красная линза в латунной оправе. Выбрана — теперь проведи ею над тем, что хочешь рассмотреть.',icon:()=>lensIcon(40,40,.62)},
+  heart:{name:'Сердце Хроноса',desc:'Сердце Хроноса. Оно тёплое и тихо тикает, как живое.',icon:()=>heartObj(50,52,30,false)}
+};
+
+/* ---------------- UI ---------------- */
+let msgQueue=[];
+function showMsg(t){ msgEl.hidden=false; msgText.textContent=t; msgMore.hidden=!msgQueue.length; msgEl.style.animation='none'; void msgEl.offsetWidth; msgEl.style.animation=''; }
+function say(t){ msgQueue=[]; showMsg(t); }
+function sayAll(a){ msgQueue=a.slice(1); showMsg(a[0]); }
+function hideMsg(){ msgEl.hidden=true; }
+msgEl.addEventListener('click',()=>{ if(msgQueue.length) showMsg(msgQueue.shift()); else hideMsg(); });
+
+function renderInv(){
+  const inv=$('#inv'); const showInv = !['title','end'].includes(S.scene);
+  inv.hidden=!showInv; if(!showInv) return;
+  let h=''; for(let i=0;i<4;i++){ const id=S.inv[i];
+    h+=`<button class="slot${id&&S.sel===id?' sel':''}" data-slot="${i}" aria-label="${id?ITEMS[id].name:'Пустой слот'}">${id?`<svg viewBox="0 0 100 100">${ITEMS[id].icon()}</svg>`:''}</button>`; }
+  inv.innerHTML=h;
+}
+$('#inv').addEventListener('click',e=>{
+  const b=e.target.closest('.slot'); if(!b) return; const id=S.inv[+b.dataset.slot]; if(!id) return;
+  AU.click(); S.sel = S.sel===id ? null : id; save();
+  if(S.scene==='letter') render(); else renderInv();
+  if(S.sel) say(ITEMS[id].desc); else hideMsg();
+});
+function addItem(id){
+  S.inv.push(id); S.sel=null; save(); renderInv(); AU.pick();
+  const b=document.querySelector(`.slot[data-slot="${S.inv.length-1}"]`); if(b) b.classList.add('new');
+}
+function removeItem(id){ S.inv=S.inv.filter(x=>x!==id); if(S.sel===id) S.sel=null; renderInv(); }
+
+function render(){
+  const sc=SC[S.scene]||SC.room;
+  svgEl.onpointerdown=svgEl.onpointermove=svgEl.onpointerup=svgEl.onpointercancel=null;
+  sceneG.innerHTML=(sc.bleed?bleed(sc.bleed):'')+sc.draw();
+  sceneG.classList.remove('fade'); void sceneG.getBoundingClientRect(); sceneG.classList.add('fade');
+  if(sc.mount) sc.mount();
+  $('#loc').textContent=sc.title;
+  $('#back').hidden=!sc.back; $('#backSpacer').hidden=!!sc.back;
+  $('#hint').hidden=!sc.hint;
+  renderInv();
+}
+function go(n){
+  if(!SC[n]) n='room';
+  if(S.scene!==n) hideMsg();
+  S.scene=n; if(SC[n].hint) S.f['v_'+n]=true;
+  render(); save();
+  if(n==='letter' && S.inv.includes('lens') && S.sel!=='lens' && S.f.gotLens && !S.f.sawCode) setTimeout(()=>say('Может, взглянуть на письмо через красную линзу? Выбери её внизу.'),400);
+}
+$('#back').addEventListener('click',()=>{ AU.click(); go(SC[S.scene].back||'room'); });
+$('#hint').addEventListener('click',()=>{ AU.click(); hint(); });
+function updSnd(){ $('#snd').classList.toggle('off',!soundOn); $('#sndWave').style.display=soundOn?'':'none'; }
+$('#snd').addEventListener('click',()=>{ soundOn=!soundOn; try{localStorage.setItem(SAVE_KEY+'-snd',soundOn?'1':'0');}catch(e){} AU.init(); AU.ambient(); updSnd(); });
+
+function hint(){
+  const f=S.f; let h;
+  if(!f.v_letter) h='Начни с письма на столе: оно адресовано тебе.';
+  else if(!f.gotGear) h = f.v_painting ? 'Выставь на настенных часах время с башни на картине — 7:20. Крути латунные рукоятки по бокам циферблата.' : 'Профессор пишет о времени на любимой картине. Рассмотри картину над столом.';
+  else if(!f.gearPlaced) h='В механизме шкатулки не хватает шестерни. Выбери её внизу экрана и коснись пустой оси на передней стенке.';
+  else if(!f.topOpen) h='Поверни рукоять на большой шестерне шкатулки.';
+  else if(!f.ringsDone){
+    if(!f.gotLens) h='Скрытое откроет красный свет. В книжном шкафу нажми книги с римскими цифрами по порядку: I, II, III, IV, V.';
+    else if(!f.sawCode) h='Выбери красную линзу внизу и поводи ею по письму — особенно под подписью.';
+    else h='Поворачивай кольца касанием, чтобы под красной стрелкой встали знаки из письма. Снаружи внутрь: луна, звезда, треугольник.';
+  }
+  else if(!f.pipesDone) h='Касайся сегментов, чтобы поворачивать трубы. Пар должен пройти от котла слева до турбины справа.';
+  else if(!f.gotHeart) h='Сердце поднялось из шкатулки. Забери его.';
+  else h='Выбери Сердце внизу экрана и вставь его в гнездо в центре круглого люка.';
+  say(h);
+}
+
+/* ---------------- actions ---------------- */
+const ACT={
+  go:el=>{ AU.click(); go(el.dataset.go); },
+  say:el=>{ const k=el.dataset.say;
+    if(k==='letter' && S.inv.includes('lens')) { say('Попробуй выбрать красную линзу внизу экрана и провести ею над письмом.'); return; }
+    say(SAY[k]); },
+  start:()=>{ AU.init(); S=freshState(); S.started=true; S.t0=Date.now(); go('room');
+    sayAll(['Осень 1887 года. Профессор Аврелий Брасс, лучший часовщик Нового Лондона, исчез три дня назад.',
+      'Ты — его подмастерье. Едва ты вошёл, дверь мастерской захлопнулась, и замок щёлкнул. Изнутри ключа нет.',
+      'Единственный другой выход — круглый латунный люк в стене. Но его механизм мёртв.',
+      'На столе лежит письмо, адресованное тебе. Касайся предметов, чтобы рассмотреть их.']); },
+  cont:()=>{ AU.init(); go(resumeScene && !['title','end'].includes(resumeScene) ? resumeScene : 'room'); },
+  knob:el=>{
+    if(S.f.clockDone){ say('Часы уже пробили своё. Механизм стрелок застопорился.'); return; }
+    const k=el.dataset.k; if(k==='h') S.hs++; else S.ms++;
+    AU.click(); AU.tick();
+    el.querySelector('.kn').style.transform=`rotate(${(k==='h'?S.hs:S.ms)*40}deg)`;
+    setHands(); save();
+    if(curH()===7 && curM()===20){
+      S.f.clockDone=true; save();
+      setTimeout(()=>AU.bell(7),350);
+      setTimeout(()=>{ $('#door')?.classList.add('open'); const g=$('#cgear'); if(g) g.removeAttribute('visibility');
+        document.querySelectorAll('[data-say="pendulum"]').forEach(n=>n.setAttribute('pointer-events','none')); },900);
+      say('Часы бьют семь раз… Дверца маятника со скрипом отворилась!');
+    }
+  },
+  takeGear:()=>{ if(S.f.gotGear||!S.f.clockDone) return; S.f.gotGear=true; $('#cgear')?.remove(); addItem('gear');
+    say('Ты взял латунную шестерню. Она тёплая, будто недавно крутилась.'); },
+  book:el=>{
+    const i=+el.dataset.i, b=BOOKS[i], num=b[4];
+    if(S.f.shelfDone){ say(num ? 'Книга утоплена в полку. Механизм шкафа уже сработал.' : b[5]); return; }
+    if(!num){ AU.click(); say(b[5]); return; }
+    if(num<=S.shelf){ say('Эта книга уже вдавлена.'); return; }
+    if(num===S.shelf+1){
+      S.shelf++; el.classList.add('in'); AU.click(); AU.tick(); save();
+      if(S.shelf===5){ S.f.shelfDone=true; save(); setTimeout(()=>{ AU.whirr(); },200);
+        setTimeout(()=>{ render(); AU.chime(); say('Внутри шкафа что-то провернулось, и нижний ящик выехал наружу!'); },900); }
+    } else {
+      S.shelf=0; save(); AU.clank();
+      document.querySelectorAll('.book.in').forEach(n=>n.classList.remove('in'));
+      say('Щёлк! Все книги выскочили обратно. Порядок неверный.');
+    }
+  },
+  takeLens:()=>{ if(S.f.gotLens) return; S.f.gotLens=true; addItem('lens'); render(); say('Красная линза в латунной оправе. «Скрытое откроет лишь красный свет»…'); },
+  socket:()=>{
+    if(S.sel==='gear'){ removeItem('gear'); S.f.gearPlaced=true; save(); AU.click(); AU.clank(); render(); say('Шестерня встала на ось и сцепилась с соседними. Теперь можно крутить рукоять.'); }
+    else if(S.inv.includes('gear')) say('Пустая ось. Выбери шестерню внизу экрана, затем коснись оси.');
+    else say('Пустая ось. В передаче явно не хватает одной шестерни.');
+  },
+  crank:()=>{
+    const f=S.f, tr=$('#train');
+    if(!f.gearPlaced){ AU.clank(); const g=$('#g1'); g.classList.remove('shake'); void g.getBoundingClientRect(); g.classList.add('shake');
+      say('Рукоять заедает: в передаче не хватает звена.'); return; }
+    if(f.topOpen){ say('Механизм уже провернулся. Крышка открыта.'); return; }
+    tr.classList.add('run'); AU.whirr();
+    setTimeout(()=>{ f.topOpen=true; save(); tr.classList.remove('run'); AU.clank(); render(); AU.chime();
+      say('Латунная пластина на крышке отъехала. Под ней — три вращающихся кольца со знаками.'); },2000);
+  },
+  ring:el=>{
+    if(S.f.ringsDone) return;
+    const i=+el.dataset.i; S.rs[i]++; el.style.transform=`rotate(${-S.rs[i]*60}deg)`; AU.click(); save();
+    const ok=RINGS.every((r,k)=>r[S.rs[k]%6]===CODE[k]);
+    if(ok){ S.f.ringsDone=true; save();
+      setTimeout(()=>{ AU.chime(); $('#medal')?.classList.add('turn'); },450);
+      setTimeout(()=>{ go('box'); AU.clank(); say('Кольца встали на место, и крышка шкатулки откинулась! Внутри — паровой контур.'); },2100); }
+  },
+  pipe:el=>{
+    if(S.f.pipesDone) return;
+    const i=+el.dataset.i; S.pr[i]++; el.querySelector('.prot').style.transform=`rotate(${S.pr[i]*90}deg)`; AU.click(); save();
+    if(updatePipes()){
+      S.f.pipesDone=true; save(); AU.hiss();
+      setTimeout(()=>{ $('#turb')?.classList.add('on'); const n=$('#pneedle'); if(n) n.style.transform='rotate(100deg)'; AU.whirr(); },300);
+      setTimeout(()=>{ AU.chime(); go('box'); say('Пар ударил в турбину, и из глубины шкатулки медленно поднялось сияющее Сердце!'); },2600);
+    }
+  },
+  takeHeart:()=>{ if(S.f.gotHeart) return; S.f.gotHeart=true; addItem('heart'); render(); say('Сердце Хроноса. Оно тёплое и тикает в ладони. «Сердце отворит тебе дверь»…'); },
+  hsocket:()=>{
+    const f=S.f;
+    if(f.heartIn) return;
+    if(S.sel==='heart'){
+      removeItem('heart'); f.heartIn=true; save(); render(); AU.clank(); AU.chime();
+      say('Сердце легло в гнездо и засияло. Люк ожил!');
+      setTimeout(()=>{ $('#wheel')?.classList.add('turn'); AU.whirr(); AU.hiss(); },700);
+      setTimeout(()=>{ f.doorOpen=true; $('#hdoor')?.classList.add('open'); AU.bell(3); save(); },2900);
+      setTimeout(()=>{ S.tEnd=Date.now(); save(); go('end'); },4700);
+    } else if(S.inv.includes('heart')) say('Гнездо в форме сердца. Выбери Сердце внизу экрана и коснись гнезда.');
+    else say('В центре люка — гнездо в форме сердца. Пустое и холодное.');
+  },
+  wheel:()=>{ if(S.f.heartIn) return; AU.clank(); const w=$('#wheel'); w.classList.remove('shake'); void w.getBoundingClientRect(); w.classList.add('shake');
+    say('Колесо не поддаётся ни на миллиметр. Механизму не хватает сердца.'); }
+};
+sceneG.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');
+  if(!msgQueue.length && !msgEl.hidden) hideMsg();
+  if(t && ACT[t.dataset.act]) ACT[t.dataset.act](t,e);
+});
+sceneG.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ const t=e.target.closest('[data-act]'); if(t){ e.preventDefault(); ACT[t.dataset.act]?.(t,e); } } });
+
+/* ---------------- boot ---------------- */
+updSnd();
+let resumeScene = S.scene;
+S.scene = 'title';
+render();
+</script>
+</body>
+</html>
