@@ -1,0 +1,742 @@
+<title>Мастерская букв</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Neucha&family=Nunito:wght@600;800&family=Rubik:wght@600;700&display=swap">
+<style>
+/* Layout: a green school board in a wooden frame. Montessori-style wooden letter tiles are the only
+   physical objects; everything else is drawn in chalk. Letters keep the school colour code:
+   vowels red, consonants blue. Deliberately single-theme (a dark board), every colour set explicitly. */
+:root{
+  --board:#2E5A4C; --board2:#244A3E; --frame:#9B6B3C; --frame2:#6E4826;
+  --chalk:#F3F1E7; --chalk2:rgba(243,241,231,.55); --chalk3:rgba(243,241,231,.2);
+  --wood1:#F8E9C8; --wood2:#EED5A6; --woodshadow:#6E4E2C; --woodline:rgba(150,100,40,.08);
+  --vowel:#D7263D; --cons:#1F5FBF; --vowel-chalk:#FF9DAA; --cons-chalk:#A9C8FF;
+  --gold:#F4B942; --ink:#3A2A1A; --space:#0F1C2E;
+  --paper:#FFFBF2; --paper-ink:#2E2A24; --paper-muted:#6F675C;
+  --f-tile:"Rubik","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif;
+  --f-chalk:"Neucha","Comic Sans MS","Segoe Print",cursive;
+  --f-body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --f-emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{box-sizing:border-box;height:100%;background:var(--frame2)}
+body{height:100%;margin:0;overflow:hidden;color:var(--chalk);font-family:var(--f-body);font-size:16px;
+  background:radial-gradient(60% 40% at 20% 15%,rgba(255,255,255,.05),transparent 70%),radial-gradient(50% 45% at 85% 80%,rgba(255,255,255,.04),transparent 70%),var(--board);
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit}
+#app{height:100%;display:flex;flex-direction:column;box-shadow:inset 0 0 0 9px var(--frame),inset 0 0 0 12px var(--frame2),inset 0 0 50px rgba(0,0,0,.35)}
+.screen{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:20px 24px 22px;overflow-y:auto;overflow-x:hidden}
+
+/* ---------- wood ---------- */
+.wood{background:repeating-linear-gradient(97deg,var(--woodline) 0 2px,transparent 2px 7px),linear-gradient(180deg,var(--wood1),var(--wood2));
+  box-shadow:inset 0 -4px 0 rgba(160,115,55,.35),0 4px 0 var(--woodshadow),0 8px 14px rgba(0,0,0,.3)}
+.woodbtn{border:0;cursor:pointer;color:var(--ink);font-family:var(--f-tile);font-weight:700;border-radius:16px;transition:transform .08s}
+.woodbtn:active{transform:translateY(3px)}
+.woodbtn:focus-visible,.card:focus-visible{outline:4px solid var(--gold);outline-offset:4px}
+.round{width:56px;height:56px;padding:0;border-radius:50%;display:grid;place-items:center;font-size:24px;font-family:var(--f-emoji);flex:0 0 auto}
+.gear{background:conic-gradient(var(--gold) calc(var(--p,0) * 1turn),transparent 0),linear-gradient(180deg,var(--wood1),var(--wood2))}
+.big{min-width:96px;height:84px;padding:0 26px;font-size:40px;border-radius:22px}
+.big.emo{font-family:var(--f-emoji);font-size:36px}
+
+/* ---------- top bars ---------- */
+.bar{display:flex;align-items:center;gap:12px;min-height:56px}
+.spacer{flex:1}
+.task{font-family:var(--f-chalk);font-size:clamp(22px,4.4vmin,32px);line-height:1.1;min-width:0}
+.task.naming{color:var(--gold)}
+.mini{display:flex;align-items:center;gap:4px}
+.mini .ic{font-family:var(--f-emoji);font-size:20px;margin-right:2px}
+.peg{width:11px;height:18px;border-radius:3px;border:2px solid var(--chalk2)}
+.peg.on{background:var(--gold);border-color:var(--gold)}
+@media (max-width:560px){.mini{display:none}}
+
+/* ---------- home ---------- */
+.home-main{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.home-text{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.title{margin:0;font-family:var(--f-chalk);font-weight:400;font-size:clamp(40px,9vmin,76px);line-height:.95;text-wrap:balance}
+.title span{display:block;font-size:.42em;color:var(--gold);margin-top:.25em}
+.planets{position:relative;display:flex;gap:16px;padding:4px 0}
+.planets::before{content:"";position:absolute;left:18px;right:18px;top:50%;border-top:3px dashed var(--chalk3)}
+.pl{position:relative;width:40px;height:40px;border-radius:50%;background:var(--pc);display:grid;place-items:center;font-family:var(--f-chalk);font-size:22px;color:#fff;box-shadow:inset -6px -6px 0 rgba(0,0,0,.2)}
+.pl.future{background:var(--board);border:3px solid var(--chalk3);box-shadow:none;color:var(--chalk2)}
+.pl.now{box-shadow:inset -6px -6px 0 rgba(0,0,0,.2),0 0 0 4px var(--board),0 0 0 7px var(--gold)}
+.letters{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;--ts:50px}
+.rocket-wrap{height:min(34vh,62vw,320px);aspect-ratio:160/260;flex:0 0 auto}
+.play{font-size:clamp(30px,6.5vmin,46px);padding:12px 44px;height:auto;align-self:center}
+@media (orientation:landscape) and (min-width:640px){
+  .home-main{flex-direction:row;gap:clamp(24px,7vw,90px)}
+  .rocket-wrap{height:min(62vh,360px)}
+}
+
+/* ---------- tiles & slots ---------- */
+.tile{width:var(--ts);height:calc(var(--ts) * 1.1);flex:0 0 auto;position:relative;display:grid;place-items:center;
+  border-radius:calc(var(--ts) * .16);font-family:var(--f-tile);font-weight:700;font-size:calc(var(--ts) * .66);line-height:1;cursor:grab;touch-action:none}
+.tile.v,.piece.v{color:var(--vowel)} .tile.c,.piece.c{color:var(--cons)}
+.lift{z-index:40;cursor:grabbing;box-shadow:inset 0 -4px 0 rgba(160,115,55,.35),0 10px 0 var(--woodshadow),0 18px 26px rgba(0,0,0,.4)!important}
+.locked{cursor:default}
+.slot{width:var(--ts);height:calc(var(--ts) * 1.1);flex:0 0 auto;position:relative;display:grid;place-items:center;
+  border-radius:calc(var(--ts) * .16);outline:3px dashed var(--chalk2);outline-offset:-3px;background:rgba(0,0,0,.13)}
+.slot.full,.slot.fixed{outline:none;background:none}
+.slot.over,.jslot.over{outline-color:var(--gold);background:rgba(244,185,66,.2)}
+.ghost{font-family:var(--f-tile);font-weight:700;font-size:calc(var(--ts) * .66);color:var(--chalk3);line-height:1}
+.slot.full .ghost{display:none}
+.tile.ask{animation:askp 1s ease-in-out infinite;box-shadow:0 0 0 5px var(--gold),0 4px 0 var(--woodshadow),0 8px 14px rgba(0,0,0,.3)}
+.tile.ask::after,.board.ask::after{content:"?";position:absolute;left:50%;top:0;transform:translate(-50%,-115%);width:1.5em;height:1.5em;display:grid;place-items:center;
+  font-family:var(--f-chalk);font-size:clamp(22px,calc(var(--ts) * .42),40px);color:var(--board2);background:var(--gold);border-radius:999px}
+.tile.said{box-shadow:0 0 0 4px var(--chalk2),0 4px 0 var(--woodshadow),0 8px 14px rgba(0,0,0,.3)}
+.shelf{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px 16px 8px;border-bottom:10px solid var(--frame);border-radius:4px;min-height:calc(var(--ts) * 1.1 + 28px);max-width:100%}
+.shelf::after{content:"";flex-basis:100%;height:0}
+
+/* ---------- puzzles ---------- */
+#stage{flex:1;min-height:0;position:relative;display:flex}
+.pz{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--ts,80px) * .34)}
+.pic{font-family:var(--f-emoji);font-size:calc(var(--ts) * 1.3);line-height:1.1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.22))}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:nowrap}
+
+/* memory */
+.memory{display:grid;grid-template-columns:repeat(var(--cols),var(--cw));gap:14px;align-content:center;justify-content:center;flex:1}
+.card{position:relative;width:var(--cw);height:calc(var(--cw) * 1.25);border:0;padding:0;background:none;cursor:pointer;perspective:700px}
+.card .back,.card .face{position:absolute;inset:0;border-radius:14px;display:grid;place-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .35s ease}
+.card .back{background:repeating-linear-gradient(97deg,rgba(80,50,20,.12) 0 2px,transparent 2px 8px),linear-gradient(180deg,#C99A5E,#B07F45);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 4px 0 var(--woodshadow),0 8px 14px rgba(0,0,0,.3);
+  font-family:var(--f-chalk);font-size:calc(var(--cw) * .42);color:rgba(255,240,210,.55)}
+.card .face{transform:rotateY(180deg);font-family:var(--f-tile);font-weight:700;font-size:calc(var(--cw) * .62)}
+.card .face.pic2{font-family:var(--f-emoji);font-size:calc(var(--cw) * .55)}
+.card.open .back{transform:rotateY(180deg)} .card.open .face{transform:rotateY(0)}
+.card.done .face{box-shadow:0 0 0 5px var(--gold),0 4px 0 var(--woodshadow)}
+.card.done{cursor:default}
+
+/* jigsaw */
+.jig{flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(18px,4vmin,40px)}
+.board{position:relative;border-radius:16px;background:rgba(0,0,0,.13);outline:3px dashed var(--chalk2);outline-offset:-3px;--ts:80px}
+.board.solved{outline:none}
+.board .gl{position:absolute;inset:0;width:100%;height:100%}
+.gl text{fill:none;stroke:var(--chalk3);stroke-width:3;stroke-dasharray:9 8;font-family:var(--f-tile);font-weight:700;font-size:250px}
+.jslots,.jtray{display:grid;gap:5px}
+.jslots{position:absolute;inset:0;transition:gap .4s}
+.q{grid-template:1fr 1fr/1fr 1fr} .h{grid-template:1fr 1fr/1fr}
+.jslot{display:grid;border-radius:10px}
+.jslot.hint{animation:hintp .9s}
+.tcell{display:grid;place-items:center}
+.piece{position:relative;border-radius:10px;overflow:hidden;cursor:grab;touch-action:none}
+.piece svg{display:block;width:100%;height:100%}
+.piece text{font-family:var(--f-tile);font-weight:700;font-size:250px;fill:currentColor}
+.jslot .piece{width:100%!important;height:100%!important}
+.board.solved .jslots{gap:0}
+.board.solved .piece{border-radius:0;box-shadow:none}
+.board.solved .jslot:first-child .piece{border-top-left-radius:16px}
+.board.ask{animation:askp 1s ease-in-out infinite}
+
+/* case match */
+.pairs{display:flex;gap:clamp(12px,4vw,40px);justify-content:center}
+.pair{display:flex;flex-direction:column;align-items:center;gap:10px}
+.lower{font-family:var(--f-tile);font-weight:600;font-size:calc(var(--ts) * .85);line-height:1}
+.lower.v{color:var(--vowel-chalk)} .lower.c{color:var(--cons-chalk)}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(20,40,33,.95)}
+.rw{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.rw-rocket{height:min(48vh,320px);aspect-ratio:160/260}
+.rw-text{font-family:var(--f-chalk);font-size:clamp(34px,7vmin,58px);line-height:1}
+.rw-btns{display:flex;gap:20px;align-items:center}
+.space{background:radial-gradient(1.5px 1.5px at 12% 20%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 72% 12%,#fff 99%,transparent),radial-gradient(2px 2px at 40% 70%,#fff 99%,transparent),
+  radial-gradient(1.5px 1.5px at 86% 60%,#fff 99%,transparent),radial-gradient(1px 1px at 25% 85%,#fff 99%,transparent),radial-gradient(2px 2px at 58% 35%,#fff 99%,transparent),
+  radial-gradient(1px 1px at 92% 90%,#fff 99%,transparent),radial-gradient(1.5px 1.5px at 6% 55%,#fff 99%,transparent),var(--space)}
+.ln-rocket{height:min(56vh,380px);aspect-ratio:160/260}
+.ln-rocket.fly{animation:fly 2.2s cubic-bezier(.55,0,.8,.6) forwards}
+.ln-card{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.ln-card h2{margin:0;font-family:var(--f-chalk);font-weight:400;font-size:clamp(40px,9vmin,72px);line-height:1}
+.rk{display:block;width:100%;height:100%;overflow:visible}
+.rk .part{transform-box:fill-box;transform-origin:center}
+.rk .off *{fill:none!important;stroke:var(--chalk2)!important;stroke-dasharray:6 6}
+.rk .off .gr{display:none}
+.rk .pop{animation:partin .8s cubic-bezier(.3,1.6,.5,1)}
+.rk .flame{transform-box:fill-box;transform-origin:50% 0;animation:flick .12s ease-in-out infinite alternate}
+
+/* parents */
+.sheet{width:100%;max-width:560px;max-height:100%;overflow:auto;padding:18px 20px 22px;background:var(--paper);color:var(--paper-ink);border-radius:20px;color-scheme:light;user-select:text;-webkit-user-select:text;font-size:15px}
+.sheet h2{margin:0 0 4px;font-family:var(--f-tile);font-weight:700;font-size:24px}
+.sheet h3{margin:18px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-muted)}
+.sheet p,.sheet li{line-height:1.5;margin:0}
+.sheet ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 0}
+.opt label{font-weight:800}
+.opt select{font:inherit;font-weight:600;padding:7px 10px;border:2px solid var(--paper-ink);border-radius:10px;background:#fff;color:var(--paper-ink)}
+.opt input[type=range]{flex:1;min-width:140px;accent-color:var(--board)}
+.note{color:var(--paper-muted)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.btn{font-weight:800;padding:9px 14px;border:2px solid var(--paper-ink);border-radius:10px;background:#EAF2EE;color:var(--paper-ink);cursor:pointer}
+.btn.warn{background:#FBE4E6} .btn.main{background:var(--gold)}
+
+.cf{position:fixed;z-index:30;pointer-events:none;font-size:30px;color:var(--gold)}
+
+@keyframes askp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes hintp{0%,100%{background:transparent}50%{background:rgba(244,185,66,.35)}}
+@keyframes wob{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-5deg)}50%{transform:translateX(8px) rotate(4deg)}80%{transform:translateX(-4px)}}
+@keyframes partin{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes flick{from{transform:scaleY(.85)}to{transform:scaleY(1.15)}}
+@keyframes fly{0%{transform:translateY(0)}15%{transform:translateY(8px)}100%{transform:translateY(-140vh)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.wob{animation:wob .45s}
+.pulse{animation:pulse .5s ease-in-out 3}
+@media (prefers-reduced-motion:reduce){.tile.ask,.board.ask,.rk .flame{animation:none}}
+</style>
+
+<div id="app">
+  <section class="screen" id="scr-home">
+    <div class="bar">
+      <div class="task">Планета <span id="planetN">1</span> из 5</div>
+      <div class="spacer"></div>
+      <button class="woodbtn wood round gear" id="gear" aria-label="Для взрослых: удерживайте">⚙️</button>
+    </div>
+    <div class="home-main">
+      <div class="home-text">
+        <h1 class="title">Мастерская букв<span>для Гурия</span></h1>
+        <div class="planets" id="planets" aria-label="Планеты"></div>
+        <div class="letters" id="homeLetters" aria-label="Буквы этой планеты"></div>
+      </div>
+      <div class="rocket-wrap" id="homeRocket"></div>
+    </div>
+    <button class="woodbtn wood play" id="play">Играть ▶</button>
+  </section>
+
+  <section class="screen" id="scr-game" hidden>
+    <div class="bar">
+      <button class="woodbtn wood round" id="homeBtn" aria-label="Домой">🏠</button>
+      <div class="task" id="task"></div>
+      <div class="spacer"></div>
+      <div class="mini" id="mini" aria-label="Детали ракеты"></div>
+      <button class="woodbtn wood round" id="repeat" aria-label="Повторить задание">🔊</button>
+    </div>
+    <main id="stage"></main>
+  </section>
+</div>
+
+<div class="overlay" id="reward" hidden>
+  <div class="rw">
+    <div class="rw-rocket" id="rwRocket"></div>
+    <div class="rw-text" id="rwText">Молодец!</div>
+    <div class="rw-btns">
+      <button class="woodbtn wood round" id="rwHome" aria-label="Домой">🏠</button>
+      <button class="woodbtn wood big" id="rwNext" aria-label="Дальше">▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay space" id="launch" hidden>
+  <div class="ln-rocket" id="lnRocket"></div>
+  <div class="ln-card" id="lnCard" hidden>
+    <h2 id="lnTitle">Планета 2</h2>
+    <div class="letters" id="lnLetters"></div>
+    <button class="woodbtn wood big" id="lnNext" aria-label="Дальше">▶</button>
+  </div>
+</div>
+
+<div class="overlay" id="parent" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="pTitle">
+    <h2 id="pTitle">Для взрослых</h2>
+    <p class="note">Настройки и прогресс хранятся в этом браузере.</p>
+    <h3>Игра</h3>
+    <div class="opt"><label for="p-planet">Планета</label>
+      <select id="p-planet"><option value="1">1: А О У М С К</option><option value="2">2: И Ы Л Н Т П</option><option value="3">3: Р Ш Х З Ж В</option><option value="4">4: Д Б Г Я Е Ё</option><option value="5">5: Ю Ф Ц Ч Щ Э Й</option></select></div>
+    <div class="opt"><label for="p-ghost">Подсказки-тени в словах</label>
+      <select id="p-ghost"><option value="auto">на планетах 1–2</option><option value="on">всегда</option><option value="off">никогда</option></select></div>
+    <div class="opt"><label for="p-pause">Пауза «Назови!»: <span id="p-pausev"></span></label><input type="range" id="p-pause" min="1500" max="6000" step="500"></div>
+    <div class="btns"><button class="btn warn" id="p-reset">Начать сначала</button></div>
+    <h3>Как играть</h3>
+    <ul>
+      <li>Пять головоломок по кругу: собрать слово, найти пары, собрать букву из частей, вставить пропущенную букву, найти маленькую букву для большой. Каждая даёт деталь ракеты, 6 деталей открывают новую планету с новыми буквами.</li>
+      <li>«Назови!»: после решения буквы по очереди подсвечиваются со знаком вопроса. Гурий называет букву сам, затем голос говорит правильный ответ. Если он ответил раньше паузы, нажмите на экран, чтобы не ждать.</li>
+      <li>Если ошибся, не поправляйте сразу: пусть услышит ответ и повторит.</li>
+      <li>Буквы называются звуком («мэ», «сэ»), как советуют логопеды для обучения чтению.</li>
+      <li>Голос: нейросетевой синтез Microsoft (Светлана), записан заранее и встроен в игру.</li>
+    </ul>
+    <div class="btns" style="margin-top:16px"><button class="btn main" id="p-close">Готово</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const DATA = __DATA__;
+const VOICE = __VOICE__;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rand = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const VOWELS = 'АОУЫИЭЯЁЮЕ';
+const L = DATA.letters.map(([ch, word, e]) => ({ ch, word, e, v: VOWELS.includes(ch), lo: ch.toLowerCase() }));
+const byCh = ch => L.find(l => l.ch === ch);
+const vc = ch => VOWELS.includes(ch) ? 'v' : 'c';
+const SEQ = ['build', 'memory', 'jigsaw', 'missing', 'case', 'build'];
+const TASK = { build: 'Собери слово', memory: 'Найди пары', jigsaw: 'Собери букву', missing: 'Какой буквы нет?', case: 'Большая и маленькая' };
+const PLANET_COLORS = ['#F28C38', '#3FB68B', '#E25D8C', '#58A6E8', '#9B7BEA'];
+
+/* ---------- state ---------- */
+const KEY = 'bukvy-masterskaya.v1';
+const DEF = { stage: 1, part: 0, pause: 3000, ghosts: 'auto' };
+const state = (() => { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch (e) { return Object.assign({}, DEF); } })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const stageLetters = s => [...DATA.stages[s - 1]].map(byCh);
+const cumPool = () => DATA.stages.slice(0, state.stage).join('').split('').map(byCh);
+// Mostly this planet's letters, plus a couple of earlier ones for review.
+function focusPool(n, exclude = '') {
+  const now = shuffle(stageLetters(state.stage).filter(l => !exclude.includes(l.ch)));
+  const old = shuffle(cumPool().filter(l => !now.includes(l) && !exclude.includes(l.ch)));
+  const take = Math.min(now.length, old.length ? n - 1 : n);
+  return shuffle(now.slice(0, take).concat(old.slice(0, n - take)));
+}
+const recent = [];
+function pickWord() {
+  const lv = { 1: ['1'], 2: ['1', '2'], 3: ['2'], 4: ['2', '3'], 5: ['3', '2'] }[state.stage];
+  const list = DATA.words[rand(lv)];
+  let w, guard = 0;
+  do { w = rand(list); } while (recent.includes(w[0]) && guard++ < 30);
+  recent.push(w[0]); if (recent.length > 8) recent.shift();
+  return w;
+}
+const ghostsOn = () => state.ghosts === 'on' || (state.ghosts === 'auto' && state.stage <= 2);
+
+/* ---------- audio ---------- */
+const AC = { ctx: null, get() { if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (C) this.ctx = new C(); } return this.ctx; } };
+function unlockAudio() { const c = AC.get(); if (c && c.state === 'suspended') c.resume().catch(() => {}); }
+document.addEventListener('pointerdown', unlockAudio, true);
+function tone(f, dur, type = 'sine', vol = .2, when = 0, slide) {
+  const c = AC.get(); if (!c) return;
+  const t = c.currentTime + when, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .05);
+}
+function noise(dur, vol, freq) {
+  const c = AC.get(); if (!c) return;
+  const b = c.createBuffer(1, c.sampleRate * dur, c.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol;
+  s.buffer = b; s.connect(f); f.connect(g); g.connect(c.destination); s.start();
+}
+const sfx = {
+  pick() { tone(700, .06, 'triangle', .12); },
+  click() { noise(.05, .5, 1800); tone(160, .08, 'triangle', .25); },
+  boing() { tone(300, .3, 'sine', .18, 0, 140); },
+  flip() { tone(900, .05, 'triangle', .1); },
+  chime() { [660, 880, 1320].forEach((f, i) => tone(f, .3, 'triangle', .15, i * .09)); },
+  part() { tone(220, .1, 'square', .08); tone(330, .14, 'square', .08, .1); [784, 1047].forEach((f, i) => tone(f, .25, 'triangle', .15, .25 + i * .1)); },
+  whoosh() { noise(2.2, .5, 900); }
+};
+const Voice = {
+  cache: new Map(), cur: null,
+  buf(id) {
+    if (this.cache.has(id)) return this.cache.get(id);
+    const b64 = VOICE[id], c = AC.get(); if (!b64 || !c) return Promise.resolve(null);
+    const bin = atob(b64), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const p = new Promise((res, rej) => c.decodeAudioData(u8.buffer, res, rej)).catch(() => null);
+    this.cache.set(id, p); return p;
+  },
+  async play(id) {
+    this.stop();
+    const c = AC.get(); if (!c) return;
+    const token = this.token = {};
+    const b = await this.buf(id);
+    if (!b || token !== this.token) return;
+    return new Promise(res => {
+      const s = c.createBufferSource(); s.buffer = b; s.connect(c.destination);
+      const done = () => { clearTimeout(to); if (this.cur && this.cur.s === s) this.cur = null; res(); };
+      const to = setTimeout(done, b.duration * 1000 + 600);
+      s.onended = done; this.cur = { s, done }; s.start();
+    });
+  },
+  stop() { this.token = {}; if (this.cur) { const { s, done } = this.cur; this.cur = null; try { s.onended = null; s.stop(); } catch (e) {} done(); } }
+};
+
+/* ---------- flow control ---------- */
+let RUN = 0;
+class Abort extends Error {}
+const alive = t => { if (t !== RUN) throw new Abort(); };
+const wait = (ms, t) => new Promise(r => setTimeout(r, ms)).then(() => alive(t));
+const say = async (id, t) => { alive(t); await Voice.play(id); alive(t); };
+function until(t, setup) {
+  return new Promise(res => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; clearInterval(iv); res(v); };
+    const iv = setInterval(() => { if (t !== RUN) finish(); }, 200);
+    setup(finish);
+  }).then(v => { alive(t); return v; });
+}
+// The pause for the child to answer; a tap anywhere skips it.
+function waitOrTap(ms, t) {
+  return until(t, fin => {
+    const to = setTimeout(go, ms);
+    function go() { clearTimeout(to); document.removeEventListener('pointerdown', go, true); fin(); }
+    setTimeout(() => document.addEventListener('pointerdown', go, true), 250);
+  });
+}
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+/* ---------- drag & drop (mouse and touch) ---------- */
+function draggable(el, opt) {
+  el.addEventListener('pointerdown', e => {
+    if (el.classList.contains('locked')) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    let moved = false, over = null;
+    const targets = $$('#stage [data-drop]').filter(x => !x.classList.contains('full')).map(x => ({ x, r: x.getBoundingClientRect() }));
+    const hit = (px, py) => {
+      let best = null, bd = 1e9;
+      for (const { x, r } of targets) {
+        const pad = 26;
+        if (px > r.left - pad && px < r.right + pad && py > r.top - pad && py < r.bottom + pad) {
+          const d = Math.hypot(px - (r.left + r.width / 2), py - (r.top + r.height / 2)); if (d < bd) { bd = d; best = x; }
+        }
+      }
+      return best;
+    };
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    const move = ev => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) > 8) { moved = true; el.classList.add('lift'); sfx.pick(); }
+      if (!moved) return;
+      el.style.transform = `translate(${dx}px,${dy}px) scale(1.08)`;
+      const h = hit(ev.clientX, ev.clientY);
+      if (h !== over) { if (over) over.classList.remove('over'); over = h; if (over) over.classList.add('over'); }
+    };
+    const up = ev => {
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      el.classList.remove('lift'); if (over) over.classList.remove('over');
+      if (!moved) { el.style.transform = ''; if (opt.onTap) opt.onTap(); return; }
+      const h = ev.type === 'pointercancel' ? null : hit(ev.clientX, ev.clientY);
+      if (h && opt.accept(h)) return;
+      snapBack(el);
+      if (h && opt.onWrong) opt.onWrong(h);
+    };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+}
+function snapBack(el) { el.style.transition = 'transform .25s ease'; el.style.transform = ''; setTimeout(() => { el.style.transition = ''; }, 260); }
+function moveInto(el, parent) {
+  const a = el.getBoundingClientRect();
+  parent.appendChild(el); el.style.transition = 'none'; el.style.transform = '';
+  const b = el.getBoundingClientRect();
+  el.style.transform = `translate(${a.left - b.left}px,${a.top - b.top}px)`;
+  el.getBoundingClientRect();
+  el.style.transition = 'transform .22s cubic-bezier(.3,1.4,.5,1)'; el.style.transform = '';
+  setTimeout(() => { el.style.transition = ''; }, 260);
+}
+function wobble(el) { el.classList.remove('wob'); void el.offsetWidth; el.classList.add('wob'); }
+function pulse(el) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+const tileHTML = (ch, cls = '') => `<div class="tile wood ${vc(ch)} ${cls}" data-ch="${ch}">${ch}</div>`;
+function stageBox() { const r = $('#stage').getBoundingClientRect(); return { w: r.width, h: r.height, land: r.width > r.height * 1.15 }; }
+
+/* ---------- naming moment ---------- */
+async function nameSeq(tiles, t) {
+  const task = $('#task'), prev = task.textContent;
+  task.textContent = 'Назови!'; task.classList.add('naming');
+  await say(tiles.length > 1 ? 'p:nameN' : 'p:name1', t);
+  for (const tl of tiles) {
+    tl.classList.add('ask');
+    await waitOrTap(state.pause, t);
+    tl.classList.remove('ask'); tl.classList.add('said');
+    await say('n:' + tl.dataset.ch, t);
+    await wait(200, t);
+  }
+  task.textContent = prev; task.classList.remove('naming');
+}
+
+/* ---------- puzzle 1: build the word ---------- */
+async function pBuild(t) {
+  const [W, e] = pickWord(), letters = [...W], n = letters.length;
+  let order;
+  do { order = shuffle(letters.map((_, i) => i)); } while (n > 1 && order.every((v, i) => letters[v] === letters[i]));
+  const { w, h } = stageBox();
+  const ts = Math.floor(Math.min(132, (w - (n - 1) * 12 - 32) / n, h / 5));
+  const gh = ghostsOn();
+  $('#stage').innerHTML = `<div class="pz" style="--ts:${ts}px"><div class="pic">${e}</div>
+    <div class="row">${letters.map(c => `<div class="slot" data-drop data-ch="${c}">${gh ? `<span class="ghost">${c}</span>` : ''}</div>`).join('')}</div>
+    <div class="shelf">${order.map(i => tileHTML(letters[i])).join('')}</div></div>`;
+  Voice.play('p:build');
+  await until(t, fin => {
+    let wrong = 0;
+    const slots = $$('#stage .slot');
+    const firstEmpty = () => slots.find(s => !s.classList.contains('full'));
+    const hint = () => { const s = firstEmpty(); const tl = s && $$('#stage .shelf .tile').find(x => x.dataset.ch === s.dataset.ch); if (tl) pulse(tl); wrong = 0; };
+    const miss = el => { sfx.boing(); wobble(el); if (++wrong >= 2) hint(); };
+    const place = (tl, s) => { moveInto(tl, s); s.classList.add('full'); tl.classList.add('locked'); sfx.click(); if (!firstEmpty()) setTimeout(fin, 300); };
+    $$('#stage .shelf .tile').forEach(tl => draggable(tl, {
+      accept: s => { if (s.dataset.ch !== tl.dataset.ch) return false; place(tl, s); return true; },
+      onWrong: s => miss(s),
+      onTap: () => { const s = firstEmpty(); if (s && s.dataset.ch === tl.dataset.ch) place(tl, s); else miss(tl); }
+    }));
+  });
+  sfx.chime();
+  await say('w:' + W.toLowerCase(), t);
+  await nameSeq($$('#stage .slot .tile'), t);
+  await say('w:' + W.toLowerCase(), t);
+  await finish(t);
+}
+
+/* ---------- puzzle 2: memory pairs, letter + picture ---------- */
+async function pMemory(t) {
+  const n = state.stage <= 2 ? 3 : 4;
+  const ls = focusPool(n, 'Ы');
+  const cards = shuffle(ls.flatMap(l => [{ l, pic: false }, { l, pic: true }]));
+  const { w, h, land } = stageBox();
+  const cols = land ? n : (n === 3 ? 3 : 4), rows = cards.length / cols;
+  const cw = Math.floor(Math.min(200, (w - (cols - 1) * 14) / cols, (h - (rows - 1) * 14) / rows / 1.25));
+  $('#stage').innerHTML = `<div class="memory" style="--cols:${cols};--cw:${cw}px">${cards.map((c, i) =>
+    `<button class="card" data-i="${i}" aria-label="Карточка"><span class="back">?</span><span class="face wood ${c.pic ? 'pic2' : vc(c.l.ch)}">${c.pic ? c.l.e : c.l.ch}</span></button>`).join('')}</div>`;
+  Voice.play('p:memory');
+  await until(t, fin => {
+    let open = [], lock = false, matched = 0;
+    $$('#stage .card').forEach(el => el.onclick = () => {
+      if (lock || el.classList.contains('open')) return;
+      const c = cards[+el.dataset.i];
+      el.classList.add('open'); sfx.flip();
+      Voice.play(c.pic ? 'w:' + c.l.word : 'n:' + c.l.ch);
+      open.push({ el, c });
+      if (open.length < 2) return;
+      lock = true;
+      const [a, b] = open; open = [];
+      if (a.c.l === b.c.l) {
+        setTimeout(() => { a.el.classList.add('done'); b.el.classList.add('done'); sfx.chime(); lock = false; if (++matched === n) setTimeout(fin, 500); }, 450);
+      } else {
+        setTimeout(() => { a.el.classList.remove('open'); b.el.classList.remove('open'); lock = false; }, 1400);
+      }
+    });
+  });
+  await finish(t);
+}
+
+/* ---------- puzzle 3: assemble a letter from pieces ---------- */
+async function pJigsaw(t) {
+  const l = focusPool(1)[0], four = state.stage >= 3;
+  const { w, h, land } = stageBox();
+  const S = Math.floor(land ? Math.min(h * .9, (w - 40) / 2, 440) : Math.min(w * .82, (h - 30) / 2, 440));
+  const P = four ? [[0, 0, 150, 150], [150, 0, 150, 150], [0, 150, 150, 150], [150, 150, 150, 150]] : [[0, 0, 300, 150], [0, 150, 300, 150]];
+  const pw = four ? S / 2 - 3 : S, ph = S / 2 - 3;
+  const txt = cls => `<text x="150" y="150" text-anchor="middle" dominant-baseline="central"${cls ? ` class="${cls}"` : ''}>${l.ch}</text>`;
+  const grid = four ? 'q' : 'h';
+  let order; do { order = shuffle(P.map((_, i) => i)); } while (order.every((v, i) => v === i));
+  $('#stage').innerHTML = `<div class="jig">
+    <div class="board" id="board" style="width:${S}px;height:${S}px"><svg class="gl" viewBox="0 0 300 300" aria-hidden="true">${txt()}</svg>
+      <div class="jslots ${grid}">${P.map((_, i) => `<div class="jslot" data-drop data-i="${i}"></div>`).join('')}</div></div>
+    <div class="jtray ${grid}" style="width:${S}px;height:${S}px">${order.map(i => `<div class="tcell"><div class="piece wood ${vc(l.ch)}" data-i="${i}" style="width:${pw}px;height:${ph}px">
+      <svg viewBox="${P[i].join(' ')}" aria-hidden="true">${txt()}</svg></div></div>`).join('')}</div></div>`;
+  Voice.play('p:jigsaw');
+  await until(t, fin => {
+    let left = P.length;
+    $$('#stage .piece').forEach(pc => draggable(pc, {
+      accept: s => { if (s.dataset.i !== pc.dataset.i) return false; moveInto(pc, s); s.classList.add('full'); pc.classList.add('locked'); sfx.click(); if (!--left) setTimeout(fin, 350); return true; },
+      onWrong: () => { sfx.boing(); wobble(pc); },
+      onTap: () => { const s = $(`#stage .jslot[data-i="${pc.dataset.i}"]`); s.classList.remove('hint'); void s.offsetWidth; s.classList.add('hint'); }
+    }));
+  });
+  const board = $('#board'); board.classList.add('solved'); sfx.chime();
+  await wait(500, t);
+  const task = $('#task'), prev = task.textContent;
+  task.textContent = 'Назови!'; task.classList.add('naming'); board.classList.add('ask');
+  await say('p:name1', t);
+  await waitOrTap(state.pause, t);
+  board.classList.remove('ask'); task.textContent = prev; task.classList.remove('naming');
+  await say('t:' + l.ch, t);
+  await finish(t);
+}
+
+/* ---------- puzzle 4: which letter is missing ---------- */
+async function pMissing(t) {
+  const [W, e] = pickWord(), letters = [...W], n = letters.length;
+  const now = DATA.stages[state.stage - 1], cum = DATA.stages.slice(0, state.stage).join('');
+  const idx = letters.map((_, i) => i);
+  const c1 = idx.filter(i => now.includes(letters[i])), c2 = idx.filter(i => cum.includes(letters[i]));
+  const gi = rand(c1.length ? c1 : c2.length ? c2 : idx), ans = letters[gi];
+  let others = shuffle([...cum].filter(c => c !== ans && !letters.includes(c)));
+  if (others.length < 2) others = others.concat(shuffle(L.map(l => l.ch).filter(c => c !== ans && !letters.includes(c) && !others.includes(c))));
+  const opts = shuffle([ans, ...others.slice(0, 2)]);
+  const { w, h } = stageBox();
+  const ts = Math.floor(Math.min(132, (w - (n - 1) * 12 - 32) / n, h / 5));
+  $('#stage').innerHTML = `<div class="pz" style="--ts:${ts}px"><div class="pic">${e}</div>
+    <div class="row">${letters.map((c, i) => i === gi ? `<div class="slot" data-drop data-ch="${c}"></div>` : `<div class="slot fixed">${tileHTML(c, 'locked')}</div>`).join('')}</div>
+    <div class="shelf">${opts.map(c => tileHTML(c)).join('')}</div></div>`;
+  Voice.play('p:missing');
+  const gap = $('#stage .slot[data-drop]');
+  const tile = await until(t, fin => {
+    $$('#stage .shelf .tile').forEach(tl => {
+      const place = () => { moveInto(tl, gap); gap.classList.add('full'); tl.classList.add('locked'); sfx.click(); $$('#stage .shelf .tile').forEach(x => x.classList.add('locked')); setTimeout(() => fin(tl), 300); };
+      draggable(tl, {
+        accept: s => { if (s.dataset.ch !== tl.dataset.ch) return false; place(); return true; },
+        onWrong: s => { sfx.boing(); wobble(s); },
+        onTap: () => { if (tl.dataset.ch === ans) place(); else { sfx.boing(); wobble(tl); } }
+      });
+    });
+  });
+  sfx.chime();
+  await nameSeq([tile], t);
+  await say('w:' + W.toLowerCase(), t);
+  await finish(t);
+}
+
+/* ---------- puzzle 5: capital meets lowercase ---------- */
+async function pCase(t) {
+  const n = state.stage <= 2 ? 3 : 4;
+  const ls = focusPool(n);
+  const { w, h } = stageBox();
+  const ts = Math.floor(Math.min(124, (w - (n - 1) * 30 - 32) / n, h / 4.6));
+  $('#stage').innerHTML = `<div class="pz" style="--ts:${ts}px">
+    <div class="pairs">${ls.map(l => `<div class="pair"><div class="slot" data-drop data-ch="${l.ch}"></div><div class="lower ${vc(l.ch)}">${l.lo}</div></div>`).join('')}</div>
+    <div class="shelf">${shuffle(ls).map(l => tileHTML(l.ch)).join('')}</div></div>`;
+  Voice.play('p:case');
+  await until(t, fin => {
+    let left = n;
+    $$('#stage .shelf .tile').forEach(tl => draggable(tl, {
+      accept: s => {
+        if (s.dataset.ch !== tl.dataset.ch) return false;
+        moveInto(tl, s); s.classList.add('full'); tl.classList.add('locked'); sfx.click(); Voice.play('n:' + tl.dataset.ch);
+        if (!--left) setTimeout(fin, 900);
+        return true;
+      },
+      onWrong: s => { sfx.boing(); wobble(s); },
+      onTap: () => { pulse(tl); Voice.play('n:' + tl.dataset.ch); }
+    }));
+  });
+  sfx.chime();
+  await finish(t);
+}
+const PUZ = { build: pBuild, memory: pMemory, jigsaw: pJigsaw, missing: pMissing, case: pCase };
+
+/* ---------- rocket ---------- */
+const RK = [
+  '<rect x="52" y="78" width="56" height="106" rx="12" fill="#F4E2BE" stroke="#6B4A28" stroke-width="3"/><path class="gr" d="M62 98 Q68 140 62 176 M98 96 Q92 140 98 178" stroke="rgba(150,105,50,.35)" stroke-width="2" fill="none"/>',
+  '<path d="M52 84 Q55 34 80 10 Q105 34 108 84 Z" fill="#D7263D" stroke="#6B4A28" stroke-width="3" stroke-linejoin="round"/>',
+  '<circle cx="80" cy="118" r="17" fill="#9BD3E8" stroke="#6B4A28" stroke-width="4"/><circle class="gr" cx="74" cy="112" r="5" fill="#fff" opacity=".85"/>',
+  '<path d="M52 136 L20 190 L52 178 Z" fill="#1F5FBF" stroke="#6B4A28" stroke-width="3" stroke-linejoin="round"/>',
+  '<path d="M108 136 L140 190 L108 178 Z" fill="#1F5FBF" stroke="#6B4A28" stroke-width="3" stroke-linejoin="round"/>',
+  '<path d="M62 184 L98 184 L93 202 L67 202 Z" fill="#8A8F98" stroke="#6B4A28" stroke-width="3" stroke-linejoin="round"/>'
+];
+function rocketSVG(have, pop = -1, flame = false) {
+  return `<svg class="rk" viewBox="0 0 160 260" aria-hidden="true">${flame ? '<g class="flame"><path d="M67 202 Q80 268 93 202 Z" fill="#F4B942"/><path d="M73 202 Q80 238 87 202 Z" fill="#FF7A3D"/></g>' : ''}${
+    RK.map((p, i) => `<g class="part${i < have ? '' : ' off'}${i === pop ? ' pop' : ''}">${p}</g>`).join('')}</svg>`;
+}
+
+/* ---------- screens ---------- */
+function show(id) { for (const s of $$('.screen')) s.hidden = s.id !== id; }
+function letterTiles(el, letters) {
+  el.innerHTML = letters.map(l => tileHTML(l.ch, 'locked')).join('');
+  el.querySelectorAll('.tile').forEach(tl => tl.onclick = () => { pulse(tl); Voice.play('n:' + tl.dataset.ch); });
+}
+function renderHome() {
+  $('#planetN').textContent = state.stage;
+  $('#planets').innerHTML = PLANET_COLORS.map((c, i) => {
+    const s = i + 1, cls = s < state.stage ? 'done' : s === state.stage ? 'now' : 'future';
+    return `<span class="pl ${cls}" style="--pc:${c}">${s < state.stage ? '✓' : s}</span>`;
+  }).join('');
+  letterTiles($('#homeLetters'), stageLetters(state.stage));
+  $('#homeRocket').innerHTML = rocketSVG(state.part);
+}
+function renderMini() { $('#mini').innerHTML = '<span class="ic">🚀</span>' + SEQ.map((_, i) => `<span class="peg${i < state.part ? ' on' : ''}"></span>`).join(''); }
+function hideOverlays() { ['#reward', '#launch'].forEach(s => { $(s).hidden = true; }); }
+
+function goHome() {
+  RUN++; Voice.stop(); hideOverlays();
+  $('#task').classList.remove('naming');
+  show('scr-home'); renderHome();
+}
+let curType = 'build';
+async function startPuzzle() {
+  const t = ++RUN; Voice.stop(); hideOverlays();
+  curType = SEQ[state.part];
+  show('scr-game'); renderMini();
+  $('#task').textContent = TASK[curType]; $('#task').classList.remove('naming');
+  $('#stage').innerHTML = '';
+  await nextFrame();
+  try { await PUZ[curType](t); }
+  catch (e) { if (!(e instanceof Abort)) { console.error(e); goHome(); } }
+}
+
+function confetti(n = 22) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) n = 5;
+  const cx = innerWidth / 2, cy = innerHeight / 2.5;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span'); s.className = 'cf'; s.textContent = rand(['★', '✦', '★']);
+    s.style.left = cx + 'px'; s.style.top = cy + 'px'; s.style.color = rand(['#F4B942', '#F3F1E7', '#FF9DAA', '#A9C8FF']);
+    document.body.appendChild(s);
+    const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 200;
+    s.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d + 140}px)) rotate(${Math.random() * 300}deg)`, opacity: 0 }],
+      { duration: 1000 + Math.random() * 600, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => s.remove();
+  }
+}
+
+async function finish(t) {
+  alive(t);
+  state.part++; save();
+  $('#rwRocket').innerHTML = rocketSVG(state.part, state.part - 1);
+  $('#rwText').textContent = rand(['Молодец!', 'Отлично!', 'Здорово!', 'Ура!', 'Получилось!']);
+  $('#reward').hidden = false; renderMini();
+  sfx.part(); confetti();
+  await say(rand(['p:g1', 'p:g2', 'p:g3', 'p:g4', 'p:g5']), t);
+  if (state.part >= SEQ.length) { await launch(t); return; }
+  const v = await until(t, fin => { $('#rwNext').onclick = () => fin('next'); $('#rwHome').onclick = () => fin('home'); });
+  if (v === 'next') startPuzzle(); else goHome();
+}
+
+async function launch(t) {
+  $('#reward').hidden = true;
+  const rk = $('#lnRocket'), card = $('#lnCard');
+  rk.hidden = false; rk.classList.remove('fly'); rk.innerHTML = rocketSVG(6, -1, true); card.hidden = true;
+  $('#launch').hidden = false;
+  await say('p:launch', t);
+  rk.classList.add('fly'); sfx.whoosh();
+  await wait(2000, t);
+  rk.hidden = true;
+  const advanced = state.stage < DATA.stages.length;
+  if (advanced) state.stage++;
+  state.part = 0; save();
+  $('#lnTitle').textContent = advanced ? `Планета ${state.stage}` : 'Новая ракета!';
+  letterTiles($('#lnLetters'), advanced ? stageLetters(state.stage) : []);
+  card.hidden = false; sfx.chime(); confetti();
+  await say(advanced ? 'p:planet' : 'p:more', t);
+  await until(t, fin => { $('#lnNext').onclick = fin; });
+  startPuzzle();
+}
+
+/* ---------- parents ---------- */
+function holdable(el, ms, onDone) {
+  let st = 0, raf = 0;
+  const cancel = () => { cancelAnimationFrame(raf); st = 0; el.style.setProperty('--p', 0); };
+  const tick = () => { const p = Math.min(1, (performance.now() - st) / ms); el.style.setProperty('--p', p); if (p >= 1) { cancel(); onDone(); } else raf = requestAnimationFrame(tick); };
+  el.addEventListener('pointerdown', e => { e.preventDefault(); st = performance.now(); raf = requestAnimationFrame(tick); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, () => { if (st) cancel(); }));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDone(); } });
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+function renderParent() {
+  $('#p-planet').value = String(state.stage); $('#p-ghost').value = state.ghosts;
+  $('#p-pause').value = state.pause; $('#p-pausev').textContent = (state.pause / 1000).toLocaleString('ru-RU') + ' с';
+}
+holdable($('#gear'), 1500, () => { Voice.stop(); renderParent(); $('#parent').hidden = false; });
+$('#p-close').onclick = () => { $('#parent').hidden = true; goHome(); };
+$('#p-planet').onchange = e => { state.stage = +e.target.value; state.part = 0; save(); };
+$('#p-ghost').onchange = e => { state.ghosts = e.target.value; save(); };
+$('#p-pause').oninput = e => { state.pause = +e.target.value; save(); renderParent(); };
+let resetArmed = 0;
+$('#p-reset').onclick = e => {
+  if (Date.now() - resetArmed < 4000) { Object.assign(state, { stage: 1, part: 0 }); save(); renderParent(); e.target.textContent = 'Готово, с первой планеты'; resetArmed = 0; return; }
+  resetArmed = Date.now(); e.target.textContent = 'Точно? Нажмите ещё раз';
+  setTimeout(() => { e.target.textContent = 'Начать сначала'; }, 4000);
+};
+
+/* ---------- wiring ---------- */
+let greeted = false;
+$('#play').onclick = async () => {
+  unlockAudio();
+  try { if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+  if (!greeted) { greeted = true; const t = ++RUN; try { await say('p:hello', t); } catch (e) { return; } }
+  startPuzzle();
+};
+$('#homeBtn').onclick = goHome;
+$('#repeat').onclick = () => Voice.play('p:' + curType);
+document.addEventListener('visibilitychange', () => { if (document.hidden) Voice.stop(); });
+renderHome();
+})();
+</script>
