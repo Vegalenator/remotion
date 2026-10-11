@@ -302,7 +302,8 @@ function freshState(){
     shelf:0, lens:[500,470], t0:Date.now(), tEnd:0, scene:'title', started:false,
     level:1, lk:[12,12,12,12], pegs:[null,null,null], bellSeq:[],
     vl:[1,0,0,1,1,0], bl:[0,0,0,0,0], hd:[0,0,0], tg:3,
-    az:0, azc:0, ln:[0,0], op:[0,3,6] };
+    az:0, azc:0, ln:[0,0], op:[0,3,6],
+    cd:0, cw:[0,0,0,0], wv:[1,0,1], mr:{'1,1':0,'1,3':0,'3,3':1,'3,0':0,'0,0':1,'0,3':1,'2,1':0,'2,2':1,'4,1':1,'4,3':0} };
 }
 let S = freshState();
 let soundOn = true;
@@ -1303,7 +1304,7 @@ function pipesScene(){
   s+=`<g filter="url(#sh)"><g${BEV}><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#copperV)"/><rect x="18" y="330" width="120" height="290" rx="56" fill="url(#pPatina)" opacity=".5"/></g></g>
   ${[360,420,480,540,590].map(y=>brassBar(18,y,120,8)).join('')}
   ${[0,1,2,3].map(i=>rivet(30+i*32,450,3.5)+rivet(30+i*32,510,3.5)).join('')}
-  <circle cx="78" cy="566" r="40" fill="#ff8a20" opacity=".35" filter="url(#soft)" class="flick screen"/>
+  <g opacity=".35"><circle cx="78" cy="566" r="40" fill="#ff8a20" filter="url(#soft)" class="flick screen"/></g>
   <circle cx="78" cy="560" r="26" fill="#1a0804" stroke="url(#brass)" stroke-width="6"/><circle cx="78" cy="566" r="18" fill="url(#fireG)" class="flick" filter="url(#glow)"/>
   <path d="M60,560 h36 M60,568 h36" stroke="#1a0804" stroke-width="2"/>
   ${gauge(78,390,28,40,{anim:true})}
@@ -1385,7 +1386,7 @@ function hatchScene(){
 /* ---------------- TITLE & END ---------------- */
 let texProgress=0;
 function titleScene(){
-  const cont = S.started && typeof resumeScene!=='undefined' && !['end','end2','end3','end4','jump','title'].includes(resumeScene);
+  const cont = S.started && typeof resumeScene!=='undefined' && !['end','end2','end3','end4','end5','jump','board5','title'].includes(resumeScene);
   return `<rect width="1000" height="1000" fill="#1a1a12"/><rect width="1000" height="1000" fill="url(#pPaperL)"/><rect width="1000" height="1000" fill="url(#pGrime)" opacity=".7"/>
   <circle cx="500" cy="420" r="560" fill="url(#warm)" opacity=".9" class="screen"/>
   ${gear(110,140,190,20,{spin:70,op:.55})}${gear(330,40,90,12,{spin:34,rev:true,op:.45})}
@@ -2346,7 +2347,7 @@ function scope4Scene(){
   return s;
 }
 function prismArt(x,y,k){
-  return `<g transform="translate(${x},${y}) scale(${k})"><circle r="70" fill="#bfe8ff" opacity=".35" filter="url(#soft)" class="pulse"/>
+  return `<g transform="translate(${x},${y}) scale(${k})"><g opacity=".35"><circle r="70" fill="#bfe8ff" filter="url(#soft)" class="pulse"/></g>
     <path d="M0,-60 L52,40 L-52,40 Z" fill="#cfefff" opacity=".75" stroke="#fff" stroke-width="2"/>
     <path d="M0,-60 L0,40 M0,-60 L-52,40" stroke="#fff" stroke-width="1.5" opacity=".6"/>
     <path d="M10,-10 L80,-30 M14,0 L84,0 M10,10 L80,30" stroke-width="5" opacity=".7" stroke="url(#rainbow)"/>
@@ -2400,8 +2401,280 @@ function end4Scene(){
   <g${BEV}><text x="500" y="590" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="58" letter-spacing="5" fill="url(#goldText)">Якорь Времени</text></g>
   ${lines.map((t,i)=>`<text x="500" y="${640+i*34}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="24" fill="#e8e0d4">${t}</text>`).join('')}
   ${note.map((t,i)=>`<text x="500" y="${760+i*36}" text-anchor="middle" font-family="Caveat,cursive" font-size="30" fill="#bfe8ff">${t}</text>`).join('')}
-  <text x="500" y="855" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#c9a062">Конец четвёртой главы · общее время ${mm}:${ss} · продолжение следует</text>
-  ${cta(500,925,'Сыграть снова','start')}
+  <text x="500" y="850" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" letter-spacing="3" fill="#c9a062">Конец четвёртой главы · общее время ${mm}:${ss}</text>
+  ${cta(500,905,'Глава V · «Левиафан»','toLev')}
+  ${cta(500,985,'Сыграть сначала','start',true)}
+  ${vignette()}`;
+}
+
+/* ================= CHAPTER V · THE LEVIATHAN ================= */
+const CYR='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+const CIPHER_SHIFT=3, CAGE_WORD='ВЕГА';
+const caesar=(w,k)=>[...w].map(c=>CYR[(CYR.indexOf(c)+k+32)%32]).join('');
+const CAGE_WHEELS=[['А','В','Д','К','М','Р','Т','Я'],['А','Е','И','Л','О','С','У','Э'],['Б','Г','Ж','Н','П','С','Ф','Ш'],['А','Е','И','Л','О','Р','У','Ю']];
+const WAVE_T={f:3,p:2,a:2};
+// mirror grid: 5 cols × 4 rows; values 0 = '/', 1 = '\'
+const BEAM_MIRRORS=[[1,1],[1,3],[3,3],[3,0],[0,0],[0,3],[2,1],[2,2],[4,1],[4,3]];
+const BEAM_SOL={'1,1':1,'1,3':1,'3,3':0,'3,0':1,'0,0':0,'0,3':0};
+const PRISM_CELL=[3,2];
+const GX0=170, GY0=250, GC=136;
+
+function miraFigure(x,y,k){
+  return `<g transform="translate(${x},${y}) scale(${k})">
+    <path d="M-56,170 C-62,140 -44,118 -18,112 L18,112 C44,118 62,140 56,170 L80,390 L-80,390 Z" fill="#1f4a46"/>
+    <path d="M-56,170 C-62,140 -44,118 -18,112 L18,112 C44,118 62,140 56,170 L80,390 L-80,390 Z" fill="url(#shCyl)" opacity=".7"/>
+    <path d="M-18,112 L0,190 L18,112 Z" fill="#e8dcc0"/><path d="M-26,118 C-10,140 10,140 26,118 L20,150 C8,160 -8,160 -20,150 Z" fill="#8a1a14"/>
+    <path d="M-36,60 C-44,10 -20,-14 0,-14 C20,-14 44,10 36,60 C30,30 -30,30 -36,60 Z" fill="#5a2a14"/>
+    <ellipse cx="0" cy="66" rx="27" ry="33" fill="#e6b896"/><ellipse cx="0" cy="66" rx="27" ry="33" fill="url(#shAO)"/>
+    <circle cx="0" cy="-22" r="16" fill="#5a2a14"/>
+    <path d="M-30,40 C-30,18 30,18 30,40 C20,30 -20,30 -30,40 Z" fill="#6a3418"/>
+    <g${BEVS}><rect x="-30" y="22" width="60" height="8" rx="4" fill="#3a2a1a"/><circle cx="-13" cy="20" r="10" fill="url(#brass)"/><circle cx="13" cy="20" r="10" fill="url(#brass)"/></g>
+    <circle cx="-13" cy="20" r="6" fill="#7ac8e0" opacity=".8"/><circle cx="13" cy="20" r="6" fill="#7ac8e0" opacity=".8"/>
+    <circle cx="-10" cy="66" r="3" fill="#2a1a10"/><circle cx="10" cy="66" r="3" fill="#2a1a10"/>
+    <path d="M-8,84 Q0,89 8,84" stroke="#8a4a3a" stroke-width="2.5" fill="none"/>
+  </g>`;
+}
+function guildBanner(x,y,w,h){
+  return `<path d="M${x},${y} h${w} v${h} l${-w/2},${-h*.14} l${-w/2},${h*.14} Z" fill="#6a0e12"/>
+    <path d="M${x},${y} h${w} v${h} l${-w/2},${-h*.14} l${-w/2},${h*.14} Z" fill="url(#shCyl)" opacity=".6"/>
+    <path d="M${x+6},${y} v${h*.92} M${x+w-6},${y} v${h*.92}" stroke="#c9a062" stroke-width="2"/>
+    ${guildEmblem(x+w/2,y+h*.4,w/130)}${brassBar(x-8,y-8,w+16,10)}`;
+}
+function steelWall(){
+  let s=tex('rect','x="-1000" y="-1000" width="3000" height="1800"','#3a3e42','pBrush','url(#shWall)')+`<rect x="-1000" y="-1000" width="3000" height="1800" fill="url(#pGrime)" opacity=".7"/>`;
+  for(let x=-1000;x<2000;x+=180) s+=`<rect x="${x}" y="-1000" width="10" height="1800" fill="#1a1c1e" opacity=".7"/>${Array.from({length:10},(_,i)=>rivet(x+22,40+i*76,3.5)+rivet(x+158,40+i*76,3.5)).join('')}`;
+  return s;
+}
+function wallClock5(x,y,r){
+  return `<g filter="url(#shS)"><g${BEV}>${annulus(x,y,r,r*.82,'url(#brass)',.6)}</g></g>
+    <circle cx="${x}" cy="${y}" r="${f1(r*.82)}" fill="url(#ivory)"/>
+    ${RN.map((n,i)=>{const a=rad(i*30);return `<text x="${f1(x+Math.sin(a)*r*.62)}" y="${f1(y-Math.cos(a)*r*.62+r*.08)}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="${f1(r*.2)}" fill="#2a1a0c">${n}</text>`}).join('')}
+    <path d="M${x},${y} L${f1(x-r*.42)},${y}" stroke="#1a0f06" stroke-width="${f1(r*.07)}" stroke-linecap="round"/>
+    <path d="M${x},${y} L${x},${f1(y-r*.66)}" stroke="#1a0f06" stroke-width="${f1(r*.045)}" stroke-linecap="round"/>
+    ${disc(x,y,r*.08,'url(#brassR)',.4)}`;
+}
+
+/* --- cutscene: boarding --- */
+function board5Scene(){
+  return `<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#dawnSky)"/>
+  <circle cx="200" cy="230" r="140" fill="#fff0c0" opacity=".45" filter="url(#soft)"/><circle cx="200" cy="240" r="46" fill="#fff4d0"/>
+  ${Array.from({length:10},(_,i)=>`<ellipse class="drift" style="animation-duration:${50+i*6}s;animation-delay:${-i*5}s" cx="${-100+i*130}" cy="${700+(i%3)*50}" rx="200" ry="44" fill="#f6d6c0" opacity=".7" filter="url(#blur4)"/>`).join('')}
+  ${airship(640,380,95,{dark:true,name:''})}
+  <g transform="translate(640,380)">${guildEmblem(40,0,1.6)}</g>
+  ${airship(180,560,24)}
+  <path d="M200,610 Q380,560 560,520" stroke="#2a1a0c" stroke-width="3" fill="none"/>
+  <g transform="translate(400,560)"><circle r="8" fill="#1a1410"/><path d="M-5,6 L5,6 L8,34 L-8,34 Z M-4,34 l-8,16 M4,34 l8,16 M-5,10 l-10,-14 M5,10 l10,-16" stroke="#1a1410" stroke-width="6" stroke-linecap="round" fill="#1a1410"/></g>
+  ${Array.from({length:12},(_,i)=>{const r=rng(i*7+3);return `<line x1="${f1(r()*1000)}" y1="${f1(100+r()*700)}" x2="${f1(r()*1000-80)}" y2="${f1(100+r()*700)}" stroke="#fff" stroke-width="1.2" opacity=".25"/>`}).join('')}
+  ${vignette()}
+  ${cta(500,930,'Спуститься по тросу!','board5')}`;
+}
+
+/* --- hub: Leviathan's gun-deck corridor --- */
+function levScene(){
+  const f=S.f;
+  let s=steelWall();
+  s+=tex('rect','x="-1000" y="800" width="3000" height="1200"','#2a2c2e','pBrush','url(#shFloor)');
+  for(let x=-1000;x<2000;x+=60) s+=`<line x1="${x}" y1="800" x2="${x+(x-500)*.4}" y2="1000" stroke="#111" stroke-width="2" opacity=".6"/>`;
+  s+=`<rect x="-1000" y="794" width="3000" height="10" fill="#000" opacity=".5" filter="url(#blur4)"/>`;
+  // pipes
+  s+=`<rect x="-1000" y="60" width="3000" height="30" fill="url(#copperH)"/><rect x="-1000" y="60" width="3000" height="30" fill="url(#pPatina)" opacity=".5"/>
+  <rect x="-1000" y="104" width="3000" height="18" fill="url(#steel)"/>
+  ${[120,380,620,880].map(x=>brassBar(x,54,16,74)).join('')}`;
+  // portholes with noon clouds
+  [[110,250],[890,250]].forEach(([x,y])=>{ s+=`<circle cx="${x}" cy="${y}" r="52" fill="url(#dawnSky)"/><ellipse cx="${x}" cy="${y+24}" rx="60" ry="16" fill="#fff" opacity=".6" filter="url(#blur4)"/><circle cx="${x}" cy="${y}" r="52" fill="url(#glassG)"/>
+    <g filter="url(#shS)"><g${BEV}>${annulus(x,y,66,52,'url(#steel)',.5)}</g></g>${boltRing(x,y,59,10,4)}`; });
+  // banners
+  s+=guildBanner(220,150,110,250)+guildBanner(670,150,110,250);
+  // big armoured door to the Anchor chamber
+  s+=`<circle cx="500" cy="440" r="210" fill="#0a0a0c"/>
+  <g filter="url(#sh)"><g${BEVL}>${annulus(500,440,200,170,'url(#steel)',.6)}</g></g>${boltRing(500,440,185,20,6)}
+  <g class="hdoor${f.doorOpen?' open':''}" style="transform-origin:330px 440px">
+    <g${BEV}>${disc(500,440,168,'url(#steel)',.6)}</g>
+    ${[0,45,90,135].map(a=>`<rect x="350" y="434" width="300" height="12" fill="#1a1c1e" opacity=".6" transform="rotate(${a} 500 440)"/>`).join('')}
+    ${guildEmblem(500,440,1.4)}
+    <g${BEVS}><rect x="610" y="420" width="40" height="40" rx="6" fill="url(#brass)"/></g><rect x="620" y="434" width="20" height="12" rx="2" fill="#120a04"/>
+  </g>
+  ${f.doorOpen?`<g opacity=".18"><circle cx="500" cy="440" r="168" fill="#6a3aff" filter="url(#soft)" class="pulse"/></g>`:''}
+  <circle cx="500" cy="190" r="12" fill="#ff2a1a" filter="url(#glow)" class="${f.doorOpen?'':'blink'}"/>`;
+  // wall clock (9:00)
+  s+=wallClock5(110,470,58);
+  // desk with logbook + cipher disc
+  s+=`<g filter="url(#sh)">${woodRect(20,640,250,20,'pWood','url(#shVr)')}</g><path d="M40,660 L46,800 M250,660 L244,800" stroke="#1a1c1e" stroke-width="14"/>
+  <rect x="40" y="612" width="96" height="30" rx="2" fill="#2a1a10"/>${tex('rect','x="48" y="614" width="80" height="24"','#ead6a6','pParchS','')}
+  <g${BEVS}>${disc(200,618,30,'url(#brass)',.6)}</g><circle cx="200" cy="618" r="20" fill="#e8d8b0"/><circle cx="200" cy="618" r="8" fill="url(#brassR)"/>`;
+  // Mira's cage
+  s+=`<g filter="url(#sh)"><g${BEV}><rect x="740" y="400" width="240" height="20" rx="6" fill="url(#steel)"/><rect x="740" y="780" width="240" height="24" rx="6" fill="url(#steel)"/></g></g>`;
+  if(!f.cageOpen) s+=miraFigure(860,440,.82);
+  s+=f.cageOpen ? `<g${BEVS}>${Array.from({length:3},(_,i)=>`<rect x="${750+i*34}" y="420" width="10" height="360" rx="4" fill="url(#steel)"/>`).join('')}</g>`
+    : `<g${BEVS}>${Array.from({length:8},(_,i)=>`<rect x="${750+i*32}" y="420" width="10" height="360" rx="4" fill="url(#steel)"/>`).join('')}</g>
+      <g transform="translate(860,620) scale(.16)">${padlockArt(0,0,1,false)}</g>`;
+  if(f.cageOpen) s+=miraFigure(700,470,.72);
+  s+=profFigure(330,500,.62);
+  // red emergency light wash
+  s+=`<g opacity=".08"><circle cx="500" cy="190" r="420" fill="#ff2a1a" class="${f.doorOpen?'':'flick'}"/></g>`;
+  s+=glint(90,620,'logbook5')+glint(860,600,'cage')+glint(500,440,'anchor');
+  s+=vignette();
+  s+=hot(20,580,260,90,'go','data-go="logbook5"')+hot(50,410,120,120,'say','data-say="clock5"')
+    +hot(730,390,260,420,f.cageOpen?'mira':'go',f.cageOpen?'':'data-go="cage"')
+    +`<circle class="hot" cx="500" cy="440" r="200" fill="transparent" data-act="levdoor"/>`;
+  return s;
+}
+
+/* --- logbook + cipher disc --- */
+function logbook5Scene(){
+  const cx=650, cy=520, Ro=250, Ri=190;
+  let s=`${woodRect(-1000,-1000,3000,3000,'pWood','')}<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#pGrime)" opacity=".4"/><circle cx="300" cy="200" r="700" fill="url(#warm)" class="screen"/>
+  <g transform="rotate(-4 220 420)"><rect x="30" y="80" width="360" height="560" rx="6" fill="#000" opacity=".45" transform="translate(10,12)" filter="url(#soft)"/>
+    <rect x="30" y="80" width="360" height="560" rx="6" fill="#4a0e12"/>
+    ${tex('rect','x="44" y="92" width="332" height="536"','#ead6a6','pParch','')}
+    ${guildEmblem(210,140,.55)}
+    ${['Журнал капитана «Левиафана».','Пленница — в клетке','на орудийной палубе.','Шифр замка (Цезарь,','сдвиг = часы до полудня):'].map((t,i)=>`<text x="64" y="${206+i*40}" font-family="Caveat,cursive" font-size="26" fill="#2e1a0a">${t}</text>`).join('')}
+    <text x="210" y="430" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="64" letter-spacing="10" fill="#8a1410">${caesar(CAGE_WORD,CIPHER_SHIFT)}</text>
+    ${['Полдень солнцестояния —','Якорь будет запущен.'].map((t,i)=>`<text x="64" y="${520+i*40}" font-family="Caveat,cursive" font-size="26" fill="#2e1a0a">${t}</text>`).join('')}</g>
+  <g filter="url(#sh)"><g${BEVL}>${annulus(cx,cy,Ro+30,Ri+40,'url(#brass)',.6)}</g></g>`;
+  for(let k=0;k<32;k++){ const a=rad(k*360/32); s+=`<text transform="translate(${f1(cx+Math.sin(a)*(Ro+5))},${f1(cy-Math.cos(a)*(Ro+5))}) rotate(${k*360/32})" text-anchor="middle" dy="8" font-family="Cormorant SC,serif" font-weight="700" font-size="26" fill="#2a1606">${CYR[k]}</text>`; }
+  s+=`<g class="hot" data-act="cdisc"><g style="transform-origin:${cx}px ${cy}px;transform:rotate(${S.cd*360/32}deg);transition:transform .4s cubic-bezier(.3,1.3,.5,1)" id="cdin">
+    <g${BEV}>${disc(cx,cy,Ri+30,'url(#brassD)',.5)}</g><circle cx="${cx}" cy="${cy}" r="${Ri+28}" fill="#e8d8b0"/><circle cx="${cx}" cy="${cy}" r="${Ri+28}" fill="url(#pParchS)" opacity=".4"/>
+    ${Array.from({length:32},(_,k)=>{const a=rad(k*360/32);return `<text transform="translate(${f1(cx+Math.sin(a)*Ri)},${f1(cy-Math.cos(a)*Ri)}) rotate(${k*360/32})" text-anchor="middle" dy="8" font-family="Cormorant SC,serif" font-weight="700" font-size="24" fill="#8a1410">${CYR[k]}</text>`}).join('')}
+    ${guildEmblem(cx,cy,1.3)}</g></g>
+  <path d="M${cx},${cy-Ro-40} L${cx-12},${cy-Ro-62} L${cx+12},${cy-Ro-62} Z" fill="#8a1410"/>
+  <g filter="url(#shS)"><g${BEV}><rect x="${cx-90}" y="${cy+Ro+44}" width="180" height="46" rx="5" fill="url(#brass)"/></g></g>
+  <text id="cdtxt" x="${cx}" y="${cy+Ro+76}" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="22" fill="#2a1606">сдвиг: ${((S.cd%32)+32)%32}</text>
+  <text x="${cx}" y="${cy+Ro+124}" text-anchor="middle" font-family="Caveat,cursive" font-size="26" fill="#e9c47a">снаружи — шифр, внутри — открытый текст</text>
+  ${vignette()}`;
+  return s;
+}
+
+/* --- Mira's cage --- */
+function cageScene(){
+  let s=steelWall()+tex('rect','x="-1000" y="860" width="3000" height="1140"','#2a2c2e','pBrush','url(#shFloor)');
+  s+=miraFigure(500,250,1.5);
+  s+=`<g${BEV}>${Array.from({length:10},(_,i)=>`<rect x="${110+i*84}" y="100" width="20" height="780" rx="8" fill="url(#steel)"/>`).join('')}<rect x="80" y="80" width="840" height="34" rx="8" fill="url(#steel)"/><rect x="80" y="860" width="840" height="34" rx="8" fill="url(#steel)"/></g>
+  <rect x="240" y="520" width="520" height="40" fill="url(#steel)"/>
+  ${padlockArt(500,560,.62,false)}
+  <rect x="330" y="640" width="340" height="110" rx="10" fill="#0c0c0c"/><rect x="330" y="640" width="340" height="110" rx="10" fill="url(#recess)"/>`;
+  for(let i=0;i<4;i++){ const x=375+i*84;
+    s+=`<g class="hot" data-act="cagew" data-i="${i}"><g${BEVS}><rect x="${x-36}" y="648" width="72" height="94" rx="8" fill="url(#brassH)"/></g><rect x="${x-36}" y="648" width="72" height="94" rx="8" fill="url(#shCylH)"/>
+      <text id="cw${i}" x="${x}" y="712" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="46" fill="#2a1606">${CAGE_WHEELS[i][S.cw[i]]}</text></g>`; }
+  return s+vignette();
+}
+
+/* --- Anchor chamber --- */
+function anchorScene(){
+  const f=S.f;
+  let s=steelWall()+`<rect x="-1000" y="-1000" width="3000" height="3000" fill="#000" opacity=".45"/>`;
+  s+=tex('rect','x="-1000" y="820" width="3000" height="1200"','#1e2022','pBrush','url(#shFloor)');
+  // window: city far below at noon
+  s+=`<path d="M300,60 L700,60 L740,200 L260,200 Z" fill="url(#dawnSky)"/><ellipse cx="500" cy="180" rx="240" ry="20" fill="#fff" opacity=".6" filter="url(#blur4)"/><circle cx="500" cy="110" r="24" fill="#fff4d0" filter="url(#glow)"/>
+  <g${BEVS}><path d="M300,60 L700,60 L740,200 L260,200 Z" fill="none" stroke="url(#steel)" stroke-width="12"/></g>`;
+  // the Anchor: crystal in rings
+  const rev=f.anchorRev;
+  s+=`<g opacity=".22"><circle cx="500" cy="480" r="300" fill="${rev?'#ffd27a':'#7a4aff'}" filter="url(#soft)" class="pulse"/></g>
+  ${[260,210,160].map((r,i)=>`<g${BEV}><g class="spin${i%2?' rev':''}" style="transform-origin:500px 480px;animation-duration:${rev?40:6+i*3}s"><ellipse cx="500" cy="480" rx="${r}" ry="${f1(r*.32)}" fill="none" stroke="url(#brassH)" stroke-width="12" transform="rotate(${i*60-30} 500 480)"/></g></g>`).join('')}
+  <path d="M500,330 L590,480 L500,630 L410,480 Z" fill="${rev?'#ffe0a0':'#9a7aff'}" opacity=".9" filter="url(#glow)"/>
+  <path d="M500,330 L590,480 L500,480 Z" fill="#fff" opacity=".35"/><path d="M500,330 L500,630" stroke="#fff" stroke-width="2" opacity=".5"/>
+  <path d="M500,630 L500,800" stroke="url(#steel)" stroke-width="30"/><path d="M500,330 L500,200" stroke="url(#steel)" stroke-width="24"/>
+  ${f.fieldOff?'':`<g opacity=".12"><circle cx="500" cy="480" r="290" fill="#5aa0ff" class="pulse"/></g><circle cx="500" cy="480" r="290" fill="none" stroke="#9ad0ff" stroke-width="3" stroke-dasharray="14 10" opacity=".7" class="dashpulse"/>`}`;
+  // resonator console (left) and mirror platform (right)
+  s+=`<g filter="url(#sh)"><g${BEV}><rect x="20" y="520" width="220" height="300" rx="10" fill="url(#steel)"/></g></g>
+  <rect x="44" y="550" width="172" height="120" rx="8" fill="#062014"/><path d="M50,610 ${Array.from({length:20},(_,i)=>`L${54+i*8},${f1(610-Math.sin(i*.9)*30)}`).join(' ')}" stroke="#4aff8a" stroke-width="3" fill="none" filter="url(#glow)"/>
+  ${[70,130,190].map(x=>`<g${BEVS}>${disc(x,730,20,'url(#brassR)',.6)}</g>`).join('')}
+  <g filter="url(#sh)"><g${BEV}><path d="M720,820 L990,820 L960,600 L750,600 Z" fill="url(#steel)"/></g></g>
+  ${Array.from({length:4},(_,r)=>Array.from({length:5},(_,c)=>`<rect x="${762+c*38+r*-6}" y="${612+r*50}" width="32" height="40" fill="#1a1c1e" stroke="#4a4c4e"/>`).join('')).join('')}
+  ${f.prismIn5?`<circle cx="880" cy="700" r="16" fill="#bfe8ff" filter="url(#glow)"/>`:''}`;
+  s+=profFigure(300,560,.5)+miraFigure(640,560,.5);
+  s+=glint(130,600,'reson')+glint(860,640,'beam');
+  s+=vignette();
+  s+=hot(20,510,230,320,'go','data-go="reson"')+hot(710,590,290,240,'go','data-go="beam"')+`<circle class="hot" cx="500" cy="480" r="160" fill="transparent" data-act="say" data-say="anchor"/>`;
+  return s;
+}
+
+/* --- resonator (oscilloscope) --- */
+function wavePath(fq,ph,am,x0,y0,w,h){
+  let d=''; for(let i=0;i<=120;i++){ const t=i/120, x=x0+t*w, y=y0-Math.sin(t*Math.PI*2*fq/2+ph*Math.PI/4)*am*h/3.2; d+=(i?'L':'M')+f1(x)+','+f1(y); } return d;
+}
+function resonScene(){
+  const f=S.f, W=S.wv;
+  let s=steelWall()+`<g filter="url(#sh)"><g${BEVL}><rect x="100" y="100" width="800" height="820" rx="18" fill="url(#steel)"/><rect x="100" y="100" width="800" height="820" rx="18" fill="url(#pBrush)" opacity=".4"/></g></g>
+  ${[[122,122],[878,122],[122,898],[878,898]].map(([x,y])=>bolt(x,y,9)).join('')}
+  <g filter="url(#shS)"><g${BEV}><rect x="340" y="120" width="320" height="44" rx="4" fill="url(#brass)"/></g></g>
+  <text x="500" y="150" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="22" letter-spacing="3" fill="#2a1606">РЕЗОНАТОР ПОЛЯ</text>
+  <rect x="160" y="190" width="680" height="400" rx="40" fill="#03140a"/>
+  ${Array.from({length:9},(_,i)=>`<line x1="${180+i*80}" y1="200" x2="${180+i*80}" y2="580" stroke="#1a5a30" stroke-width="1" opacity=".6"/>`).join('')}
+  ${Array.from({length:5},(_,i)=>`<line x1="170" y1="${230+i*80}" x2="830" y2="${230+i*80}" stroke="#1a5a30" stroke-width="1" opacity=".6"/>`).join('')}
+  <path d="${wavePath(WAVE_T.f,WAVE_T.p,WAVE_T.a,180,390,640,380)}" stroke="#ff5a4a" stroke-width="5" fill="none" filter="url(#glow)" opacity=".85"/>
+  <path id="mywave" d="${wavePath(W[0],W[1],W[2],180,390,640,380)}" stroke="#5aff8a" stroke-width="4" fill="none" filter="url(#glow)"/>
+  <rect x="160" y="190" width="680" height="400" rx="40" fill="url(#glassG)"/><rect x="160" y="190" width="680" height="400" rx="40" fill="none" stroke="url(#brassH)" stroke-width="10"/>
+  <text x="200" y="620" font-family="Cormorant SC,serif" font-size="20" fill="#ff8a7a">— пульс кристалла</text><text x="800" y="620" text-anchor="end" font-family="Cormorant SC,serif" font-size="20" fill="#7aff9a">— резонатор —</text>`;
+  [['ЧАСТОТА',260,0,6],['ФАЗА',500,1,8],['РАЗМАХ',740,2,3]].forEach(([lbl,x,i,n])=>{
+    s+=`<g class="hot" data-act="knob5" data-i="${i}"><g filter="url(#sh)"><g${BEV}><g style="transform-origin:${x}px 760px;transform:rotate(${W[i]*(300/n)}deg);transition:transform .3s"><path d="${gearPath(x,760,74,64,26)}" fill="url(#brass)"/>${disc(x,760,52,'url(#brassR)',.6)}<path d="M${x},${700} L${x+9},${722} L${x-9},${722} Z" fill="#8a1a10"/></g></g></g>
+      <text x="${x}" y="870" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="22" letter-spacing="2" fill="#e9c47a">${lbl}</text>
+      <text id="kv${i}" x="${x}" y="898" text-anchor="middle" font-family="Cormorant SC,serif" font-size="20" fill="#c9a062">${W[i]}</text></g>`; });
+  return s+vignette();
+}
+
+/* --- mirror grid + prism: the finale --- */
+function beamTrace(){
+  const mir={}; BEAM_MIRRORS.forEach(([c,r])=>{ mir[c+','+r]=S.mr[c+','+r]; });
+  let c=0, r=1, d=1; // enter (0,1) heading east
+  const pts=[[GX0-90, GY0+GC*1.5]]; let hitPrism=false, result='lost';
+  const dx=[0,1,0,-1], dy=[-1,0,1,0];
+  for(let step=0;step<60;step++){
+    if(c<0||c>4||r<0||r>3){ result=(c<0&&r===3&&d===3)?'win':'out'; break; }
+    const cx=GX0+c*GC+GC/2, cy=GY0+r*GC+GC/2;
+    const key=c+','+r;
+    if(c===PRISM_CELL[0]&&r===PRISM_CELL[1]){ if(!S.f.prismIn5){ pts.push([cx,cy]); result='blocked'; break; } hitPrism=true; }
+    if(key in mir){ pts.push([cx,cy]); const m=mir[key];
+      d = m===0 ? [1,0,3,2][d] : [3,2,1,0][d]; }
+    c+=dx[d]; r+=dy[d];
+  }
+  if(result==='win'||result==='out'){ const lc=c, lr=r; pts.push([GX0+lc*GC+GC/2-(result==='win'?GC/2-30:0), GY0+lr*GC+GC/2]); }
+  return {pts, hitPrism, win: result==='win' && hitPrism, result};
+}
+function beamScene(){
+  const f=S.f, t=beamTrace();
+  let s=steelWall()+`<rect x="-1000" y="-1000" width="3000" height="3000" fill="#000" opacity=".45"/>
+  <g filter="url(#sh)"><g${BEVL}><rect x="${GX0-20}" y="${GY0-20}" width="${GC*5+40}" height="${GC*4+40}" rx="14" fill="url(#steel)"/></g></g>
+  <rect x="${GX0}" y="${GY0}" width="${GC*5}" height="${GC*4}" fill="#101214"/>
+  ${Array.from({length:20},(_,i)=>{const c=i%5,r=Math.floor(i/5);return `<rect x="${GX0+c*GC+4}" y="${GY0+r*GC+4}" width="${GC-8}" height="${GC-8}" rx="6" fill="#1a1c1e" stroke="#3a3c3e"/>`}).join('')}
+  <g transform="translate(70,${GY0+GC*2})"><path d="M0,-190 L60,0 L0,190 L-60,0 Z" fill="${f.anchorRev?'#ffe0a0':'#9a7aff'}" opacity=".9" filter="url(#glow)" class="pulse"/>
+    <text x="0" y="-210" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="18" fill="#cfc0ff">КРИСТАЛЛ</text></g>
+  <circle cx="${GX0-14}" cy="${GY0+GC*1.5}" r="10" fill="#ff8a5a" filter="url(#glow)"/><text x="${GX0-26}" y="${GY0+GC*1.5-18}" text-anchor="end" font-family="Cormorant SC,serif" font-size="16" fill="#ffb08a">ВЫХОД</text>
+  <circle cx="${GX0-14}" cy="${GY0+GC*3.5}" r="12" fill="none" stroke="#9ad0ff" stroke-width="3" stroke-dasharray="5 4" class="dashpulse"/><text x="${GX0-26}" y="${GY0+GC*3.5+34}" text-anchor="end" font-family="Cormorant SC,serif" font-size="16" fill="#9ad0ff">ВХОД</text>`;
+  const pc=GX0+PRISM_CELL[0]*GC+GC/2, pr=GY0+PRISM_CELL[1]*GC+GC/2;
+  s+=`<g class="hot" data-act="prism5">${f.prismIn5?prismArt(pc,pr+6,.62):`<path d="M${pc},${pr-40} L${pc+40},${pr+34} L${pc-40},${pr+34} Z" fill="none" stroke="#bfe8ff" stroke-width="3" stroke-dasharray="8 6" class="dashpulse"/>`}<rect x="${pc-GC/2}" y="${pr-GC/2}" width="${GC}" height="${GC}" fill="transparent"/></g>`;
+  if(f.fieldOff){
+    const col=t.hitPrism?'url(#rainbow)':'#ff8a5a';
+    s+=`<path d="M${t.pts.map(p=>f1(p[0])+','+f1(p[1])).join(' L')}" fill="none" stroke="${t.hitPrism?'#fff4d0':'#ff8a5a'}" stroke-width="8" filter="url(#glow)" stroke-linejoin="round" opacity=".95"/>`;
+  }
+  BEAM_MIRRORS.forEach(([c,r])=>{ const cx=GX0+c*GC+GC/2, cy=GY0+r*GC+GC/2, m=S.mr[c+','+r];
+    s+=`<g class="hot" data-act="mirror" data-k="${c},${r}"><rect x="${cx-GC/2}" y="${cy-GC/2}" width="${GC}" height="${GC}" fill="transparent"/>
+      <g style="transform-origin:${cx}px ${cy}px;transform:rotate(${m===0?45:-45}deg);transition:transform .3s">
+        <g${BEVS}><rect x="${cx-8}" y="${cy-52}" width="16" height="104" rx="4" fill="url(#brassV)"/></g>
+        <rect x="${cx-3}" y="${cy-46}" width="6" height="92" fill="#dff0ff" opacity=".9"/></g>
+      ${disc(cx,cy,9,'url(#brassR)',.4)}</g>`; });
+  if(!f.fieldOff) s+=`<g opacity=".14"><rect x="${GX0-20}" y="${GY0-20}" width="${GC*5+40}" height="${GC*4+40}" rx="14" fill="#5aa0ff" class="pulse"/></g>`;
+  s+=`<text x="500" y="${GY0+GC*4+70}" text-anchor="middle" font-family="Cormorant SC,serif" font-size="22" fill="#e9c47a">Луч — сквозь призму — обратно в нижний порт кристалла</text>`;
+  return s+vignette();
+}
+
+/* --- grand finale --- */
+function end5Scene(){
+  const sec=Math.max(0,Math.round(((S.tEnd||Date.now())-S.t0)/1000)), mm=Math.floor(sec/60), ss=String(sec%60).padStart(2,'0');
+  const lines=['Луч хронита прошёл сквозь призму и ударил в самое сердце кристалла.','Якорь Времени взвыл, замер — и закрутился назад. «Левиафан» осел в облака,','а над Новым Лондоном пробило полдень, и стрелки как ни в чём не бывало пошли дальше.'];
+  const note=['Через неделю в мастерской снова горела лампа. Профессор, Мира и ты пили чай','под тиканье сотни часов. «Ну что, подмастерье, — сказал профессор, —','у меня есть одна идея насчёт подводной лодки…»'];
+  return `<rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#dawnSky)"/>
+  <circle cx="500" cy="200" r="220" fill="#fff4c8" opacity=".5" filter="url(#soft)"/><circle cx="500" cy="210" r="70" fill="#fff8e0"/>
+  <g class="spin" style="transform-origin:500px 210px;animation-duration:140s">${Array.from({length:16},(_,i)=>{const a=rad(i*22.5);return `<path d="M500,210 L${f1(500+Math.cos(a-.05)*900)},${f1(210+Math.sin(a-.05)*900)} L${f1(500+Math.cos(a+.05)*900)},${f1(210+Math.sin(a+.05)*900)} Z" fill="#fff" opacity=".07"/>`}).join('')}</g>
+  <path d="M-1000,470 L120,440 L150,380 L170,440 L260,430 L280,350 L300,430 L420,440 L440,300 L470,250 L500,300 L520,440 L640,430 L660,370 L690,430 L2000,450 L2000,2000 L-1000,2000 Z" fill="#3a2a3a"/>
+  <circle cx="485" cy="300" r="14" fill="#ffd98a" filter="url(#glow)"/>
+  <g class="bob">${airship(800,180,18)}</g>
+  <rect x="-500" y="480" width="2000" height="1000" fill="#000" opacity=".45"/>
+  <g${BEVL}><text x="500" y="575" text-anchor="middle" font-family="Cormorant SC,serif" font-weight="700" font-size="80" letter-spacing="10" fill="url(#goldText)">КОНЕЦ</text></g>
+  ${lines.map((t,i)=>`<text x="500" y="${626+i*32}" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="22" fill="#f8ecd8">${t}</text>`).join('')}
+  ${note.map((t,i)=>`<text x="500" y="${740+i*32}" text-anchor="middle" font-family="Caveat,cursive" font-size="27" fill="#ffe0a0">${t}</text>`).join('')}
+  <text x="500" y="858" text-anchor="middle" font-family="Cormorant SC,serif" font-size="21" letter-spacing="3" fill="#ffd8a0">«Сердце Хроноса» · пять глав · общее время ${mm}:${ss}</text>
+  ${cta(500,930,'Сыграть снова','start')}
   ${vignette()}`;
 }
 
@@ -2441,7 +2714,15 @@ const SC={
   domectl:{title:'Пульт купола',draw:domectlScene,back:'obs',hint:1},
   scope4:{title:'Окуляр Хроноскопа',draw:scope4Scene,mount:mountScope4,back:'obs',hint:1},
   orrery:{title:'Планетарий',draw:orreryScene,back:'obs',hint:1},
-  end4:{title:'Финал',draw:end4Scene}
+  end4:{title:'Финал',draw:end4Scene},
+  board5:{title:'Над облаками',draw:board5Scene},
+  lev:{title:'Палуба «Левиафана»',draw:levScene,hint:1},
+  logbook5:{title:'Журнал капитана',draw:logbook5Scene,back:'lev',hint:1},
+  cage:{title:'Клетка',draw:cageScene,back:'lev',hint:1},
+  anchor:{title:'Зал Якоря',draw:anchorScene,back:'lev',hint:1},
+  reson:{title:'Резонатор',draw:resonScene,back:'anchor',hint:1},
+  beam:{title:'Зеркала',draw:beamScene,back:'anchor',hint:1},
+  end5:{title:'Конец',draw:end5Scene}
 };
 const SAY={
   window:'За окном ночной дождь над Новым Лондоном. Вдали плывёт огонёк дирижабля. Рамы заклёпаны намертво.',
@@ -2463,6 +2744,8 @@ const SAY={
   logbook:'Хребет Бурь выше нас на 330 футов, каждый пуд балласта даёт 10 футов. Лишний сброс унесёт в грозу.',
   codebook:'Кодовая книга: цифры азбуки Морзе. Точка — короткая вспышка, тире — длинная.',
   slit:'Щель купола. Через неё Хроноскоп смотрит в небо — если открыть створки.',
+  clock5:'Корабельные часы: ровно девять утра. До полудня — три часа.',
+  anchor:'Якорь Времени: кристалл хронита в бешено вращающихся кольцах. От него ломит виски.',
   boxtop:'Крышка украшена латунной розой ветров и девизом «Время открывает всё». Она не поддаётся.'
 };
 const ITEMS={
@@ -2473,6 +2756,7 @@ const ITEMS={
   gL:{name:'Большая шестерня',desc:'Большая шестерня, двадцать зубьев. Тяжёлая.',icon:()=>gear(50,50,44,20,{bev:true,holes:6})},
   wrench:{name:'Гаечный ключ',desc:'Тяжёлый разводной ключ. Таким можно провернуть даже прикипевший вентиль.',icon:()=>wrenchIcon(50,52,.55)},
   prism:{name:'Звёздная призма',desc:'Звёздная призма. Внутри неё переливаются крошечные радуги, хотя света почти нет.',icon:()=>prismArt(50,58,.55)},
+  token:{name:'Жетон Гильдии',desc:'Латунный жетон капитана с гербом Гильдии. Подходит к прорези бронедвери.',icon:()=>`<g${BEVS}>${disc(50,50,36,'url(#brass)')}</g>${guildEmblem(50,50,.62)}`},
   heart:{name:'Сердце Хроноса',desc:'Сердце Хроноса. Оно тёплое и тихо тикает, как живое.',icon:()=>heartObj(50,52,30,false)}
 };
 
@@ -2485,7 +2769,7 @@ function hideMsg(){ msgEl.hidden=true; }
 msgEl.addEventListener('click',()=>{ if(msgQueue.length) showMsg(msgQueue.shift()); else hideMsg(); });
 
 function renderInv(){
-  const inv=$('#inv'); const showInv = !['title','end','end2','end3','end4','jump'].includes(S.scene);
+  const inv=$('#inv'); const showInv = !['title','end','end2','end3','end4','end5','jump','board5'].includes(S.scene);
   inv.hidden=!showInv; if(!showInv) return;
   let h=''; for(let i=0;i<4;i++){ const id=S.inv[i];
     h+=`<button class="slot${id&&S.sel===id?' sel':''}" data-slot="${i}" aria-label="${id?ITEMS[id].name:'Пустой слот'}">${id?`<svg viewBox="0 0 100 100">${ITEMS[id].icon()}</svg>`:''}</button>`; }
@@ -2563,7 +2847,18 @@ function mountScope4(){
   const f=S.f;
   if(!f.focusDone && lensBlur()===0 && f.domeOpen && S.az===AZ_OK){ f.focusDone=true; save(); later(()=>{ AU.chime(); say('Резкость! В окуляре чётко видна комета с серебряным хвостом.'); },300); }
 }
+function hint5(){
+  const f=S.f; let h;
+  if(!f.cageOpen) h=!f.v_logbook5?'На столе слева — журнал капитана Гильдии и шифровальный диск.'
+    :`Сдвиг шифра — часы до полудня. Корабельные часы показывают девять, значит сдвиг 3: каждую букву ${caesar(CAGE_WORD,CIPHER_SHIFT)} сдвинь на три назад по алфавиту. Получится имя пленницы.`;
+  else if(!f.doorOpen) h='Выбери жетон Гильдии внизу экрана и приложи его к круглой бронедвери.';
+  else if(!f.fieldOff) h='Резонатор слева в зале Якоря: совмести зелёную волну с красной. Считай горбы — это частота; потом подбери сдвиг и высоту.';
+  else if(!f.prismIn5) h='На платформе с зеркалами есть гнездо для призмы. Выбери призму внизу и коснись гнезда.';
+  else h='Поворачивай зеркала касанием. Луч выходит из верхнего порта, должен пройти сквозь призму и вернуться в нижний порт кристалла.';
+  say(h);
+}
 function hint(){
+  if(S.level===5) return hint5();
   if(S.level===4) return hint4();
   if(S.level===3) return hint3();
   if(S.level===2) return hint2();
@@ -2594,7 +2889,7 @@ const ACT={
       'Ты — его подмастерье. Едва ты вошёл, дверь мастерской захлопнулась, и замок щёлкнул. Изнутри ключа нет.',
       'Единственный другой выход — круглый латунный люк в стене. Но его механизм мёртв.',
       'На столе лежит письмо, адресованное тебе. Касайся предметов, чтобы рассмотреть их.']); },
-  cont:()=>{ AU.init(); go(resumeScene && !['title','end','end2','end3','end4'].includes(resumeScene) ? resumeScene : 'room'); },
+  cont:()=>{ AU.init(); go(resumeScene && !['title','end','end2','end3','end4','end5'].includes(resumeScene) ? resumeScene : 'room'); },
   knob:el=>{
     if(S.f.clockDone){ say('Часы уже пробили своё. Механизм стрелок застопорился.'); return; }
     const k=el.dataset.k; if(k==='h') S.hs++; else S.ms++;
@@ -2810,6 +3105,45 @@ const ACT={
     if(S.op.every((v,k)=>v%12===ORRERY_SOL[k])){ f.orreryDone=true; save();
       setTimeout(()=>{ AU.whirr(); render(); AU.chime(); say('Планеты встали в Великое соединение, и латунные лепестки солнца раскрылись. Внутри — звёздная призма!'); },500); } },
   takePrism:()=>{ if(S.f.gotPrism) return; S.f.gotPrism=true; addItem('prism'); render(); say('Звёздная призма. Холодная, как лёд, и тяжелее, чем кажется.'); },
+  toLev:()=>{ AU.init(); S.level=5; S.f.ch4=true; S.inv=['prism']; S.sel=null; S.tEnd=0; go('board5');
+    sayAll(['Три дня спустя, утро солнцестояния. «Аврора» крадётся в облаках под брюхом «Левиафана».',
+      'Профессор вынул звёздную призму из Хроноскопа: «Без неё Якорь не одолеть».',
+      'Трос заброшен на нижнюю палубу флагмана. Пора.']); },
+  board5:()=>{ AU.whirr(); go('lev');
+    sayAll(['Вы спрыгнули на орудийную палубу «Левиафана». Мигают красные лампы, гудят трубы.',
+      'В клетке у стены — Мира Вега! «Профессор! Ключ у капитана… но шифр он записывал в журнал.»',
+      'Круглая бронедверь ведёт к Якорю Времени. До полудня осталось совсем немного.']); },
+  cdisc:()=>{ S.cd++; AU.click(); save(); const g=$('#cdin'); if(g) g.style.transform=`rotate(${S.cd*360/32}deg)`; const t=$('#cdtxt'); if(t) t.textContent='сдвиг: '+(S.cd%32); },
+  cagew:el=>{ const f=S.f; if(f.cageOpen) return; const i=+el.dataset.i; S.cw[i]=(S.cw[i]+1)%8; $('#cw'+i).textContent=CAGE_WHEELS[i][S.cw[i]]; AU.click(); save();
+    if(S.cw.map((v,k)=>CAGE_WHEELS[k][v]).join('')===CAGE_WORD){ f.cageOpen=true; save(); AU.clank(); AU.chime();
+      setTimeout(()=>{ go('lev'); addItem('token');
+        sayAll(['Замок щёлкнул на слове «ВЕГА». «Профессор! Я знала, что ты придёшь.» Мира выходит из клетки, растирая запястья.',
+          '«Якорь питается кристаллом хронита. Разбить его нельзя: рванёт так, что полдень станет вечным для всех.»',
+          '«Но поток можно обратить. Сначала погаси защитное поле: подстрой резонатор под пульс кристалла.»',
+          '«Потом — призма. Пусти луч кристалла сквозь неё обратно в него самого. Вот жетон от двери: я стащила его у капитана.»']); },900); } },
+  mira:()=>{ const f=S.f; say(!f.doorOpen?'Мира: «Жетон — к прорези на бронедвери. Скорее!»':!f.fieldOff?'Мира: «Резонатор слева. Поймай пульс кристалла: частоту, фазу, размах.»':'Мира: «Поле погасло! Теперь зеркала и призма — луч должен вернуться в кристалл.»'); },
+  levdoor:()=>{ const f=S.f;
+    if(f.doorOpen){ go('anchor'); return; }
+    if(S.sel!=='token'){ say(S.inv.includes('token')?'Выбери жетон внизу экрана и коснись двери.':'Бронедверь заперта. В ней прорезь для жетона Гильдии.'); return; }
+    removeItem('token'); f.doorOpen=true; save(); render(); AU.clank(); AU.whirr();
+    say('Жетон провалился в прорезь, и бронедверь с лязгом откатилась. Из зала льётся лиловый свет.');
+    setTimeout(()=>{ go('anchor'); say('Зал Якоря Времени. Кристалл хронита закрыт защитным полем. Слева — резонатор, справа — платформа с зеркалами.'); },1600); },
+  knob5:el=>{ const f=S.f; if(f.fieldOff){ say('Поле уже погашено. Резонатор гудит в унисон с кристаллом.'); return; } const i=+el.dataset.i;
+    if(i===0) S.wv[0]=S.wv[0]%6+1; else if(i===1) S.wv[1]=(S.wv[1]+1)%8; else S.wv[2]=S.wv[2]%3+1;
+    AU.click(); AU.tone(200+S.wv[0]*60,.15,'sine',.05); save(); render();
+    if(S.wv[0]===WAVE_T.f&&S.wv[1]===WAVE_T.p&&S.wv[2]===WAVE_T.a){ f.fieldOff=true; save(); AU.chime(); AU.hiss();
+      say('Волны слились в одну — резонанс! Защитное поле вокруг кристалла мигнуло и погасло.');
+      setTimeout(()=>go('anchor'),1800); } },
+  mirror:el=>{ const f=S.f; if(f.anchorRev) return; if(!f.fieldOff){ AU.clank(); say('Защитное поле отбрасывает руку от зеркал. Сначала резонатор.'); return; }
+    const k=el.dataset.k; S.mr[k]^=1; AU.click(); save(); render(); ACT.beamCheck(); },
+  prism5:()=>{ const f=S.f; if(f.prismIn5) return;
+    if(!f.fieldOff){ say('Поле не пускает к гнезду. Сначала резонатор.'); return; }
+    if(S.sel!=='prism'){ say(S.inv.includes('prism')?'Выбери призму внизу экрана и коснись гнезда.':'Гнездо для призмы.'); return; }
+    removeItem('prism'); f.prismIn5=true; save(); render(); AU.chime(); say('Призма встала в гнездо. Луч, коснувшись её, вспыхнул радугой.'); ACT.beamCheck(); },
+  beamCheck:()=>{ const f=S.f; const t=beamTrace(); if(!t.win||f.anchorRev) return;
+    f.anchorRev=true; save(); AU.whirr(); AU.hiss(); AU.bell(12); render();
+    say('Луч прошёл сквозь призму и вернулся в кристалл! Якорь взвыл, кристалл вспыхнул золотом…');
+    setTimeout(()=>{ S.tEnd=Date.now(); save(); go('end5'); },3200); },
   wheel:()=>{ if(S.f.heartIn) return; AU.clank(); const w=$('#wheel'); w.classList.remove('shake'); void w.getBoundingClientRect(); w.classList.add('shake');
     say('Колесо не поддаётся ни на миллиметр. Механизму не хватает сердца.'); }
 };
