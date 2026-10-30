@@ -232,7 +232,9 @@ renderer.setAnimationLoop((now) => {
   renderer.render(scene, camera);
 });
 
-new GLTFLoader().load('./doll.glb', (gltf) => {
+// doll.glb in the repo; the published page carries the same model as glTF JSON plus a JPEG texture
+const loader = new GLTFLoader();
+const onModel = (gltf) => {
   const doll = gltf.scene;
   let verts = 0;
   doll.traverse((o) => {
@@ -253,7 +255,7 @@ new GLTFLoader().load('./doll.glb', (gltf) => {
   document.getElementById('loading').hidden = true;
   window.viewer = { renderer, scene, camera, controls, setView };
   window.dollReady = true;
-}, undefined, () => {
-  document.getElementById('loading').textContent = 'Не удалось загрузить модель. Обнови страницу.';
-});
+};
+const onFail = () => { document.getElementById('loading').textContent = 'Не удалось загрузить модель. Обнови страницу.'; };
+loader.load('./doll.glb', onModel, undefined, () => loader.load('./doll.json', onModel, undefined, onFail));
 </script>
