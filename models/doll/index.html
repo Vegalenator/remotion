@@ -257,5 +257,25 @@ const onModel = (gltf) => {
   window.dollReady = true;
 };
 const onFail = () => { document.getElementById('loading').textContent = 'Не удалось загрузить модель. Обнови страницу.'; };
-loader.load('./doll.glb', onModel, undefined, () => loader.load('./doll.json', onModel, undefined, onFail));
+// The page's security policy blocks fetch() of data: URLs, so the embedded buffer is decoded here
+// and handed to the loader as an in-memory GLB.
+async function loadJsonModel() {
+  const gltf = await (await fetch('./doll.json')).json();
+  const b64 = gltf.buffers[0].uri.split(',')[1];
+  const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  delete gltf.buffers[0].uri;
+  const pad = (n) => (n + 3) & ~3;
+  const json = new TextEncoder().encode(JSON.stringify(gltf));
+  const jsonLen = pad(json.length), binLen = pad(bin.length);
+  const glb = new ArrayBuffer(12 + 8 + jsonLen + 8 + binLen);
+  const dv = new DataView(glb), u8 = new Uint8Array(glb);
+  dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, glb.byteLength, true);
+  dv.setUint32(12, jsonLen, true); dv.setUint32(16, 0x4e4f534a, true);
+  u8.fill(0x20, 20, 20 + jsonLen); u8.set(json, 20);
+  const b0 = 20 + jsonLen;
+  dv.setUint32(b0, binLen, true); dv.setUint32(b0 + 4, 0x004e4942, true);
+  u8.set(bin, b0 + 8);
+  loader.parse(glb, './', onModel, onFail);
+}
+loader.load('./doll.glb', onModel, undefined, () => loadJsonModel().catch(onFail));
 </script>
