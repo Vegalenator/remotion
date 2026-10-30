@@ -12,6 +12,7 @@ Y_SOLE, Y_TOP = 946, 18
 SCALE = 1.62 / (Y_SOLE - 20)          # metres per sheet pixel
 HEM = 676                             # lowest row of the dress body
 LEG_TOP = 640                         # legs start hidden under the skirt
+SMOOTH_LEG = 1.0                      # vertical smoothing of the leg outline (rows)
 
 # clean the strip of background between the legs: below the hem, drop pixels that match the backdrop
 for k in range(4):
@@ -107,7 +108,7 @@ def leg_extents(side):
     for c in range(5):
         col = E[:, c]; ok = ~np.isnan(col)
         E[:, c] = np.interp(np.arange(len(col)), np.nonzero(ok)[0], col[ok])
-        E[:, c] = ndi.gaussian_filter1d(ndi.median_filter(E[:, c], 5), 1.0)
+        E[:, c] = ndi.gaussian_filter1d(ndi.median_filter(E[:, c], 5), SMOOTH_LEG)
     E[:, 1:] = np.maximum(E[:, 1:], 1.0)
     return ys, E
 

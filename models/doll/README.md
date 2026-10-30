@@ -5,6 +5,7 @@
 
 - `doll.glb` — модель (glTF binary, 9,5 МБ, 187 тыс. вершин, одна текстура 4096×4096). Открывается в Blender, «Средстве 3D-просмотра» Windows, https://gltf-viewer.donmccurdy.com.
 - `index.html` — просмотрщик с ракурсами как на листе. Запуск: `npx serve models/doll`.
+- `print/doll_print.stl` — модель для 3D-печати с настоящим рельефом (ярусы, банты, руки, лицо, пряди); подробности в `print/README.md`.
 - `reconstruction/` — пайплайн и исходники. Пересборка: `cd reconstruction && python3 build.py` (numpy, scipy, opencv-python-headless, pillow, trimesh).
 
 Масштаб: 1 единица = 1 м, рост 1,62 м, кукла смотрит в +Z.

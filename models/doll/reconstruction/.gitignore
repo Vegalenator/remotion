@@ -2,3 +2,5 @@ mask_*.npy
 atlas.jpg
 doll.glb
 r_*.png
+doll_print.stl
+doll_print.glb
