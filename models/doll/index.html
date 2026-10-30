@@ -88,12 +88,12 @@
 </style>
 
 <div id="stage" aria-label="3D-модель куклы, вращается мышью или пальцем"></div>
-<div id="loading">Собираю модель…</div>
+<div id="loading">Загружаю модель…</div>
 
 <header class="hud top">
   <div class="title">
     <h1>Кукла в рюшах</h1>
-    <p>Процедурная 3D-модель по листу разворота: тянуть — вращать, колесо или щипок — приблизить.</p>
+    <p>Реконструкция по листу разворота, виду сверху и портрету: тянуть — вращать, колесо или щипок — приблизить.</p>
   </div>
   <div class="meta" id="meta"></div>
 </header>
@@ -124,13 +124,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildDoll } from './doll.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.92;
+// the texture already carries the artwork's own shading, so colours pass through untouched
+renderer.toneMapping = THREE.NoToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.domElement.tabIndex = 0;
@@ -139,7 +139,7 @@ stage.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.35;
+scene.environmentIntensity = 0.12;
 
 // narrow lens: the named views read almost like the orthographic turnaround sheets
 const FOV = 16;
@@ -150,8 +150,8 @@ controls.minDistance = 1;
 controls.maxDistance = 16;
 controls.autoRotateSpeed = 1.6;
 
-scene.add(new THREE.HemisphereLight('#fff4ea', '#6b5a55', 0.75));
-const key = new THREE.DirectionalLight('#fff0e0', 2.1);
+scene.add(new THREE.HemisphereLight('#fff4ea', '#6b5a55', 0.3));
+const key = new THREE.DirectionalLight('#fff0e0', 0.55);
 key.position.set(1.3, 4, 2.2);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
@@ -159,10 +159,10 @@ Object.assign(key.shadow.camera, { left: -0.8, right: 0.8, top: 1.9, bottom: -0.
 key.shadow.bias = -0.0004;
 key.shadow.normalBias = 0.01;
 scene.add(key);
-const fill = new THREE.DirectionalLight('#e9ecff', 0.6);
+const fill = new THREE.DirectionalLight('#e9ecff', 0.15);
 fill.position.set(-2.2, 1.6, 1.4);
 scene.add(fill);
-const rim = new THREE.DirectionalLight('#ffe0c8', 1.3);
+const rim = new THREE.DirectionalLight('#ffe0c8', 0.3);
 rim.position.set(0.4, 2.6, -3);
 scene.add(rim);
 
@@ -176,7 +176,7 @@ const VIEWS = {
   right: { label: 'ПРАВЫЙ БОК', pos: [-7.4, 0.84, 0] },
   back: { label: 'СЗАДИ', pos: [0, 0.84, -7.4] },
   left: { label: 'ЛЕВЫЙ БОК', pos: [7.4, 0.84, 0] },
-  top: { label: 'ВИД СВЕРХУ', pos: [0, 6.2, 0.02], target: [0, 0.75, 0] },
+  top: { label: 'ВИД СВЕРХУ', pos: [0, 6.1, 1.08], target: [0, 0.75, 0] },   // the top sheet is tilted ~10° toward the front
   isoF: { label: 'ИЗОМЕТРИЯ СПЕРЕДИ', pos: [2.6, 3.9, 5.8] },
   isoB: { label: 'ИЗОМЕТРИЯ СЗАДИ', pos: [-2.6, 3.9, -5.8] },
 };
@@ -218,7 +218,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(stage);
 resize();
-setView('isoF', true);
+setView('front', true);
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 renderer.setAnimationLoop((now) => {
@@ -232,19 +232,28 @@ renderer.setAnimationLoop((now) => {
   renderer.render(scene, camera);
 });
 
-// build after the first paint so the loading label shows
-requestAnimationFrame(() => setTimeout(() => {
-  const t0 = performance.now();
-  const doll = buildDoll();
+new GLTFLoader().load('./doll.glb', (gltf) => {
+  const doll = gltf.scene;
+  let verts = 0;
+  doll.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material;
+    m.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    // mostly self-lit so the painted light of the sheets survives; the scene lights add a little real form
+    m.emissiveMap = m.map;
+    m.emissive = new THREE.Color(1, 1, 1);
+    m.emissiveIntensity = 0.72;
+    o.castShadow = true;
+    verts += o.geometry.attributes.position.count;
+  });
   scene.add(doll);
   window.doll = doll;
-  const meshes = [];
-  doll.traverse((o) => o.isMesh && meshes.push(o));
-  const n = doll.userData.vertices;
   document.getElementById('meta').innerHTML =
-    `${n.toLocaleString('ru-RU')} вершин · ${meshes.length} сеток<br>рост 1,62 м · сборка ${Math.round(performance.now() - t0)} мс`;
+    `${verts.toLocaleString('ru-RU')} вершин · текстура 4096²<br>рост 1,62 м · 5 ракурсов + портрет`;
   document.getElementById('loading').hidden = true;
-  window.dollReady = true;
   window.viewer = { renderer, scene, camera, controls, setView };
-}, 30));
+  window.dollReady = true;
+}, undefined, () => {
+  document.getElementById('loading').textContent = 'Не удалось загрузить модель. Обнови страницу.';
+});
 </script>
